@@ -16,5 +16,8 @@ class Settings(BaseModel):
     DEFAULT_MODEL_VERSION: str | None = None
     DEFAULT_DATA_VERSION: str | None = None
 
+    # Builder 2 Runtime Model Artifact Directory
+    BUILDER2_MODEL_DIR: str | None = os.getenv("BUILDER2_MODEL_DIR", None)
+
 
 settings = Settings()

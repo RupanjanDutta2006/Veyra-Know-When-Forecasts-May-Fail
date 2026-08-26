@@ -95,6 +95,17 @@ models/*
 *.hdf5
 *.joblib
 *.pkl
+# Temporary scratch & logs
+scratch/
+*.log
+*.tmp
 
+# Type-checker & linter caches
+.mypy_cache/
+.ruff_cache/
 
-
+# Local secrets & credentials
+*.pem
+*.key
+*.cert
+credentials.json
