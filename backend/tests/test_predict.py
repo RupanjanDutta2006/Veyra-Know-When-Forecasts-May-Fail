@@ -145,3 +145,128 @@ def test_predict_dependency_injection_override(client: TestClient):
         assert data["data_version"] == "gefs-v1.0"
     finally:
         app.dependency_overrides.clear()
+
+
+# =====================================================================
+# REGRESSION TESTS — API VALIDATION & SAFETY CONTRACT
+# =====================================================================
+
+
+def test_predict_valid_kolkata_positive_lead_accepted(client: TestClient):
+    """Test A: Valid Kolkata with positive lead time is accepted and evaluated."""
+    payload = {
+        "issue_time": "2026-08-27T00:00:00Z",
+        "valid_time": "2026-08-28T00:00:00Z",
+        "region_id": "Kolkata",
+        "variable": "temperature_2m",
+        "model_type": None,
+    }
+    response = client.post("/v1/predict", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["location"] == "Kolkata"
+    assert data["abstain"] is False
+    assert data["bust_probability"] is not None
+    assert 0.0 <= data["bust_probability"] <= 1.0
+    assert data["trust_state"] == "HIGH_CONFIDENCE"
+    assert ReasonCode.SUCCESS.value in data["reason_codes"]
+
+
+def test_predict_atlantis_safely_abstained(client: TestClient):
+    """Test B: Atlantis unknown region returns safe abstention without reaching model."""
+    payload = {
+        "issue_time": "2026-08-27T00:00:00Z",
+        "valid_time": "2026-08-28T00:00:00Z",
+        "region_id": "Atlantis",
+        "variable": "temperature_2m",
+        "model_type": None,
+    }
+    response = client.post("/v1/predict", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["location"] == "Atlantis"
+    assert data["abstain"] is True
+    assert data["bust_probability"] is None
+    assert data["risk_level"] is None
+    assert data["trust_state"] == "UNAVAILABLE"
+    assert ReasonCode.INVALID_LOCATION.value in data["reason_codes"]
+
+
+def test_predict_negative_lead_time_rejected(client: TestClient):
+    """Test C: valid_time before issue_time (negative lead) is rejected with 422."""
+    payload = {
+        "issue_time": "2026-08-28T00:00:00Z",
+        "valid_time": "2026-08-27T00:00:00Z",
+        "region_id": "Kolkata",
+        "variable": "temperature_2m",
+        "model_type": None,
+    }
+    response = client.post("/v1/predict", json=payload)
+    assert response.status_code == 422
+    err_detail = str(response.json())
+    assert "strictly after issue_time" in err_detail or "Negative or zero" in err_detail
+
+
+def test_predict_zero_lead_time_rejected(client: TestClient):
+    """Test D: valid_time equal to issue_time (lead=0) is rejected with 422 for forecast inference."""
+    payload = {
+        "issue_time": "2026-08-27T00:00:00Z",
+        "valid_time": "2026-08-27T00:00:00Z",
+        "region_id": "Kolkata",
+        "variable": "temperature_2m",
+        "model_type": None,
+    }
+    response = client.post("/v1/predict", json=payload)
+    assert response.status_code == 422
+    err_detail = str(response.json())
+    assert "strictly after issue_time" in err_detail or "Negative or zero" in err_detail
+
+
+def test_predict_excessive_lead_time_rejected(client: TestClient):
+    """Test E: Extremely long lead time (> 384h / 16 days) is rejected with 422."""
+    payload = {
+        "issue_time": "2026-08-27T00:00:00Z",
+        "valid_time": "2026-09-20T00:00:00Z",  # 24 days = 576h > 384h
+        "region_id": "Kolkata",
+        "variable": "temperature_2m",
+    }
+    response = client.post("/v1/predict", json=payload)
+    assert response.status_code == 422
+    err_detail = str(response.json())
+    assert "exceeds the maximum supported forecast horizon" in err_detail
+
+
+def test_predict_malformed_timestamp_rejected(client: TestClient):
+    """Test F: Malformed timestamp format is rejected with 422."""
+    payload = {
+        "issue_time": "not-a-valid-timestamp",
+        "valid_time": "2026-08-28T00:00:00Z",
+        "location": "Kolkata",
+    }
+    response = client.post("/v1/predict", json=payload)
+    assert response.status_code == 422
+
+
+def test_predict_unsupported_variable_rejected(client: TestClient):
+    """Test G: Unsupported forecast variable is rejected with 422."""
+    payload = {
+        "location": "Kolkata",
+        "variable": "unsupported_crypto_metric",
+    }
+    response = client.post("/v1/predict", json=payload)
+    assert response.status_code == 422
+    err_detail = str(response.json())
+    assert "Unsupported forecast variable" in err_detail
+
+
+def test_predict_unsupported_model_type_rejected(client: TestClient):
+    """Test H: Unsupported model_type override is rejected with 422."""
+    payload = {
+        "location": "Kolkata",
+        "model_type": "deep_transformer_v99",
+    }
+    response = client.post("/v1/predict", json=payload)
+    assert response.status_code == 422
+    err_detail = str(response.json())
+    assert "Unsupported model_type" in err_detail
+

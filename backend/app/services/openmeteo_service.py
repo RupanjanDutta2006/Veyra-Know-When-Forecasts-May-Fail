@@ -48,7 +48,7 @@ class OpenMeteoGEFSWeatherService(BaseWeatherService):
         qc_validator: Optional[ForecastQualityControl] = None,
         http_client: Optional[Callable[[str], dict[str, Any]]] = None,
         data_version: str = "gefs-openmeteo-v1.0",
-        timeout_seconds: int = 10,
+        timeout_seconds: int = 25,
     ):
         self.api_url = api_url
         self.qc = qc_validator or ForecastQualityControl()
@@ -57,16 +57,23 @@ class OpenMeteoGEFSWeatherService(BaseWeatherService):
         self.timeout_seconds = timeout_seconds
 
     def _default_http_client(self, url: str) -> dict[str, Any]:
-        """Perform HTTP GET request using standard library urllib."""
+        """Perform HTTP GET request using standard library urllib with transient retry."""
         req = urllib.request.Request(
             url,
             headers={"User-Agent": "Veyra-Forecast-Bust-Sentinel/0.1.0"},
         )
-        with urllib.request.urlopen(req, timeout=self.timeout_seconds) as response:
-            if response.status != 200:
-                raise RuntimeError(f"HTTP error {response.status} fetching forecast data")
-            payload = response.read().decode("utf-8")
-            return json.loads(payload)
+        max_attempts = 2
+        for attempt in range(max_attempts):
+            try:
+                with urllib.request.urlopen(req, timeout=self.timeout_seconds) as response:
+                    if response.status != 200:
+                        raise RuntimeError(f"HTTP error {response.status} fetching forecast data")
+                    payload = response.read().decode("utf-8")
+                    return json.loads(payload)
+            except Exception as exc:
+                if attempt == max_attempts - 1:
+                    raise exc
+
 
     def resolve_coordinates(self, location: str) -> Optional[tuple[float, float]]:
         """Resolve location name or coordinate string to (latitude, longitude)."""

@@ -70,7 +70,13 @@ class ModelArtifactManager:
         """Load model bundle and feature pipeline."""
         bundle_path = os.path.join(self.artifacts_dir, f"{artifact_name}.joblib")
         if not os.path.exists(bundle_path):
-            raise FileNotFoundError(f"Model artifact not found: {bundle_path}")
+            repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+            alt_path = os.path.join(repo_root, self.artifacts_dir, f"{artifact_name}.joblib")
+            if os.path.exists(alt_path):
+                bundle_path = alt_path
+            else:
+                raise FileNotFoundError(f"Model artifact not found: {bundle_path}")
 
         bundle = joblib.load(bundle_path)
         return bundle["model"], bundle["pipeline"], bundle["metadata"]
+
