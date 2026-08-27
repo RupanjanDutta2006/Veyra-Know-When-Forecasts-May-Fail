@@ -49,8 +49,11 @@ def test_multiple_supported_locations_live_predictions(client: TestClient):
         assert 0.0 <= data["bust_probability"] <= 1.0
         assert data["trust_state"] == TrustState.HIGH_CONFIDENCE.value
         assert ReasonCode.SUCCESS.value in data["reason_codes"]
-        assert data["model_version"] == "baseline-logistic-v1.0"
+        assert data["model_version"] == "prototype-gbm-v1"
         assert data["data_version"] == "gefs-openmeteo-v1.0"
+
+
+
 
 
 def test_model_serving_is_read_only():

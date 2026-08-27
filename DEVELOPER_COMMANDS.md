@@ -71,6 +71,13 @@ python scripts/smoke_test_serving.py
 
 # 5. Final End-to-End System Readiness Smoke Test (Day 7)
 python scripts/smoke_test_final.py
+
+# 6. Builder 2 Standalone ML Training & Calibration Pipeline
+python scripts/train_builder2_model.py
+
+# 7. Builder 2 Standalone Verification & Smoke Test
+python scripts/smoke_test_builder2.py
+
 ```
 
 ---
