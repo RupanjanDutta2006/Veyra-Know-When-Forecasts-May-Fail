@@ -4,6 +4,21 @@
 
 ---
 
+## 📚 Development Documentation
+
+Veyra's complete development history and technical verification records are organized hierarchically by phase, builder, and day.
+
+👉 **[View the Complete Development Overview](./Overview/README.md)**
+
+- **Phase 1**
+  - **Builder 1**: [Day 1 to Day 7](./Overview/Phase-1/Builder-1/Day-1.md) (Architecture, Ingestion, Baseline ML, Live Serving)
+  - **Builder 2**: [Day 1 to Day 7](./Overview/Phase-1/Builder-2/Day-1.md) (26-Feature Pipeline, LightGBM, Platt Calibration)
+- **Phase 2**
+  - **Builder 1**: [Day 8](./Overview/Phase-2/Builder-1/Day-8.md) (Dynamic Location Resolution) & [Day 9](./Overview/Phase-2/Builder-1/Day-9.md) (Historical Data Infrastructure)
+  - **Builder 2**: *Pending Phase 2 start*
+
+---
+
 ## 🏗️ Architecture & Pipeline Flow
 
 ```text
