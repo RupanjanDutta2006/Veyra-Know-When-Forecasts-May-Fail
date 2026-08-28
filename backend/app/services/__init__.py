@@ -21,6 +21,10 @@ from backend.app.services.location_service import (
     BaseLocationService,
     DynamicLocationService,
 )
+from backend.app.services.model_integration_service import (
+    BaseModelIntegrationService,
+    ModelIntegrationService,
+)
 from backend.app.services.model_service import (
     LiveLogisticModelService,
     UnavailableModelService,
@@ -47,6 +51,8 @@ __all__ = [
     "HistoricalDataService",
     "BaseMultiLocationService",
     "MultiLocationService",
+    "BaseModelIntegrationService",
+    "ModelIntegrationService",
     "WeatherResult",
     "WeatherDataResult",
     "FeatureResult",
