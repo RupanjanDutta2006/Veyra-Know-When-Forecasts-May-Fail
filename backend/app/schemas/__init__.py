@@ -1,4 +1,11 @@
 """Schemas package exporting API and Data contracts."""
+from backend.app.schemas.evaluation import (
+    CalibrationMetadata,
+    EvaluationDatasetInfo,
+    EvaluationMetrics,
+    EvaluationStatus,
+    ModelEvaluationResponse,
+)
 from backend.app.schemas.health import HealthResponse
 from backend.app.schemas.historical import (
     CanonicalHistoricalRecord,
@@ -63,4 +70,9 @@ __all__ = [
     "ModelInputContract",
     "ModelOutputContract",
     "ModelMetadataInfo",
+    "EvaluationStatus",
+    "EvaluationMetrics",
+    "CalibrationMetadata",
+    "EvaluationDatasetInfo",
+    "ModelEvaluationResponse",
 ]
