@@ -22,6 +22,10 @@ from backend.app.services.base import (
     ModelResult,
     WeatherResult,
 )
+from backend.app.services.explainability_service import (
+    BaseExplainabilityService,
+    ExplainabilityIntegrationService,
+)
 from backend.app.services.feature_service import UnavailableFeatureService
 from backend.app.services.model_service import UnavailableModelService
 from backend.app.services.weather_service import UnavailableWeatherService
@@ -33,7 +37,7 @@ class ForecastBustAgent:
     """Orchestration agent coordinating modular services to evaluate forecast bust risk.
 
     Acts strictly as an orchestrator — delegates weather ingestion, feature extraction,
-    model inference, and safety evaluation to independent injected services.
+    model inference, explainability integration, and safety evaluation to independent injected services.
     """
 
     def __init__(
@@ -43,11 +47,13 @@ class ForecastBustAgent:
         model_service: Optional[BaseModelService] = None,
         safety_service: Optional[BaseSafetyService] = None,
         safety_evaluator: Optional[SafetyEvaluator] = None,
+        explainability_service: Optional[BaseExplainabilityService] = None,
     ):
         self.weather_service = weather_service or UnavailableWeatherService()
         self.feature_service = feature_service or UnavailableFeatureService()
         self.model_service = model_service or UnavailableModelService()
         self.safety_service = safety_service or safety_evaluator or SafetyEvaluator()
+        self.explainability_service = explainability_service or ExplainabilityIntegrationService()
 
     def resolve_request(self, request: PredictionRequest) -> tuple[str, Optional[str]]:
         """Validate and resolve location and target date parameters."""
@@ -118,8 +124,22 @@ class ForecastBustAgent:
         safety_assessment: SafetyAssessment,
         model_result: Optional[ModelResult] = None,
         weather_result: Optional[WeatherResult] = None,
+        feature_result: Optional[FeatureResult] = None,
     ) -> PredictionResponse:
         """Construct the standardized API response payload."""
+        explanation = None
+        if not safety_assessment.abstain and model_result and model_result.is_ready and model_result.probability is not None:
+            raw_expl = model_result.metadata.get("explanation") if model_result.metadata else None
+            if raw_expl is not None:
+                explanation = self.explainability_service.validate_explanation(raw_expl)
+            elif feature_result and feature_result.features:
+                explanation = self.explainability_service.explain(
+                    feature_row=feature_result.features,
+                    bust_probability=safety_assessment.bust_probability,
+                    threshold=getattr(model_result, "threshold", 0.280),
+                    is_abstained=safety_assessment.abstain,
+                )
+
         return PredictionResponse(
             location=location,
             bust_probability=safety_assessment.bust_probability,
@@ -129,6 +149,7 @@ class ForecastBustAgent:
             reason_codes=safety_assessment.reason_codes,
             model_version=model_result.model_version if model_result else None,
             data_version=weather_result.data_version if weather_result else None,
+            explanation=explanation,
         )
 
     def analyze(self, request: PredictionRequest) -> PredictionResponse:
@@ -164,6 +185,7 @@ class ForecastBustAgent:
                     location=location,
                     safety_assessment=safety_assessment,
                     weather_result=weather_result,
+                    feature_result=feature_result,
                 )
 
             # 4. ML Model Prediction Stage
@@ -179,6 +201,7 @@ class ForecastBustAgent:
                     safety_assessment=safety_assessment,
                     model_result=model_result,
                     weather_result=weather_result,
+                    feature_result=feature_result,
                 )
 
             # 5. Safety & Abstention Evaluation on Model Prediction
@@ -194,6 +217,7 @@ class ForecastBustAgent:
                 safety_assessment=safety_assessment,
                 model_result=model_result,
                 weather_result=weather_result,
+                feature_result=feature_result,
             )
 
         except Exception as exc:

@@ -4,6 +4,8 @@ from enum import Enum
 from typing import Optional
 from pydantic import BaseModel, Field, model_validator
 
+from backend.app.schemas.explainability import ExplanationItem
+
 
 class TrustState(str, Enum):
     """Trust state of the forecast bust assessment."""
@@ -234,6 +236,10 @@ class PredictionResponse(BaseModel):
         default=None,
         description="Identifier of the weather data pipeline version used, if available",
     )
+    explanation: Optional["ExplanationItem"] = Field(
+        default=None,
+        description="Deterministic physical feature attribution and explanation summary",
+    )
 
     model_config = {
         "json_schema_extra": {
@@ -246,6 +252,7 @@ class PredictionResponse(BaseModel):
                 "reason_codes": ["MODEL_NOT_READY"],
                 "model_version": None,
                 "data_version": None,
+                "explanation": None,
             }
         }
     }

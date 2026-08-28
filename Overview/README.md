@@ -48,7 +48,8 @@ Overview/
         ├── Day-9.md
         ├── Day-10.md
         ├── Day-11.md
-        └── Day-12.md
+        ├── Day-12.md
+        └── Day-13.md
 ```
 
 ---
@@ -94,6 +95,7 @@ Overview/
 - [Day 10](./Phase-2/Builder-1/Day-10.md) — Multi-location Platform Support
 - [Day 11](./Phase-2/Builder-1/Day-11.md) — Model Integration Layer
 - [Day 12](./Phase-2/Builder-1/Day-12.md) — Evaluation Integration
+- [Day 13](./Phase-2/Builder-1/Day-13.md) — Explainability Integration
 
 ### Builder 2
 
