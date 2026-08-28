@@ -9,6 +9,10 @@ from backend.app.services.base import (
     WeatherDataResult,
     WeatherResult,
 )
+from backend.app.services.evaluation_service import (
+    BaseEvaluationService,
+    EvaluationIntegrationService,
+)
 from backend.app.services.feature_service import (
     LiveFeatureService,
     UnavailableFeatureService,
@@ -53,6 +57,8 @@ __all__ = [
     "MultiLocationService",
     "BaseModelIntegrationService",
     "ModelIntegrationService",
+    "BaseEvaluationService",
+    "EvaluationIntegrationService",
     "WeatherResult",
     "WeatherDataResult",
     "FeatureResult",

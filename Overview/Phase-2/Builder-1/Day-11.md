@@ -178,4 +178,5 @@ Any presence of these keys raises a `ValueError` or triggers `ReasonCode.QC_FAIL
 ## 11. Navigation
 
 - **Previous**: [Day 10 — Multi-location Platform Support](./Day-10.md)
+- **Next**: [Day 12 — Evaluation Integration](./Day-12.md)
 - **Central Overview**: [Overview README](../../README.md)

@@ -47,7 +47,8 @@ Overview/
         ├── Day-8.md
         ├── Day-9.md
         ├── Day-10.md
-        └── Day-11.md
+        ├── Day-11.md
+        └── Day-12.md
 ```
 
 ---
@@ -92,6 +93,7 @@ Overview/
 - [Day 9](./Phase-2/Builder-1/Day-9.md) — Historical Data Infrastructure
 - [Day 10](./Phase-2/Builder-1/Day-10.md) — Multi-location Platform Support
 - [Day 11](./Phase-2/Builder-1/Day-11.md) — Model Integration Layer
+- [Day 12](./Phase-2/Builder-1/Day-12.md) — Evaluation Integration
 
 ### Builder 2
 
