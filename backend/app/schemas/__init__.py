@@ -1,5 +1,10 @@
 """Schemas package exporting API and Data contracts."""
 from backend.app.schemas.health import HealthResponse
+from backend.app.schemas.historical import (
+    CanonicalHistoricalRecord,
+    HistoricalCollectionResult,
+    HistoricalDataRequest,
+)
 from backend.app.schemas.location import ResolvedLocation
 from backend.app.schemas.prediction import (
     PredictionRequest,
@@ -29,4 +34,8 @@ __all__ = [
     "ReferenceWeatherRecord",
     "ReferenceWeatherDataset",
     "ResolvedLocation",
+    "HistoricalDataRequest",
+    "CanonicalHistoricalRecord",
+    "HistoricalCollectionResult",
 ]
+

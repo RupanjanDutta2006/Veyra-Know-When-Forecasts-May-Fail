@@ -13,6 +13,10 @@ from backend.app.services.feature_service import (
     LiveFeatureService,
     UnavailableFeatureService,
 )
+from backend.app.services.historical_service import (
+    BaseHistoricalDataService,
+    HistoricalDataService,
+)
 from backend.app.services.location_service import (
     BaseLocationService,
     DynamicLocationService,
@@ -35,6 +39,8 @@ __all__ = [
     "BaseSafetyService",
     "BaseLocationService",
     "DynamicLocationService",
+    "BaseHistoricalDataService",
+    "HistoricalDataService",
     "WeatherResult",
     "WeatherDataResult",
     "FeatureResult",
@@ -48,4 +54,5 @@ __all__ = [
     "BaseReferenceWeatherService",
     "OpenMeteoArchiveReferenceService",
 ]
+
 
