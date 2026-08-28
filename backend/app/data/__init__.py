@@ -13,6 +13,10 @@ from backend.app.data.historical_pathway import (
     HistoricalForecastPair,
     HistoricalPathwayAligner,
 )
+from backend.app.data.historical_qc import (
+    HistoricalDeduplicator,
+    HistoricalQualityControl,
+)
 from backend.app.data.qc import (
     PHYSICAL_BOUNDS,
     ForecastQualityControl,
@@ -57,4 +61,7 @@ __all__ = [
     "HistoricalTrainingRow",
     "HistoricalDatasetBuilder",
     "derive_season",
+    "HistoricalDeduplicator",
+    "HistoricalQualityControl",
 ]
+
