@@ -1,6 +1,6 @@
 """V1 API Router combining all v1 endpoints."""
 from fastapi import APIRouter
-from backend.app.api.v1.endpoints import health, predict
+from backend.app.api.v1.endpoints import health, multi_location, predict
 
 api_router = APIRouter()
 
@@ -12,4 +12,9 @@ api_router.include_router(
 api_router.include_router(
     predict.router,
     tags=["Prediction"],
+)
+
+api_router.include_router(
+    multi_location.router,
+    tags=["Multi-Location"],
 )

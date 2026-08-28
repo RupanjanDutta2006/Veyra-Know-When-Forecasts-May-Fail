@@ -6,6 +6,15 @@ from backend.app.schemas.historical import (
     HistoricalDataRequest,
 )
 from backend.app.schemas.location import ResolvedLocation
+from backend.app.schemas.multi_location import (
+    MAX_MULTI_LOCATION_BATCH_SIZE,
+    MultiLocationHistoricalItemResult,
+    MultiLocationHistoricalRequest,
+    MultiLocationHistoricalResult,
+    MultiLocationPredictionItemResult,
+    MultiLocationPredictionRequest,
+    MultiLocationPredictionResult,
+)
 from backend.app.schemas.prediction import (
     PredictionRequest,
     PredictionResponse,
@@ -37,5 +46,11 @@ __all__ = [
     "HistoricalDataRequest",
     "CanonicalHistoricalRecord",
     "HistoricalCollectionResult",
+    "MAX_MULTI_LOCATION_BATCH_SIZE",
+    "MultiLocationHistoricalRequest",
+    "MultiLocationHistoricalItemResult",
+    "MultiLocationHistoricalResult",
+    "MultiLocationPredictionRequest",
+    "MultiLocationPredictionItemResult",
+    "MultiLocationPredictionResult",
 ]
-

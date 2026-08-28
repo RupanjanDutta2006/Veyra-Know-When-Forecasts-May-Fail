@@ -193,4 +193,4 @@ Complete Regression Suite: 142 passed
 
 ---
 
-**Previous:** [Day 8](./Day-8.md) | **Next:** Day 10 (Planned)
+**Previous:** [Day 8](./Day-8.md) | **Next:** [Day 10](./Day-10.md)

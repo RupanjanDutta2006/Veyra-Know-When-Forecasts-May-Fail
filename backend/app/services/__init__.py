@@ -25,6 +25,10 @@ from backend.app.services.model_service import (
     LiveLogisticModelService,
     UnavailableModelService,
 )
+from backend.app.services.multi_location_service import (
+    BaseMultiLocationService,
+    MultiLocationService,
+)
 from backend.app.services.openmeteo_service import OpenMeteoGEFSWeatherService
 from backend.app.services.reference_service import (
     BaseReferenceWeatherService,
@@ -41,6 +45,8 @@ __all__ = [
     "DynamicLocationService",
     "BaseHistoricalDataService",
     "HistoricalDataService",
+    "BaseMultiLocationService",
+    "MultiLocationService",
     "WeatherResult",
     "WeatherDataResult",
     "FeatureResult",
@@ -54,5 +60,3 @@ __all__ = [
     "BaseReferenceWeatherService",
     "OpenMeteoArchiveReferenceService",
 ]
-
-

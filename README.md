@@ -14,7 +14,7 @@ Veyra's complete development history and technical verification records are orga
   - **Builder 1**: [Day 1 to Day 7](./Overview/Phase-1/Builder-1/Day-1.md) (Architecture, Ingestion, Baseline ML, Live Serving)
   - **Builder 2**: [Day 1 to Day 7](./Overview/Phase-1/Builder-2/Day-1.md) (26-Feature Pipeline, LightGBM, Platt Calibration)
 - **Phase 2**
-  - **Builder 1**: [Day 8](./Overview/Phase-2/Builder-1/Day-8.md) (Dynamic Location Resolution) & [Day 9](./Overview/Phase-2/Builder-1/Day-9.md) (Historical Data Infrastructure)
+  - **Builder 1**: [Day 8](./Overview/Phase-2/Builder-1/Day-8.md) (Dynamic Location Resolution), [Day 9](./Overview/Phase-2/Builder-1/Day-9.md) (Historical Data Infrastructure), & [Day 10](./Overview/Phase-2/Builder-1/Day-10.md) (Multi-location Platform Support)
   - **Builder 2**: *Pending Phase 2 start*
 
 ---
