@@ -45,7 +45,8 @@ Overview/
 └── Phase-2/
     └── Builder-1/
         ├── Day-8.md
-        └── Day-9.md
+        ├── Day-9.md
+        └── Day-10.md
 ```
 
 ---
@@ -88,6 +89,7 @@ Overview/
 
 - [Day 8](./Phase-2/Builder-1/Day-8.md) — Dynamic Location Resolution
 - [Day 9](./Phase-2/Builder-1/Day-9.md) — Historical Data Infrastructure
+- [Day 10](./Phase-2/Builder-1/Day-10.md) — Multi-location Platform Support
 
 ### Builder 2
 
