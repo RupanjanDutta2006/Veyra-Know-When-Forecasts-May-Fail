@@ -8,6 +8,7 @@ from backend.app.builder2.feature_adapter import Builder2FeatureAdapter
 from backend.app.core.config import settings
 from backend.app.safety.abstention import SafetyEvaluator
 from backend.app.schemas.prediction import PredictionRequest, PredictionResponse
+from backend.app.services.explainability_service import ExplainabilityIntegrationService
 from backend.app.services.feature_service import LiveFeatureService
 from backend.app.services.model_integration_service import ModelIntegrationService
 from backend.app.services.openmeteo_service import OpenMeteoGEFSWeatherService
@@ -18,13 +19,15 @@ router = APIRouter()
 def create_forecast_bust_agent(
     builder2_model_dir: Optional[str] = None,
     model_integration_service: Optional[ModelIntegrationService] = None,
+    explainability_service: Optional[ExplainabilityIntegrationService] = None,
 ) -> ForecastBustAgent:
     """Factory creating ForecastBustAgent with active services based on configuration.
 
-    Integrates Day 11 ModelIntegrationService as the single authoritative model gateway.
+    Integrates Day 11 ModelIntegrationService and Day 13 ExplainabilityIntegrationService.
     """
     model_dir = builder2_model_dir or settings.BUILDER2_MODEL_DIR or os.getenv("BUILDER2_MODEL_DIR")
     model_svc = model_integration_service or ModelIntegrationService(builder2_model_dir=model_dir)
+    expl_svc = explainability_service or ExplainabilityIntegrationService()
 
     # Match feature service to active model architecture
     if model_svc.get_active_model_info().model_name == "builder2_gbm":
@@ -37,6 +40,7 @@ def create_forecast_bust_agent(
         feature_service=feature_svc,
         model_service=model_svc,
         safety_evaluator=SafetyEvaluator(),
+        explainability_service=expl_svc,
     )
 
 

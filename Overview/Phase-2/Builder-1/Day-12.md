@@ -228,4 +228,4 @@ When an unknown or unregistered model identifier (e.g. `model_name=totally_unkno
 ## 10. Navigation
 
 - **Previous**: [Day 11 — Model Integration Layer](./Day-11.md)
-- **Next Planned**: Day 13 — Explainability Integration
+- **Next**: [Day 13 — Explainability Integration](./Day-13.md)

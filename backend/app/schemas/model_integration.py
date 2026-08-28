@@ -17,6 +17,10 @@ FORBIDDEN_GROUND_TRUTH_FIELDS: set[str] = {
     "actual_value",
     "ground_truth",
     "reference_records",
+    "era5",
+    "observation",
+    "forecast_error",
+    "absolute_error",
 }
 
 

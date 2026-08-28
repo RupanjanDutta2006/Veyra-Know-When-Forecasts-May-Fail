@@ -13,6 +13,10 @@ from backend.app.services.evaluation_service import (
     BaseEvaluationService,
     EvaluationIntegrationService,
 )
+from backend.app.services.explainability_service import (
+    BaseExplainabilityService,
+    ExplainabilityIntegrationService,
+)
 from backend.app.services.feature_service import (
     LiveFeatureService,
     UnavailableFeatureService,
@@ -59,6 +63,8 @@ __all__ = [
     "ModelIntegrationService",
     "BaseEvaluationService",
     "EvaluationIntegrationService",
+    "BaseExplainabilityService",
+    "ExplainabilityIntegrationService",
     "WeatherResult",
     "WeatherDataResult",
     "FeatureResult",

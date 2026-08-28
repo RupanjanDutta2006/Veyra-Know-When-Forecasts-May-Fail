@@ -6,6 +6,12 @@ from backend.app.schemas.evaluation import (
     EvaluationStatus,
     ModelEvaluationResponse,
 )
+from backend.app.schemas.explainability import (
+    ContributingFactor,
+    ExplanationItem,
+    ExplainabilityStatus,
+    ModelExplanationResponse,
+)
 from backend.app.schemas.health import HealthResponse
 from backend.app.schemas.historical import (
     CanonicalHistoricalRecord,
@@ -75,4 +81,8 @@ __all__ = [
     "CalibrationMetadata",
     "EvaluationDatasetInfo",
     "ModelEvaluationResponse",
+    "ContributingFactor",
+    "ExplanationItem",
+    "ExplainabilityStatus",
+    "ModelExplanationResponse",
 ]
