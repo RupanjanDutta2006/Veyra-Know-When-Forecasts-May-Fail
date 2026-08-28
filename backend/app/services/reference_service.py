@@ -7,7 +7,10 @@ from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from typing import Any, Callable, Optional
 from backend.app.schemas.reference import ReferenceWeatherDataset, ReferenceWeatherRecord
-from backend.app.services.openmeteo_service import KNOWN_LOCATIONS
+from backend.app.services.location_service import (
+    BaseLocationService,
+    DynamicLocationService,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -40,10 +43,12 @@ class OpenMeteoArchiveReferenceService(BaseReferenceWeatherService):
         api_url: str = DEFAULT_ARCHIVE_API_URL,
         http_client: Optional[Callable[[str], dict[str, Any]]] = None,
         timeout_seconds: int = 10,
+        location_service: Optional[BaseLocationService] = None,
     ):
         self.api_url = api_url
         self.http_client = http_client or self._default_http_client
         self.timeout_seconds = timeout_seconds
+        self.location_service = location_service or DynamicLocationService()
 
     def _default_http_client(self, url: str) -> dict[str, Any]:
         """Fetch JSON data from URL using standard library urllib."""
@@ -59,19 +64,7 @@ class OpenMeteoArchiveReferenceService(BaseReferenceWeatherService):
 
     def resolve_coordinates(self, location: str) -> Optional[tuple[float, float]]:
         """Resolve location name or coordinate string."""
-        loc_clean = location.strip().lower()
-        if loc_clean in KNOWN_LOCATIONS:
-            return KNOWN_LOCATIONS[loc_clean]
-        if "," in location:
-            parts = location.split(",")
-            if len(parts) == 2:
-                try:
-                    lat, lon = float(parts[0].strip()), float(parts[1].strip())
-                    if -90.0 <= lat <= 90.0 and -180.0 <= lon <= 180.0:
-                        return lat, lon
-                except ValueError:
-                    pass
-        return None
+        return self.location_service.resolve_coordinates(location)
 
     def build_query_url(
         self,

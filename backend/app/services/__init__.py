@@ -13,6 +13,10 @@ from backend.app.services.feature_service import (
     LiveFeatureService,
     UnavailableFeatureService,
 )
+from backend.app.services.location_service import (
+    BaseLocationService,
+    DynamicLocationService,
+)
 from backend.app.services.model_service import (
     LiveLogisticModelService,
     UnavailableModelService,
@@ -29,6 +33,8 @@ __all__ = [
     "BaseFeatureService",
     "BaseModelService",
     "BaseSafetyService",
+    "BaseLocationService",
+    "DynamicLocationService",
     "WeatherResult",
     "WeatherDataResult",
     "FeatureResult",

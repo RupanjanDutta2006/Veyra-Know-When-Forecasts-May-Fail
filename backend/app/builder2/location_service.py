@@ -272,6 +272,34 @@ class LocationRegistry:
         """
         loc_key = location_id.strip().lower()
         if loc_key not in self._locations:
+            try:
+                from backend.app.services.location_service import DynamicLocationService
+                dynamic_svc = DynamicLocationService()
+                resolved = dynamic_svc.resolve(location_id)
+                if resolved is not None:
+                    req_lat = resolved.latitude
+                    req_lon = resolved.longitude
+                    actual_coords = (
+                        LocationCoordinates(latitude=actual_grid_lat, longitude=actual_grid_lon)
+                        if actual_grid_lat is not None and actual_grid_lon is not None
+                        else None
+                    )
+                    dist_km = (
+                        haversine_distance_km(req_lat, req_lon, actual_grid_lat, actual_grid_lon)
+                        if actual_coords is not None
+                        else None
+                    )
+                    return LocationInfo(
+                        location_id=loc_key,
+                        country=resolved.country or "Global",
+                        state_region=resolved.state_region or "Unknown",
+                        city=resolved.name,
+                        requested_coordinates=LocationCoordinates(latitude=req_lat, longitude=req_lon),
+                        actual_grid_coordinates=actual_coords,
+                        spatial_distance_km=dist_km,
+                    )
+            except Exception:
+                pass
             raise KeyError(f"Unknown location_id '{location_id}'. Registered locations: {list(self._locations.keys())}")
 
         cfg = self._locations[loc_key]

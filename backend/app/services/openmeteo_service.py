@@ -6,31 +6,25 @@ import urllib.request
 from datetime import datetime, timezone
 from typing import Any, Callable, Optional
 from backend.app.data.qc import ForecastQualityControl, QualityControlResult
+from backend.app.schemas.location import ResolvedLocation
 from backend.app.schemas.prediction import ReasonCode
 from backend.app.schemas.weather import (
     CanonicalForecastDataset,
     CanonicalForecastRecord,
 )
 from backend.app.services.base import BaseWeatherService, WeatherResult
+from backend.app.services.location_service import (
+    BaseLocationService,
+    DynamicLocationService,
+    KNOWN_BENCHMARK_LOCATIONS,
+)
 
 logger = logging.getLogger(__name__)
 
+# Backward-compatible alias for legacy references
 KNOWN_LOCATIONS: dict[str, tuple[float, float]] = {
-    "london": (51.5074, -0.1278),
-    "tokyo": (35.6762, 139.6503),
-    "new york": (40.7128, -74.0060),
-    "delhi": (28.6139, 77.2090),
-    "kolkata": (22.5726, 88.3639),
-    "mumbai": (19.0760, 72.8777),
-    "berlin": (52.5200, 13.4050),
-    "paris": (48.8566, 2.3522),
-    "singapore": (1.3521, 103.8198),
-    "sydney": (-33.8688, 151.2093),
-    "dubai": (25.2048, 55.2708),
-    "geneva": (46.2044, 6.1432),
+    k: (v["latitude"], v["longitude"]) for k, v in KNOWN_BENCHMARK_LOCATIONS.items()
 }
-
-
 
 DEFAULT_ENSEMBLE_API_URL = "https://ensemble-api.open-meteo.com/v1/ensemble"
 
@@ -49,12 +43,14 @@ class OpenMeteoGEFSWeatherService(BaseWeatherService):
         http_client: Optional[Callable[[str], dict[str, Any]]] = None,
         data_version: str = "gefs-openmeteo-v1.0",
         timeout_seconds: int = 25,
+        location_service: Optional[BaseLocationService] = None,
     ):
         self.api_url = api_url
         self.qc = qc_validator or ForecastQualityControl()
         self.http_client = http_client or self._default_http_client
         self.data_version = data_version
         self.timeout_seconds = timeout_seconds
+        self.location_service = location_service or DynamicLocationService()
 
     def _default_http_client(self, url: str) -> dict[str, Any]:
         """Perform HTTP GET request using standard library urllib with transient retry."""
@@ -74,25 +70,13 @@ class OpenMeteoGEFSWeatherService(BaseWeatherService):
                 if attempt == max_attempts - 1:
                     raise exc
 
+    def resolve_location(self, location: str) -> Optional[ResolvedLocation]:
+        """Resolve location name or coordinate string to a structured ResolvedLocation object."""
+        return self.location_service.resolve(location)
 
     def resolve_coordinates(self, location: str) -> Optional[tuple[float, float]]:
         """Resolve location name or coordinate string to (latitude, longitude)."""
-        loc_clean = location.strip().lower()
-        if loc_clean in KNOWN_LOCATIONS:
-            return KNOWN_LOCATIONS[loc_clean]
-
-        # Check if provided as 'lat,lon'
-        if "," in location:
-            parts = location.split(",")
-            if len(parts) == 2:
-                try:
-                    lat = float(parts[0].strip())
-                    lon = float(parts[1].strip())
-                    if -90.0 <= lat <= 90.0 and -180.0 <= lon <= 180.0:
-                        return lat, lon
-                except ValueError:
-                    pass
-        return None
+        return self.location_service.resolve_coordinates(location)
 
     def build_query_url(
         self,
