@@ -1,15 +1,15 @@
-"""Forecast bust prediction endpoint with live model serving."""
+"""Forecast bust prediction endpoint with centralized model integration layer."""
 import os
 from typing import Optional
 from fastapi import APIRouter, Depends
+
 from backend.app.agents.forecast_bust_agent import ForecastBustAgent
 from backend.app.builder2.feature_adapter import Builder2FeatureAdapter
-from backend.app.builder2.model_adapter import Builder2ModelAdapter
 from backend.app.core.config import settings
 from backend.app.safety.abstention import SafetyEvaluator
 from backend.app.schemas.prediction import PredictionRequest, PredictionResponse
 from backend.app.services.feature_service import LiveFeatureService
-from backend.app.services.model_service import LiveLogisticModelService
+from backend.app.services.model_integration_service import ModelIntegrationService
 from backend.app.services.openmeteo_service import OpenMeteoGEFSWeatherService
 
 router = APIRouter()
@@ -17,26 +17,25 @@ router = APIRouter()
 
 def create_forecast_bust_agent(
     builder2_model_dir: Optional[str] = None,
+    model_integration_service: Optional[ModelIntegrationService] = None,
 ) -> ForecastBustAgent:
     """Factory creating ForecastBustAgent with active services based on configuration.
 
-    When BUILDER2_MODEL_DIR is configured, Builder 2 feature and model adapters
-    are activated as the primary scientific bust risk pipeline.
-    When BUILDER2_MODEL_DIR is unconfigured or unavailable, falls back to the
-    standard baseline service or safe abstention.
+    Integrates Day 11 ModelIntegrationService as the single authoritative model gateway.
     """
     model_dir = builder2_model_dir or settings.BUILDER2_MODEL_DIR or os.getenv("BUILDER2_MODEL_DIR")
-    if model_dir:
-        return ForecastBustAgent(
-            weather_service=OpenMeteoGEFSWeatherService(),
-            feature_service=Builder2FeatureAdapter(),
-            model_service=Builder2ModelAdapter(model_dir=model_dir),
-            safety_evaluator=SafetyEvaluator(),
-        )
+    model_svc = model_integration_service or ModelIntegrationService(builder2_model_dir=model_dir)
+
+    # Match feature service to active model architecture
+    if model_svc.get_active_model_info().model_name == "builder2_gbm":
+        feature_svc = Builder2FeatureAdapter()
+    else:
+        feature_svc = LiveFeatureService()
+
     return ForecastBustAgent(
         weather_service=OpenMeteoGEFSWeatherService(),
-        feature_service=LiveFeatureService(),
-        model_service=LiveLogisticModelService(),
+        feature_service=feature_svc,
+        model_service=model_svc,
         safety_evaluator=SafetyEvaluator(),
     )
 
@@ -58,7 +57,7 @@ def get_forecast_bust_agent() -> ForecastBustAgent:
     summary="Predict Forecast Bust Risk",
     description=(
         "Evaluates the probability and risk of an issued weather forecast failing unusually badly "
-        "using real-time GEFS weather ingestion, leakage-safe feature engineering, and the trained baseline ML model."
+        "using real-time GEFS weather ingestion, canonical feature engineering, and the centralized Model Integration Layer."
     ),
 )
 async def predict_forecast_bust(
@@ -67,4 +66,3 @@ async def predict_forecast_bust(
 ) -> PredictionResponse:
     """Evaluate forecast bust probability."""
     return agent.analyze(request)
-

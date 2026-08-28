@@ -6,6 +6,12 @@ from backend.app.schemas.historical import (
     HistoricalDataRequest,
 )
 from backend.app.schemas.location import ResolvedLocation
+from backend.app.schemas.model_integration import (
+    FORBIDDEN_GROUND_TRUTH_FIELDS,
+    ModelInputContract,
+    ModelMetadataInfo,
+    ModelOutputContract,
+)
 from backend.app.schemas.multi_location import (
     MAX_MULTI_LOCATION_BATCH_SIZE,
     MultiLocationHistoricalItemResult,
@@ -53,4 +59,8 @@ __all__ = [
     "MultiLocationPredictionRequest",
     "MultiLocationPredictionItemResult",
     "MultiLocationPredictionResult",
+    "FORBIDDEN_GROUND_TRUTH_FIELDS",
+    "ModelInputContract",
+    "ModelOutputContract",
+    "ModelMetadataInfo",
 ]
