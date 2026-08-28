@@ -1,5 +1,6 @@
 """Schemas package exporting API and Data contracts."""
 from backend.app.schemas.health import HealthResponse
+from backend.app.schemas.location import ResolvedLocation
 from backend.app.schemas.prediction import (
     PredictionRequest,
     PredictionResponse,
@@ -27,4 +28,5 @@ __all__ = [
     "CanonicalForecastDataset",
     "ReferenceWeatherRecord",
     "ReferenceWeatherDataset",
+    "ResolvedLocation",
 ]
