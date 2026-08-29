@@ -1,12 +1,28 @@
-"""Main FastAPI Application for Forecast-Bust Sentinel."""
+"""Main FastAPI Application for Forecast-Bust Sentinel with Production Hardening."""
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from backend.app.api.v1.router import api_router
 from backend.app.core.config import settings
+from backend.app.core.error_handlers import register_exception_handlers
+from backend.app.core.middleware import (
+    RateLimitingMiddleware,
+    RequestCorrelationMiddleware,
+    SecurityHeadersMiddleware,
+    StructuredLoggingMiddleware,
+)
+
+# Configure logging format and level
+logging.basicConfig(
+    level=getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO),
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 
 def create_application() -> FastAPI:
-    """Application factory for Forecast-Bust Sentinel API."""
+    """Application factory for Forecast-Bust Sentinel API with centralized hardening."""
     app = FastAPI(
         title=settings.PROJECT_NAME,
         version=settings.VERSION,
@@ -19,7 +35,10 @@ def create_application() -> FastAPI:
         openapi_url="/openapi.json",
     )
 
-    # Configure CORS middleware
+    # 1. Register centralized safe error handlers
+    register_exception_handlers(app)
+
+    # 2. Configure CORS middleware
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -27,6 +46,18 @@ def create_application() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # 3. Configure Security Headers middleware
+    app.add_middleware(SecurityHeadersMiddleware)
+
+    # 4. Configure Structured Access Logging middleware
+    app.add_middleware(StructuredLoggingMiddleware)
+
+    # 5. Configure In-Process Rate Limiting middleware
+    app.add_middleware(RateLimitingMiddleware)
+
+    # 6. Configure Request Correlation ID middleware (outermost request wrapper)
+    app.add_middleware(RequestCorrelationMiddleware)
 
     # Include Versioned API Routes (/v1)
     app.include_router(api_router, prefix=settings.API_V1_STR)

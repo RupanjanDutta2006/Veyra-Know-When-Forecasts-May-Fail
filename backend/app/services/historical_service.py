@@ -11,6 +11,8 @@ import urllib.request
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from typing import Any, Callable, Optional
+from backend.app.core.config import settings
+from backend.app.core.http_retry import execute_with_retry
 from backend.app.data.historical_qc import (
     HistoricalDeduplicator,
     HistoricalQualityControl,
@@ -56,32 +58,51 @@ class HistoricalDataService(BaseHistoricalDataService):
         qc_validator: Optional[HistoricalQualityControl] = None,
         deduplicator: Optional[HistoricalDeduplicator] = None,
         http_client: Optional[Callable[[str], dict[str, Any]]] = None,
-        timeout_seconds: int = 15,
+        timeout_seconds: Optional[int] = None,
+        max_retries: Optional[int] = None,
+        retry_backoff_factor: Optional[float] = None,
     ):
         self.api_url = api_url
         self.location_service = location_service or DynamicLocationService()
         self.qc = qc_validator or HistoricalQualityControl()
         self.deduplicator = deduplicator or HistoricalDeduplicator()
         self.http_client = http_client or self._default_http_client
-        self.timeout_seconds = timeout_seconds
+        self.timeout_seconds = (
+            timeout_seconds
+            if timeout_seconds is not None
+            else settings.HISTORICAL_TIMEOUT_SECONDS
+        )
+        self.max_retries = (
+            max_retries
+            if max_retries is not None
+            else settings.MAX_HTTP_RETRIES
+        )
+        self.retry_backoff_factor = (
+            retry_backoff_factor
+            if retry_backoff_factor is not None
+            else settings.RETRY_BACKOFF_FACTOR
+        )
 
     def _default_http_client(self, url: str) -> dict[str, Any]:
-        """Perform HTTP GET with standard library urllib and transient retry."""
+        """Perform HTTP GET with standard library urllib with bounded retry and backoff."""
         req = urllib.request.Request(
             url,
             headers={"User-Agent": "Veyra-Historical-Collector/0.2.0"},
         )
-        max_attempts = 2
-        for attempt in range(max_attempts):
-            try:
-                with urllib.request.urlopen(req, timeout=self.timeout_seconds) as response:
-                    if response.status != 200:
-                        raise RuntimeError(f"HTTP error {response.status} from historical provider")
-                    payload = response.read().decode("utf-8")
-                    return json.loads(payload)
-            except Exception as exc:
-                if attempt == max_attempts - 1:
-                    raise exc
+
+        def _do_fetch() -> dict[str, Any]:
+            with urllib.request.urlopen(req, timeout=self.timeout_seconds) as response:
+                if response.status != 200:
+                    raise RuntimeError(f"HTTP error {response.status} from historical provider")
+                payload = response.read().decode("utf-8")
+                return json.loads(payload)
+
+        return execute_with_retry(
+            _do_fetch,
+            max_retries=self.max_retries,
+            backoff_factor=self.retry_backoff_factor,
+            operation_name="OpenMeteo Archive historical fetch",
+        )
 
     def build_query_url(
         self,

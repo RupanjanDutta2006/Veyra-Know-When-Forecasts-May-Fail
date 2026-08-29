@@ -5,6 +5,8 @@ import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
 from typing import Any, Callable, Optional
+from backend.app.core.config import settings
+from backend.app.core.http_retry import execute_with_retry
 from backend.app.data.qc import ForecastQualityControl, QualityControlResult
 from backend.app.schemas.location import ResolvedLocation
 from backend.app.schemas.prediction import ReasonCode
@@ -42,33 +44,52 @@ class OpenMeteoGEFSWeatherService(BaseWeatherService):
         qc_validator: Optional[ForecastQualityControl] = None,
         http_client: Optional[Callable[[str], dict[str, Any]]] = None,
         data_version: str = "gefs-openmeteo-v1.0",
-        timeout_seconds: int = 25,
+        timeout_seconds: Optional[int] = None,
         location_service: Optional[BaseLocationService] = None,
+        max_retries: Optional[int] = None,
+        retry_backoff_factor: Optional[float] = None,
     ):
         self.api_url = api_url
         self.qc = qc_validator or ForecastQualityControl()
         self.http_client = http_client or self._default_http_client
         self.data_version = data_version
-        self.timeout_seconds = timeout_seconds
+        self.timeout_seconds = (
+            timeout_seconds
+            if timeout_seconds is not None
+            else settings.WEATHER_TIMEOUT_SECONDS
+        )
         self.location_service = location_service or DynamicLocationService()
+        self.max_retries = (
+            max_retries
+            if max_retries is not None
+            else settings.MAX_HTTP_RETRIES
+        )
+        self.retry_backoff_factor = (
+            retry_backoff_factor
+            if retry_backoff_factor is not None
+            else settings.RETRY_BACKOFF_FACTOR
+        )
 
     def _default_http_client(self, url: str) -> dict[str, Any]:
-        """Perform HTTP GET request using standard library urllib with transient retry."""
+        """Perform HTTP GET request using standard library urllib with bounded retry and backoff."""
         req = urllib.request.Request(
             url,
             headers={"User-Agent": "Veyra-Forecast-Bust-Sentinel/0.1.0"},
         )
-        max_attempts = 2
-        for attempt in range(max_attempts):
-            try:
-                with urllib.request.urlopen(req, timeout=self.timeout_seconds) as response:
-                    if response.status != 200:
-                        raise RuntimeError(f"HTTP error {response.status} fetching forecast data")
-                    payload = response.read().decode("utf-8")
-                    return json.loads(payload)
-            except Exception as exc:
-                if attempt == max_attempts - 1:
-                    raise exc
+
+        def _do_fetch() -> dict[str, Any]:
+            with urllib.request.urlopen(req, timeout=self.timeout_seconds) as response:
+                if response.status != 200:
+                    raise RuntimeError(f"HTTP error {response.status} fetching forecast data")
+                payload = response.read().decode("utf-8")
+                return json.loads(payload)
+
+        return execute_with_retry(
+            _do_fetch,
+            max_retries=self.max_retries,
+            backoff_factor=self.retry_backoff_factor,
+            operation_name="OpenMeteo GEFS weather fetch",
+        )
 
     def resolve_location(self, location: str) -> Optional[ResolvedLocation]:
         """Resolve location name or coordinate string to a structured ResolvedLocation object."""

@@ -6,6 +6,8 @@ import urllib.request
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from typing import Any, Callable, Optional
+from backend.app.core.config import settings
+from backend.app.core.http_retry import execute_with_retry
 from backend.app.schemas.reference import ReferenceWeatherDataset, ReferenceWeatherRecord
 from backend.app.services.location_service import (
     BaseLocationService,
@@ -42,25 +44,50 @@ class OpenMeteoArchiveReferenceService(BaseReferenceWeatherService):
         self,
         api_url: str = DEFAULT_ARCHIVE_API_URL,
         http_client: Optional[Callable[[str], dict[str, Any]]] = None,
-        timeout_seconds: int = 10,
+        timeout_seconds: Optional[int] = None,
         location_service: Optional[BaseLocationService] = None,
+        max_retries: Optional[int] = None,
+        retry_backoff_factor: Optional[float] = None,
     ):
         self.api_url = api_url
         self.http_client = http_client or self._default_http_client
-        self.timeout_seconds = timeout_seconds
+        self.timeout_seconds = (
+            timeout_seconds
+            if timeout_seconds is not None
+            else settings.REFERENCE_TIMEOUT_SECONDS
+        )
         self.location_service = location_service or DynamicLocationService()
+        self.max_retries = (
+            max_retries
+            if max_retries is not None
+            else settings.MAX_HTTP_RETRIES
+        )
+        self.retry_backoff_factor = (
+            retry_backoff_factor
+            if retry_backoff_factor is not None
+            else settings.RETRY_BACKOFF_FACTOR
+        )
 
     def _default_http_client(self, url: str) -> dict[str, Any]:
-        """Fetch JSON data from URL using standard library urllib."""
+        """Fetch JSON data from URL using standard library urllib with bounded retry and backoff."""
         req = urllib.request.Request(
             url,
             headers={"User-Agent": "Veyra-Historical-Verification/0.1.0"},
         )
-        with urllib.request.urlopen(req, timeout=self.timeout_seconds) as response:
-            if response.status != 200:
-                raise RuntimeError(f"HTTP error {response.status} fetching reference data")
-            payload = response.read().decode("utf-8")
-            return json.loads(payload)
+
+        def _do_fetch() -> dict[str, Any]:
+            with urllib.request.urlopen(req, timeout=self.timeout_seconds) as response:
+                if response.status != 200:
+                    raise RuntimeError(f"HTTP error {response.status} fetching reference data")
+                payload = response.read().decode("utf-8")
+                return json.loads(payload)
+
+        return execute_with_retry(
+            _do_fetch,
+            max_retries=self.max_retries,
+            backoff_factor=self.retry_backoff_factor,
+            operation_name="OpenMeteo Archive reference fetch",
+        )
 
     def resolve_coordinates(self, location: str) -> Optional[tuple[float, float]]:
         """Resolve location name or coordinate string."""
