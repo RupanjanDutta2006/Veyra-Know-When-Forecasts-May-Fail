@@ -115,29 +115,39 @@ def run_builder2_smoke_test() -> bool:
 
     if not weather_result.is_available:
         print(f"  [!] Live weather API query offline ({weather_result.error}). Generating deterministic fixture.")
-        records = [
-            CanonicalForecastRecord(
-                location=location,
-                latitude=51.5074,
-                longitude=-0.1278,
-                issue_time="2026-08-26T00:00:00Z",
-                valid_time=f"2026-08-{27+i//5:02d}T{(i%5)*6:02d}:00:00Z",
-                lead_hours=(i + 1) * 6,
-                variable=var,
-                unit="celsius" if "temp" in var else "hPa" if "pressure" in var else "m/s" if "wind" in var else "%" if "humidity" in var else "mm",
-                value=20.0 + i * 0.5,
-                source="NOAA_GEFS_OPENMETEO",
-                member_count=31,
-                ensemble_mean=20.0 + i * 0.5,
-                ensemble_std=1.0 + (i * 0.1),
-                ensemble_min=18.0 + i * 0.4,
-                ensemble_max=22.0 + i * 0.6,
-                q10=18.8 + i * 0.45,
-                q90=21.2 + i * 0.55,
-            )
-            for i in range(20)
-            for var in ["temperature_2m", "surface_pressure", "wind_speed_10m", "relative_humidity_2m", "precipitation"]
-        ]
+        from datetime import datetime, timezone, timedelta
+        base_issue = datetime(2026, 8, 26, 0, 0, 0, tzinfo=timezone.utc)
+        records = []
+        for i in range(20):
+            for var in ["temperature_2m", "surface_pressure", "wind_speed_10m", "relative_humidity_2m", "precipitation"]:
+                is_pres = "pressure" in var
+                v = 1013.25 + i * 0.2 if is_pres else 20.0 + i * 0.5
+                emin = 1010.0 + i * 0.2 if is_pres else 18.0 + i * 0.4
+                emax = 1016.0 + i * 0.2 if is_pres else 22.0 + i * 0.6
+                q_10 = 1011.0 + i * 0.2 if is_pres else 18.8 + i * 0.45
+                q_90 = 1015.0 + i * 0.2 if is_pres else 21.2 + i * 0.55
+                unit_str = "celsius" if "temp" in var else "hPa" if is_pres else "m/s" if "wind" in var else "%" if "humidity" in var else "mm"
+                records.append(
+                    CanonicalForecastRecord(
+                        location=location,
+                        latitude=51.5074,
+                        longitude=-0.1278,
+                        issue_time="2026-08-26T00:00:00Z",
+                        valid_time=(base_issue + timedelta(hours=(i + 1) * 6)).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                        lead_hours=(i + 1) * 6,
+                        variable=var,
+                        unit=unit_str,
+                        value=v,
+                        source="NOAA_GEFS_OPENMETEO",
+                        member_count=31,
+                        ensemble_mean=v,
+                        ensemble_std=1.0 + (i * 0.1),
+                        ensemble_min=emin,
+                        ensemble_max=emax,
+                        q10=q_10,
+                        q90=q_90,
+                    )
+                )
         ds = CanonicalForecastDataset(
             location=location, latitude=51.5074, longitude=-0.1278, issue_time="2026-08-26T00:00:00Z", source="NOAA_GEFS_OPENMETEO", records=records
         )

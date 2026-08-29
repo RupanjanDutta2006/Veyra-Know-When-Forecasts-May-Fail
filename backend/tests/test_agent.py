@@ -228,3 +228,95 @@ def test_agent_risk_level_thresholds():
     assert evaluator._map_risk_level(0.74) == RiskLevel.HIGH
     assert evaluator._map_risk_level(0.75) == RiskLevel.CRITICAL
     assert evaluator._map_risk_level(0.99) == RiskLevel.CRITICAL
+
+
+def test_safety_evaluator_network_error_precedence_over_qc_failed():
+    """TEST C: Network/upstream failure with network_error=True and qc_passed=False resolves to DATA_UNAVAILABLE, not QC_FAILED."""
+    from backend.app.safety.abstention import SafetyEvaluator
+
+    evaluator = SafetyEvaluator()
+    w_result = WeatherResult(
+        location="Kolkata",
+        is_available=False,
+        quality_flags={"qc_passed": False, "network_error": True},
+        metadata={"status": ReasonCode.DATA_UNAVAILABLE.value},
+        error="HTTP Error 429: Too Many Requests",
+    )
+
+    assessment = evaluator.evaluate(weather_result=w_result)
+    assert assessment.abstain is True
+    assert assessment.trust_state == TrustState.UNAVAILABLE
+    assert assessment.bust_probability is None
+    assert ReasonCode.DATA_UNAVAILABLE.value in assessment.reason_codes
+    assert ReasonCode.QC_FAILED.value not in assessment.reason_codes
+
+
+def test_safety_evaluator_genuine_qc_failure_produces_qc_failed():
+    """TEST D: Genuine meteorological QC failure without network error resolves strictly to QC_FAILED."""
+    from backend.app.safety.abstention import SafetyEvaluator
+
+    evaluator = SafetyEvaluator()
+    w_result = WeatherResult(
+        location="London",
+        is_available=False,
+        quality_flags={"qc_passed": False, "has_out_of_bounds": True},
+        metadata={"status": ReasonCode.QC_FAILED.value, "violations": ["wind_speed_10m exceeds bounds"]},
+        error="Quality control checks failed",
+    )
+
+    assessment = evaluator.evaluate(weather_result=w_result)
+    assert assessment.abstain is True
+    assert assessment.trust_state == TrustState.UNAVAILABLE
+    assert assessment.bust_probability is None
+    assert ReasonCode.QC_FAILED.value in assessment.reason_codes
+    assert ReasonCode.DATA_UNAVAILABLE.value not in assessment.reason_codes
+
+
+def test_safety_evaluator_invalid_location_produces_invalid_location():
+    """TEST E: Invalid location query resolves strictly to INVALID_LOCATION."""
+    from backend.app.safety.abstention import SafetyEvaluator
+
+    evaluator = SafetyEvaluator()
+    w_result = WeatherResult(
+        location="Atlantis123",
+        is_available=False,
+        quality_flags={"invalid_location": True, "qc_passed": False},
+        metadata={"status": ReasonCode.INVALID_LOCATION.value},
+        error="Location could not be resolved to coordinates",
+    )
+
+    assessment = evaluator.evaluate(weather_result=w_result)
+    assert assessment.abstain is True
+    assert assessment.trust_state == TrustState.UNAVAILABLE
+    assert ReasonCode.INVALID_LOCATION.value in assessment.reason_codes
+    assert ReasonCode.QC_FAILED.value not in assessment.reason_codes
+
+
+def test_single_target_and_timeline_safety_parity_under_network_failure():
+    """TEST G: Verify Single Target and multi-horizon calls share identical correct DATA_UNAVAILABLE classification."""
+    mock_weather = MagicMock(spec=BaseWeatherService)
+    mock_weather.get_forecast.return_value = WeatherResult(
+        location="Malda",
+        is_available=False,
+        quality_flags={"qc_passed": False, "network_error": True},
+        metadata={"status": ReasonCode.DATA_UNAVAILABLE.value},
+        error="HTTP Error 429: Too Many Requests",
+    )
+
+    agent = ForecastBustAgent(weather_service=mock_weather)
+
+    # 1. Single Target prediction
+    req_single = PredictionRequest(location="Malda", variable="wind_speed_10m", issue_time="2026-08-29T12:30:00Z", valid_time="2026-08-30T12:30:00Z")
+    res_single = agent.analyze(req_single)
+
+    assert res_single.abstain is True
+    assert ReasonCode.DATA_UNAVAILABLE.value in res_single.reason_codes
+    assert ReasonCode.QC_FAILED.value not in res_single.reason_codes
+
+    # 2. Multi-horizon sequence (simulating timeline items)
+    for lead in [24, 72, 168, 384]:
+        req_lead = PredictionRequest(location="Malda", variable="wind_speed_10m", issue_time="2026-08-29T12:30:00Z", valid_time=f"2026-09-01T12:30:00Z")
+        res_lead = agent.analyze(req_lead)
+        assert res_lead.abstain is True
+        assert ReasonCode.DATA_UNAVAILABLE.value in res_lead.reason_codes
+        assert ReasonCode.QC_FAILED.value not in res_lead.reason_codes

@@ -51,7 +51,8 @@ Overview/
         ├── Day-12.md
         ├── Day-13.md
         ├── Day-14.md
-        └── Day-15.md
+        ├── Day-15.md
+        └── Day-16.md
 ```
 
 ---
@@ -100,6 +101,7 @@ Overview/
 - [Day 13](./Phase-2/Builder-1/Day-13.md) — Explainability Integration
 - [Day 14](./Phase-2/Builder-1/Day-14.md) — Production API Hardening
 - [Day 15](./Phase-2/Builder-1/Day-15.md) — Frontend Dashboard
+- [Day 16](./Phase-2/Builder-1/Day-16.md) — Visual Forecast Risk
 
 ### Builder 2
 

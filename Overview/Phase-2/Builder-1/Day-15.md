@@ -428,4 +428,4 @@ All manual browser verifications below were interactively executed by the user a
 ## 24. Day 15 Final Status & Roadmap
 
 - **Day 15 Status**: **COMPLETE & VERIFIED**
-- **Next Planned Roadmap Item**: Phase 2 — Builder 1 — Day 16: Visual Forecast Risk (Time-Series Curves, Risk Heatmaps & Multi-Day Graph Overlays).
+- **Next Planned Roadmap Item**: [Phase 2 — Builder 1 — Day 16: Visual Forecast Risk](./Day-16.md)

@@ -59,10 +59,73 @@ def test_openmeteo_service_query_url_builder():
     assert "latitude=51.5074" in url
     assert "longitude=-0.1278" in url
     assert "models=gfs_seamless" in url
+    assert "wind_speed_unit=ms" in url
 
     url_with_date = service.build_query_url(51.5074, -0.1278, target_date="2026-09-01")
     assert "start_date=2026-09-01" in url_with_date
     assert "end_date=2026-09-01" in url_with_date
+    assert "wind_speed_unit=ms" in url_with_date
+
+
+def test_reference_service_query_url_builder_includes_wind_speed_unit_ms():
+    """Test that OpenMeteoArchiveReferenceService explicitly requests wind_speed_unit=ms."""
+    from backend.app.services.reference_service import OpenMeteoArchiveReferenceService
+    ref_service = OpenMeteoArchiveReferenceService()
+    url = ref_service.build_query_url(51.5074, -0.1278, "2026-08-01", "2026-08-10")
+    assert "latitude=51.5074" in url
+    assert "longitude=-0.1278" in url
+    assert "start_date=2026-08-01" in url
+    assert "end_date=2026-08-10" in url
+    assert "wind_speed_unit=ms" in url
+
+
+def test_openmeteo_wind_speed_canonical_ingestion_preserves_ms_unit_and_value():
+    """Test that a valid wind_speed_10m response in m/s passes through canonical ingestion with correct unit and value."""
+    service = OpenMeteoGEFSWeatherService()
+    payload = _get_mock_vendor_payload()
+    records = service.parse_canonical_records(payload, "London", 51.5074, -0.1278)
+
+    wind_records = [r for r in records if r.variable == "wind_speed_10m"]
+    assert len(wind_records) == 4
+    # Check first wind record
+    rec0 = wind_records[0]
+    assert rec0.variable == "wind_speed_10m"
+    assert rec0.unit == "m/s"
+    assert rec0.value == 3.5
+    assert rec0.ensemble_mean == 3.5
+
+    # Check all wind record values match input payload directly without double conversion
+    expected_values = [3.5, 4.2, 5.8, 4.0]
+    actual_values = [r.value for r in wind_records]
+    assert actual_values == expected_values
+
+
+def test_temperature_and_other_variables_ingestion_parity():
+    """Verify that temperature, pressure, humidity, and precipitation behavior has not changed."""
+    service = OpenMeteoGEFSWeatherService()
+    payload = _get_mock_vendor_payload()
+    records = service.parse_canonical_records(payload, "London", 51.5074, -0.1278)
+
+    temp_records = [r for r in records if r.variable == "temperature_2m"]
+    press_records = [r for r in records if r.variable == "surface_pressure"]
+    rh_records = [r for r in records if r.variable == "relative_humidity_2m"]
+    precip_records = [r for r in records if r.variable == "precipitation"]
+
+    assert len(temp_records) == 4
+    assert [r.value for r in temp_records] == [15.2, 17.8, 22.4, 19.1]
+    assert all(r.unit == "celsius" for r in temp_records)
+
+    assert len(press_records) == 4
+    assert [r.value for r in press_records] == [1013.2, 1012.8, 1011.5, 1012.0]
+    assert all(r.unit == "hPa" for r in press_records)
+
+    assert len(rh_records) == 4
+    assert [r.value for r in rh_records] == [82.0, 75.0, 58.0, 68.0]
+    assert all(r.unit == "%" for r in rh_records)
+
+    assert len(precip_records) == 4
+    assert [r.value for r in precip_records] == [0.0, 0.0, 0.2, 0.0]
+    assert all(r.unit == "mm" for r in precip_records)
 
 
 def test_openmeteo_service_canonical_parsing():

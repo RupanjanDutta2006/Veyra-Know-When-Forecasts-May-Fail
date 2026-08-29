@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
-import { PredictionRequest, SupportedVariable } from '../api/types';
+import { HorizonPreset, HorizonTimelineRequest, PredictionRequest, SupportedVariable } from '../api/types';
 
 interface ForecastFormProps {
+  mode?: 'single' | 'timeline';
+  onModeChange?: (mode: 'single' | 'timeline') => void;
   onSubmit: (request: PredictionRequest) => void;
+  onSubmitTimeline?: (request: HorizonTimelineRequest) => void;
   onValidationError?: (errorMessage: string) => void;
   isLoading: boolean;
 }
@@ -38,11 +41,20 @@ function formatToIsoUtc(datetimeStr: string): string {
   return new Date(trimmed).toISOString();
 }
 
-export const ForecastForm: React.FC<ForecastFormProps> = ({ onSubmit, onValidationError, isLoading }) => {
+export const ForecastForm: React.FC<ForecastFormProps> = ({
+  mode = 'single',
+  onModeChange,
+  onSubmit,
+  onSubmitTimeline,
+  onValidationError,
+  isLoading,
+}) => {
+  const [evaluationMode, setEvaluationMode] = useState<'single' | 'timeline'>(mode);
   const [location, setLocation] = useState<string>('London');
   const [variable, setVariable] = useState<SupportedVariable>('temperature_2m');
   const [issueTime, setIssueTime] = useState<string>('');
   const [validTime, setValidTime] = useState<string>('');
+  const [preset, setPreset] = useState<HorizonPreset>('7_DAY');
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const handleQuickLocation = (loc: string) => {
@@ -70,6 +82,12 @@ export const ForecastForm: React.FC<ForecastFormProps> = ({ onSubmit, onValidati
     setValidationError(null);
   };
 
+  const handleModeChange = (newMode: 'single' | 'timeline') => {
+    setEvaluationMode(newMode);
+    setValidationError(null);
+    onModeChange?.(newMode);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setValidationError(null);
@@ -82,10 +100,7 @@ export const ForecastForm: React.FC<ForecastFormProps> = ({ onSubmit, onValidati
       return;
     }
 
-    // Optional Datetime Lead Validation
     let formattedIssueTime: string | undefined = undefined;
-    let formattedValidTime: string | undefined = undefined;
-
     if (issueTime) {
       const isoIssue = formatToIsoUtc(issueTime);
       const dIssue = new Date(isoIssue);
@@ -98,6 +113,20 @@ export const ForecastForm: React.FC<ForecastFormProps> = ({ onSubmit, onValidati
       formattedIssueTime = isoIssue;
     }
 
+    if (evaluationMode === 'timeline') {
+      if (onSubmitTimeline) {
+        onSubmitTimeline({
+          location: trimmedLocation,
+          variable,
+          issue_time: formattedIssueTime,
+          preset,
+        });
+      }
+      return;
+    }
+
+    // Single Target Forecast Validation
+    let formattedValidTime: string | undefined = undefined;
     if (validTime) {
       const isoValid = formatToIsoUtc(validTime);
       const dValid = new Date(isoValid);
@@ -162,6 +191,30 @@ export const ForecastForm: React.FC<ForecastFormProps> = ({ onSubmit, onValidati
       <p className="card-subtitle">
         Assess the probability that an existing medium-range weather forecast will significantly fail.
       </p>
+
+      {/* Mode Switcher Tabs */}
+      <div className="mode-toggle-group" role="tablist" aria-label="Evaluation Mode Selection">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={evaluationMode === 'single'}
+          className={`mode-tab-btn ${evaluationMode === 'single' ? 'active' : ''}`}
+          onClick={() => handleModeChange('single')}
+          disabled={isLoading}
+        >
+          Single Target Forecast
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={evaluationMode === 'timeline'}
+          className={`mode-tab-btn ${evaluationMode === 'timeline' ? 'active' : ''}`}
+          onClick={() => handleModeChange('timeline')}
+          disabled={isLoading}
+        >
+          Visual Risk Timeline
+        </button>
+      </div>
 
       {!onValidationError && validationError && (
         <div className="error-banner" role="alert">
@@ -231,27 +284,28 @@ export const ForecastForm: React.FC<ForecastFormProps> = ({ onSubmit, onValidati
           </select>
         </div>
 
-        {/* Optional Cycle Timestamps */}
-        <div className="form-row">
-          <div className="form-group">
-            <label htmlFor="issue-time-input" className="form-label">
-              Issue Time (UTC)
-              <span className="form-hint">Optional cycle issuance</span>
-            </label>
-            <input
-              id="issue-time-input"
-              type="datetime-local"
-              className="form-input"
-              value={issueTime}
-              onChange={(e) => handleIssueTimeChange(e.target.value)}
-              disabled={isLoading}
-            />
-          </div>
+        {/* Issue Time Input */}
+        <div className="form-group">
+          <label htmlFor="issue-time-input" className="form-label">
+            Issue Time (UTC)
+            <span className="form-hint">Optional cycle issuance (defaults to current cycle)</span>
+          </label>
+          <input
+            id="issue-time-input"
+            type="datetime-local"
+            className="form-input"
+            value={issueTime}
+            onChange={(e) => handleIssueTimeChange(e.target.value)}
+            disabled={isLoading}
+          />
+        </div>
 
+        {/* Single Target Mode: Valid Time */}
+        {evaluationMode === 'single' && (
           <div className="form-group">
             <label htmlFor="valid-time-input" className="form-label">
               Valid Target (UTC)
-              <span className="form-hint">Optional valid timestamp</span>
+              <span className="form-hint">Optional valid timestamp (defaults to entire horizon)</span>
             </label>
             <input
               id="valid-time-input"
@@ -262,7 +316,27 @@ export const ForecastForm: React.FC<ForecastFormProps> = ({ onSubmit, onValidati
               disabled={isLoading}
             />
           </div>
-        </div>
+        )}
+
+        {/* Timeline Mode: Preset Selection */}
+        {evaluationMode === 'timeline' && (
+          <div className="form-group">
+            <label htmlFor="preset-select" className="form-label">
+              Timeline Horizon Window
+              <span className="form-hint">Forecast steps to evaluate</span>
+            </label>
+            <select
+              id="preset-select"
+              className="form-select"
+              value={preset}
+              onChange={(e) => setPreset(e.target.value as HorizonPreset)}
+              disabled={isLoading}
+            >
+              <option value="7_DAY">Standard 7-Day Window (24h, 48h, 72h, 96h, 120h, 144h, 168h)</option>
+              <option value="16_DAY">Full 16-Day Horizon (24h to 384h in 24h increments)</option>
+            </select>
+          </div>
+        )}
 
         {/* Submit Button */}
         <button
@@ -274,14 +348,22 @@ export const ForecastForm: React.FC<ForecastFormProps> = ({ onSubmit, onValidati
           {isLoading ? (
             <>
               <span className="spinner" aria-hidden="true" />
-              <span>Analyzing Forecast Ensemble...</span>
+              <span>
+                {evaluationMode === 'timeline'
+                  ? 'Evaluating Horizon Risk Trajectory...'
+                  : 'Analyzing Forecast Ensemble...'}
+              </span>
             </>
           ) : (
             <>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <polygon points="5 3 19 12 5 21 5 3" />
               </svg>
-              <span>Estimate Bust Probability</span>
+              <span>
+                {evaluationMode === 'timeline'
+                  ? 'Generate Risk Timeline'
+                  : 'Estimate Bust Probability'}
+              </span>
             </>
           )}
         </button>

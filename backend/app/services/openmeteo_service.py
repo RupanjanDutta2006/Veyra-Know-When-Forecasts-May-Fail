@@ -112,6 +112,7 @@ class OpenMeteoGEFSWeatherService(BaseWeatherService):
             "hourly": "temperature_2m,surface_pressure,wind_speed_10m,relative_humidity_2m,precipitation",
             "models": "gfs_seamless",
             "timezone": "UTC",
+            "wind_speed_unit": "ms",
         }
         if target_date:
             params["start_date"] = target_date
