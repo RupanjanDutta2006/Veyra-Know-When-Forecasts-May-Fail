@@ -34,6 +34,7 @@ def sanitize_or_generate_request_id(client_request_id: str | None) -> str:
 # Exempt paths that should never be rate limited or blocked
 RATE_LIMIT_EXEMPT_PATHS = {
     "/",
+    "/dashboard",
     "/docs",
     "/redoc",
     "/openapi.json",
@@ -120,8 +121,8 @@ class RateLimitingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         path = request.url.path
 
-        # Bypass rate limiting for exempt system endpoints
-        if path in RATE_LIMIT_EXEMPT_PATHS:
+        # Bypass rate limiting for exempt system endpoints and static assets
+        if path in RATE_LIMIT_EXEMPT_PATHS or path.startswith("/assets"):
             return await call_next(request)
 
         client_ip = request.client.host if request.client else "127.0.0.1"

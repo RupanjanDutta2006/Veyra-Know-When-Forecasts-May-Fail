@@ -174,6 +174,16 @@ class ForecastBustAgent:
                     weather_result=weather_result,
                 )
 
+            # Propagate target forecast parameters into metadata for downstream feature selection
+            if request.valid_time:
+                weather_result.metadata["valid_time"] = request.valid_time
+            if request.issue_time:
+                weather_result.metadata["issue_time"] = request.issue_time
+            if request.variable:
+                weather_result.metadata["variable"] = request.variable
+            if request.target_date:
+                weather_result.metadata["target_date"] = request.target_date
+
             # 3. Feature Engineering Stage
             feature_result = self.get_features(weather_result)
             if not feature_result.is_ready or feature_result.error:

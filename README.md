@@ -14,7 +14,7 @@ Veyra's complete development history and technical verification records are orga
   - **Builder 1**: [Day 1 to Day 7](./Overview/Phase-1/Builder-1/Day-1.md) (Architecture, Ingestion, Baseline ML, Live Serving)
   - **Builder 2**: [Day 1 to Day 7](./Overview/Phase-1/Builder-2/Day-1.md) (26-Feature Pipeline, LightGBM, Platt Calibration)
 - **Phase 2**
-  - **Builder 1**: [Day 8](./Overview/Phase-2/Builder-1/Day-8.md) (Dynamic Location Resolution), [Day 9](./Overview/Phase-2/Builder-1/Day-9.md) (Historical Data Infrastructure), [Day 10](./Overview/Phase-2/Builder-1/Day-10.md) (Multi-location Platform Support), [Day 11](./Overview/Phase-2/Builder-1/Day-11.md) (Model Integration Layer), [Day 12](./Overview/Phase-2/Builder-1/Day-12.md) (Evaluation Integration), [Day 13](./Overview/Phase-2/Builder-1/Day-13.md) (Explainability Integration), & [Day 14](./Overview/Phase-2/Builder-1/Day-14.md) (Production API Hardening)
+  - **Builder 1**: [Day 8](./Overview/Phase-2/Builder-1/Day-8.md) (Dynamic Location Resolution), [Day 9](./Overview/Phase-2/Builder-1/Day-9.md) (Historical Data Infrastructure), [Day 10](./Overview/Phase-2/Builder-1/Day-10.md) (Multi-location Platform Support), [Day 11](./Overview/Phase-2/Builder-1/Day-11.md) (Model Integration Layer), [Day 12](./Overview/Phase-2/Builder-1/Day-12.md) (Evaluation Integration), [Day 13](./Overview/Phase-2/Builder-1/Day-13.md) (Explainability Integration), [Day 14](./Overview/Phase-2/Builder-1/Day-14.md) (Production API Hardening), & [Day 15](./Overview/Phase-2/Builder-1/Day-15.md) (Frontend Dashboard)
   - **Builder 2**: *Pending Phase 2 start*
 
 
@@ -62,6 +62,7 @@ python -m uvicorn backend.app.main:app --reload --port 8000
 ```
 
 Once running:
+- **Interactive Web Dashboard:** [http://127.0.0.1:8000/dashboard](http://127.0.0.1:8000/dashboard) (or `http://localhost:5173` via Vite)
 - **Interactive Swagger Docs:** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 - **ReDoc Documentation:** [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
 - **Service Health Check:** [http://127.0.0.1:8000/v1/health](http://127.0.0.1:8000/v1/health)
