@@ -1,7 +1,7 @@
-"""Application Settings and Configuration."""
+"""Application Settings and Configuration with centralized production hardening parameters."""
 import os
 from pathlib import Path
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _DEFAULT_DAY4_DIR = _REPO_ROOT / "models" / "day4"
@@ -26,6 +26,68 @@ class Settings(BaseModel):
         str(_DEFAULT_DAY4_DIR) if _DEFAULT_DAY4_DIR.exists() else ("models/day4" if os.path.exists("models/day4") else None),
     )
 
+    # Provider Timeouts (seconds)
+    GEOCODING_TIMEOUT_SECONDS: int = Field(
+        default_factory=lambda: int(os.getenv("GEOCODING_TIMEOUT_SECONDS", "10"))
+    )
+    WEATHER_TIMEOUT_SECONDS: int = Field(
+        default_factory=lambda: int(os.getenv("WEATHER_TIMEOUT_SECONDS", "25"))
+    )
+    HISTORICAL_TIMEOUT_SECONDS: int = Field(
+        default_factory=lambda: int(os.getenv("HISTORICAL_TIMEOUT_SECONDS", "15"))
+    )
+    REFERENCE_TIMEOUT_SECONDS: int = Field(
+        default_factory=lambda: int(os.getenv("REFERENCE_TIMEOUT_SECONDS", "10"))
+    )
+
+    # Bounded HTTP Retries & Backoff
+    MAX_HTTP_RETRIES: int = Field(
+        default_factory=lambda: int(os.getenv("MAX_HTTP_RETRIES", "2"))
+    )
+    RETRY_BACKOFF_FACTOR: float = Field(
+        default_factory=lambda: float(os.getenv("RETRY_BACKOFF_FACTOR", "0.3"))
+    )
+
+    # In-memory Caching
+    CACHE_ENABLED: bool = Field(
+        default_factory=lambda: os.getenv("CACHE_ENABLED", "True").lower() in ("true", "1", "yes")
+    )
+    CACHE_MAX_SIZE: int = Field(
+        default_factory=lambda: int(os.getenv("CACHE_MAX_SIZE", "1024"))
+    )
+    CACHE_TTL_SECONDS: int = Field(
+        default_factory=lambda: int(os.getenv("CACHE_TTL_SECONDS", "3600"))
+    )
+
+    # In-process Rate Limiting / Abuse Protection
+    RATE_LIMIT_ENABLED: bool = Field(
+        default_factory=lambda: os.getenv("RATE_LIMIT_ENABLED", "True").lower() in ("true", "1", "yes")
+    )
+    RATE_LIMIT_REQUESTS_PER_MINUTE: int = Field(
+        default_factory=lambda: int(os.getenv("RATE_LIMIT_REQUESTS_PER_MINUTE", "120"))
+    )
+    RATE_LIMIT_BURST_SIZE: int = Field(
+        default_factory=lambda: int(os.getenv("RATE_LIMIT_BURST_SIZE", "30"))
+    )
+
+    # Observability & Logging
+    LOG_LEVEL: str = Field(
+        default_factory=lambda: os.getenv("LOG_LEVEL", "INFO")
+    )
+    STRUCTURED_LOGGING: bool = Field(
+        default_factory=lambda: os.getenv("STRUCTURED_LOGGING", "True").lower() in ("true", "1", "yes")
+    )
+    ENABLE_SECURITY_HEADERS: bool = Field(
+        default_factory=lambda: os.getenv("ENABLE_SECURITY_HEADERS", "True").lower() in ("true", "1", "yes")
+    )
+    ENABLE_REQUEST_CORRELATION: bool = Field(
+        default_factory=lambda: os.getenv("ENABLE_REQUEST_CORRELATION", "True").lower() in ("true", "1", "yes")
+    )
+
+    # Multi-location Batch limits
+    MAX_MULTI_LOCATION_BATCH_SIZE: int = Field(
+        default_factory=lambda: int(os.getenv("MAX_MULTI_LOCATION_BATCH_SIZE", "50"))
+    )
+
 
 settings = Settings()
-

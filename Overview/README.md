@@ -49,7 +49,8 @@ Overview/
         ├── Day-10.md
         ├── Day-11.md
         ├── Day-12.md
-        └── Day-13.md
+        ├── Day-13.md
+        └── Day-14.md
 ```
 
 ---
@@ -96,6 +97,7 @@ Overview/
 - [Day 11](./Phase-2/Builder-1/Day-11.md) — Model Integration Layer
 - [Day 12](./Phase-2/Builder-1/Day-12.md) — Evaluation Integration
 - [Day 13](./Phase-2/Builder-1/Day-13.md) — Explainability Integration
+- [Day 14](./Phase-2/Builder-1/Day-14.md) — Production API Hardening
 
 ### Builder 2
 

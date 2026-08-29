@@ -167,4 +167,4 @@ The Day 13 integration strictly enforces:
 ## 10. Navigation
 
 - **Previous**: [Day 12 — Evaluation Integration](./Day-12.md)
-- **Next Planned**: Day 14 — Production API Hardening
+- **Next**: [Day 14 — Production API Hardening](./Day-14.md)

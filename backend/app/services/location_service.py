@@ -10,6 +10,8 @@ import urllib.parse
 import urllib.request
 from typing import Any, Callable, Dict, Optional, Tuple
 
+from backend.app.core.cache import BoundedTTLCache, location_cache
+from backend.app.core.config import settings
 from backend.app.schemas.location import ResolvedLocation
 
 logger = logging.getLogger(__name__)
@@ -189,18 +191,27 @@ class DynamicLocationService(BaseLocationService):
         self,
         api_url: str = DEFAULT_GEOCODING_API_URL,
         http_client: Optional[Callable[[str], Dict[str, Any]]] = None,
-        timeout_seconds: int = 10,
+        timeout_seconds: Optional[int] = None,
         enable_cache: bool = True,
         fallback_registry: Optional[Dict[str, Dict[str, Any]]] = None,
+        cache: Optional[BoundedTTLCache] = None,
     ):
         self.api_url = api_url
         self.http_client = http_client or self._default_http_client
-        self.timeout_seconds = timeout_seconds
+        self.timeout_seconds = (
+            timeout_seconds
+            if timeout_seconds is not None
+            else settings.GEOCODING_TIMEOUT_SECONDS
+        )
         self.enable_cache = enable_cache
         self._registry = dict(KNOWN_BENCHMARK_LOCATIONS)
         if fallback_registry:
             self._registry.update(fallback_registry)
-        self._cache: Dict[str, Optional[ResolvedLocation]] = {}
+        self._cache = cache if cache is not None else BoundedTTLCache(
+            maxsize=settings.CACHE_MAX_SIZE,
+            default_ttl=settings.CACHE_TTL_SECONDS,
+            enabled=enable_cache,
+        )
 
     def _default_http_client(self, url: str) -> Dict[str, Any]:
         """Fetch JSON data from Open-Meteo Geocoding API using standard library urllib."""
