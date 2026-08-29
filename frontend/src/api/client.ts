@@ -5,6 +5,9 @@
 import {
   ApiError,
   HealthResponse,
+  HorizonPointResult,
+  HorizonTimelineRequest,
+  HorizonTimelineResult,
   ModelEvaluationResponse,
   PredictionRequest,
   PredictionResponse,
@@ -71,6 +74,97 @@ export class VeyraApiClient {
         },
       };
     }
+  }
+
+  /**
+   * Evaluate bust risk across a multi-horizon timeline for a single location.
+   * Concurrently requests predictions for each requested lead horizon from the same issue_time.
+   */
+  async predictHorizonTimeline(
+    request: HorizonTimelineRequest
+  ): Promise<HorizonTimelineResult> {
+    const preset = request.preset || '7_DAY';
+    const leads =
+      request.custom_leads ||
+      (preset === '16_DAY'
+        ? [24, 48, 72, 96, 120, 144, 168, 192, 216, 240, 264, 288, 312, 336, 360, 384]
+        : [24, 48, 72, 96, 120, 144, 168]);
+
+    const baseIssueTime = request.issue_time || new Date().toISOString();
+    const issueDate = new Date(baseIssueTime);
+
+    // Build independent requests with deterministic valid_time calculation
+    const promises = leads.map(async (leadHours) => {
+      const validDate = new Date(issueDate.getTime() + leadHours * 3600 * 1000);
+      const validTimeIso = validDate.toISOString();
+
+      const predReq: PredictionRequest = {
+        location: request.location,
+        variable: request.variable,
+        issue_time: baseIssueTime,
+        valid_time: validTimeIso,
+      };
+
+      const result = await this.predictForecastBust(predReq);
+
+      let status: 'SUCCESS' | 'ABSTAINED' | 'ERROR' = 'ERROR';
+      let errorMessage: string | undefined = undefined;
+
+      if (result.data) {
+        if (result.data.abstain) {
+          status = 'ABSTAINED';
+        } else {
+          status = 'SUCCESS';
+        }
+      } else if (result.error) {
+        status = 'ERROR';
+        errorMessage = result.error.message || result.error.error;
+      }
+
+      const point: HorizonPointResult = {
+        lead_hours: leadHours,
+        lead_days: parseFloat((leadHours / 24).toFixed(1)),
+        valid_time: validTimeIso,
+        response: result.data || null,
+        status,
+        error_message: errorMessage,
+      };
+
+      return point;
+    });
+
+    const settled = await Promise.allSettled(promises);
+
+    const points: HorizonPointResult[] = settled.map((res, idx) => {
+      if (res.status === 'fulfilled') {
+        return res.value;
+      }
+      const leadHours = leads[idx];
+      const validDate = new Date(issueDate.getTime() + leadHours * 3600 * 1000);
+      return {
+        lead_hours: leadHours,
+        lead_days: parseFloat((leadHours / 24).toFixed(1)),
+        valid_time: validDate.toISOString(),
+        response: null,
+        status: 'ERROR',
+        error_message: res.reason instanceof Error ? res.reason.message : 'Unknown evaluation error',
+      };
+    });
+
+    const successfulCount = points.filter((p) => p.status === 'SUCCESS').length;
+    const abstainedCount = points.filter((p) => p.status === 'ABSTAINED').length;
+    const errorCount = points.filter((p) => p.status === 'ERROR').length;
+
+    return {
+      location: request.location,
+      variable: request.variable || 'temperature_2m',
+      issue_time: baseIssueTime,
+      preset,
+      points,
+      successful_count: successfulCount,
+      abstained_count: abstainedCount,
+      error_count: errorCount,
+    };
   }
 
   /**

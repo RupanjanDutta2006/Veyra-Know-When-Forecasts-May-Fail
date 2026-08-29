@@ -48,10 +48,12 @@ class SafetyEvaluator(BaseSafetyService):
             if not weather_result.is_available or weather_result.error:
                 if weather_result.quality_flags and weather_result.quality_flags.get("invalid_location"):
                     reason = ReasonCode.INVALID_LOCATION.value
-                elif weather_result.quality_flags and weather_result.quality_flags.get("qc_passed") is False:
-                    reason = ReasonCode.QC_FAILED.value
+                elif weather_result.quality_flags and weather_result.quality_flags.get("network_error"):
+                    reason = ReasonCode.DATA_UNAVAILABLE.value
                 elif weather_result.metadata and "status" in weather_result.metadata:
                     reason = weather_result.metadata["status"]
+                elif weather_result.quality_flags and weather_result.quality_flags.get("qc_passed") is False:
+                    reason = ReasonCode.QC_FAILED.value
                 else:
                     reason = ReasonCode.DATA_NOT_READY.value
 

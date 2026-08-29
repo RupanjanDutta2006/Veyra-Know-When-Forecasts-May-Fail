@@ -108,6 +108,7 @@ class OpenMeteoArchiveReferenceService(BaseReferenceWeatherService):
             "end_date": end_date,
             "hourly": "temperature_2m,surface_pressure,wind_speed_10m,relative_humidity_2m,precipitation",
             "timezone": "UTC",
+            "wind_speed_unit": "ms",
         }
         return f"{self.api_url}?{urllib.parse.urlencode(params)}"
 

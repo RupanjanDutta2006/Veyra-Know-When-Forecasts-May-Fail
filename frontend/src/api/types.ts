@@ -97,3 +97,33 @@ export interface ApiError {
   request_id?: string;
   status_code?: number;
 }
+
+export type HorizonPreset = '7_DAY' | '16_DAY';
+
+export interface HorizonPointResult {
+  lead_hours: number;
+  lead_days: number;
+  valid_time: string;
+  response: PredictionResponse | null;
+  status: 'SUCCESS' | 'ABSTAINED' | 'ERROR';
+  error_message?: string;
+}
+
+export interface HorizonTimelineRequest {
+  location: string;
+  variable?: SupportedVariable;
+  issue_time?: string;
+  preset?: HorizonPreset;
+  custom_leads?: number[];
+}
+
+export interface HorizonTimelineResult {
+  location: string;
+  variable: string;
+  issue_time: string;
+  preset: HorizonPreset;
+  points: HorizonPointResult[];
+  successful_count: number;
+  abstained_count: number;
+  error_count: number;
+}
