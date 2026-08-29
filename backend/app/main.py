@@ -1,7 +1,10 @@
 """Main FastAPI Application for Forecast-Bust Sentinel with Production Hardening."""
 import logging
+from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from backend.app.api.v1.router import api_router
 from backend.app.core.config import settings
@@ -59,8 +62,24 @@ def create_application() -> FastAPI:
     # 6. Configure Request Correlation ID middleware (outermost request wrapper)
     app.add_middleware(RequestCorrelationMiddleware)
 
+    # Optional Static Frontend Mounting (when built)
+    frontend_dist = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
+    if (frontend_dist / "assets").is_dir():
+        app.mount("/assets", StaticFiles(directory=str(frontend_dist / "assets")), name="frontend-assets")
+
     # Include Versioned API Routes (/v1)
     app.include_router(api_router, prefix=settings.API_V1_STR)
+
+    @app.get("/dashboard", include_in_schema=False)
+    async def dashboard():
+        """Serve built frontend dashboard single-page app."""
+        index_file = frontend_dist / "index.html"
+        if index_file.is_file():
+            return FileResponse(str(index_file))
+        return {
+            "message": "Frontend build not found. Run 'npm run build' inside frontend/ directory.",
+            "docs": "/docs",
+        }
 
     @app.get("/", include_in_schema=False)
     async def root():
@@ -68,6 +87,7 @@ def create_application() -> FastAPI:
         return {
             "message": "Welcome to Forecast-Bust Sentinel API",
             "docs": "/docs",
+            "dashboard": "/dashboard",
             "health": f"{settings.API_V1_STR}/health",
         }
 

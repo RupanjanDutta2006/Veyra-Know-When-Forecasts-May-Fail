@@ -391,3 +391,36 @@ def test_validate_explanation_invalid_structure_returns_none(explainer_service: 
     assert explainer_service.validate_explanation("invalid_string_not_dict") is None
     assert explainer_service.validate_explanation(12345) is None
     assert explainer_service.validate_explanation(None) is None
+
+
+def test_explainability_target_valid_time_lead_selection(client: TestClient):
+    """Verify that specifying target issue_time and valid_time properly propagates exact lead_hours into explanation."""
+    test_cases = [
+        ("2026-08-29T12:00:00Z", "2026-08-30T12:00:00Z", 24.0, "SHORT_RANGE_HORIZON"),
+        ("2026-08-29T12:00:00Z", "2026-08-31T12:00:00Z", 48.0, "SHORT_RANGE_HORIZON"),
+        ("2026-08-29T12:00:00Z", "2026-09-02T12:00:00Z", 96.0, "MEDIUM_RANGE_HORIZON"),
+        ("2026-08-29T12:00:00Z", "2026-09-05T12:00:00Z", 168.0, "EXTENDED_RANGE_DEGRADATION"),
+    ]
+
+    for issue_time, valid_time, expected_lead, expected_signal in test_cases:
+        response = client.post(
+            "/v1/predict",
+            json={
+                "location": "London",
+                "variable": "temperature_2m",
+                "issue_time": issue_time,
+                "valid_time": valid_time,
+            },
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["abstain"] is False
+        assert data["explanation"] is not None
+
+        lead_factor = next(
+            (f for f in data["explanation"]["top_contributing_factors"] if f["factor"] == "lead_hours"),
+            None,
+        )
+        assert lead_factor is not None
+        assert lead_factor["value"] == expected_lead
+        assert lead_factor["signal"] == expected_signal

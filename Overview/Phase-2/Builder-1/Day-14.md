@@ -227,4 +227,4 @@ Day 14 production hardening is complete, cleaned up, and verified. The backend A
 ## 12. Navigation
 
 - **Previous**: [Day 13 — Explainability Integration](./Day-13.md)
-- **Next Planned**: Day 15 — Frontend & Dashboard Integration
+- **Next**: [Day 15 — Frontend Dashboard](./Day-15.md)

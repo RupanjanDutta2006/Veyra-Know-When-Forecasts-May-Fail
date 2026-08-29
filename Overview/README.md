@@ -50,7 +50,8 @@ Overview/
         ├── Day-11.md
         ├── Day-12.md
         ├── Day-13.md
-        └── Day-14.md
+        ├── Day-14.md
+        └── Day-15.md
 ```
 
 ---
@@ -98,6 +99,7 @@ Overview/
 - [Day 12](./Phase-2/Builder-1/Day-12.md) — Evaluation Integration
 - [Day 13](./Phase-2/Builder-1/Day-13.md) — Explainability Integration
 - [Day 14](./Phase-2/Builder-1/Day-14.md) — Production API Hardening
+- [Day 15](./Phase-2/Builder-1/Day-15.md) — Frontend Dashboard
 
 ### Builder 2
 

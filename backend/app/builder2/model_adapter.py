@@ -88,20 +88,23 @@ class Builder2ModelAdapter(BaseModelService):
             )
 
         # Reconstruct DataFrame with exact 26 canonical features
+        is_single_target = feature_result.metadata.get("is_single_target", False)
         matrix_rows = feature_result.metadata.get("feature_matrix_rows")
-        if matrix_rows and isinstance(matrix_rows, list):
-            df_features = pd.DataFrame(matrix_rows)
-        else:
-            # Reconstruct single row from features dict
-            if not feature_result.features:
-                return ModelResult(
-                    probability=None,
-                    model_version=self.model_version,
-                    is_ready=False,
-                    metadata={"status": ReasonCode.FEATURES_NOT_READY.value},
-                    error="FeatureResult contains no feature data",
-                )
+
+        if is_single_target and feature_result.features:
             df_features = pd.DataFrame([feature_result.features])
+        elif matrix_rows and isinstance(matrix_rows, list):
+            df_features = pd.DataFrame(matrix_rows)
+        elif feature_result.features:
+            df_features = pd.DataFrame([feature_result.features])
+        else:
+            return ModelResult(
+                probability=None,
+                model_version=self.model_version,
+                is_ready=False,
+                metadata={"status": ReasonCode.FEATURES_NOT_READY.value},
+                error="FeatureResult contains no feature data",
+            )
 
         # Validate column existence
         missing_cols = [c for c in FEATURE_COLUMN_NAMES if c not in df_features.columns]
