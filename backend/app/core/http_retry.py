@@ -7,6 +7,7 @@ import urllib.error
 from typing import Any, Callable, Optional, Sequence, Type
 
 from backend.app.core.config import settings
+from backend.app.core.metrics import default_metrics
 
 logger = logging.getLogger(__name__)
 
@@ -162,6 +163,7 @@ def execute_with_retry(
             else:
                 sleep_duration = backoff_factor * (2 ** (attempt - 1))
 
+            default_metrics.record_retry()
             logger.info(
                 "%s failed attempt %d/%d (%s). Retrying in %.2fs...",
                 operation_name,

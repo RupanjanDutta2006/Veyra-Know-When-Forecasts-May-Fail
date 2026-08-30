@@ -6,7 +6,9 @@ Request -> Weather Data -> Feature Pipeline -> ML Model -> Safety/Abstention -> 
 Designed with strict Dependency Injection and Fail-Safe Short-Circuiting.
 """
 import logging
+import time
 from typing import Optional
+from backend.app.core.metrics import default_metrics
 from backend.app.safety.abstention import SafetyAssessment, SafetyEvaluator
 from backend.app.schemas.prediction import (
     PredictionRequest,
@@ -153,13 +155,14 @@ class ForecastBustAgent:
         )
 
     def analyze(self, request: PredictionRequest) -> PredictionResponse:
-        """Main entry point orchestrating the end-to-end evaluation pipeline.
+        """Main entry point orchestrating the end-to-end evaluation pipeline with operational telemetry.
 
         Short-circuits safely whenever a dependency is unavailable:
         - Weather unavailable -> abstains without calling Feature or Model service.
         - Features unavailable -> abstains without calling Model service.
         - Model unavailable -> abstains without fabricating fake probabilities.
         """
+        start_t = time.perf_counter()
         try:
             # 1. Resolve request
             location, target_date = self.resolve_request(request)
@@ -168,11 +171,13 @@ class ForecastBustAgent:
             weather_result = self.get_weather_data(location, target_date)
             if not weather_result.is_available or weather_result.error:
                 safety_assessment = self.apply_safety(weather_result=weather_result)
-                return self.build_response(
+                resp = self.build_response(
                     location=location,
                     safety_assessment=safety_assessment,
                     weather_result=weather_result,
                 )
+                self._record_pipeline_telemetry(resp, request, start_t)
+                return resp
 
             # Propagate target forecast parameters into metadata for downstream feature selection
             if request.valid_time:
@@ -191,12 +196,14 @@ class ForecastBustAgent:
                     weather_result=weather_result,
                     feature_result=feature_result,
                 )
-                return self.build_response(
+                resp = self.build_response(
                     location=location,
                     safety_assessment=safety_assessment,
                     weather_result=weather_result,
                     feature_result=feature_result,
                 )
+                self._record_pipeline_telemetry(resp, request, start_t)
+                return resp
 
             # 4. ML Model Prediction Stage
             model_result = self.run_model(feature_result)
@@ -206,13 +213,15 @@ class ForecastBustAgent:
                     feature_result=feature_result,
                     model_result=model_result,
                 )
-                return self.build_response(
+                resp = self.build_response(
                     location=location,
                     safety_assessment=safety_assessment,
                     model_result=model_result,
                     weather_result=weather_result,
                     feature_result=feature_result,
                 )
+                self._record_pipeline_telemetry(resp, request, start_t)
+                return resp
 
             # 5. Safety & Abstention Evaluation on Model Prediction
             safety_assessment = self.apply_safety(
@@ -222,13 +231,15 @@ class ForecastBustAgent:
             )
 
             # 6. Response Construction
-            return self.build_response(
+            resp = self.build_response(
                 location=location,
                 safety_assessment=safety_assessment,
                 model_result=model_result,
                 weather_result=weather_result,
                 feature_result=feature_result,
             )
+            self._record_pipeline_telemetry(resp, request, start_t)
+            return resp
 
         except Exception as exc:
             logger.error("Unhandled error during ForecastBustAgent.analyze: %s", exc)
@@ -236,7 +247,43 @@ class ForecastBustAgent:
                 reason_code=ReasonCode.INTERNAL_ERROR,
                 error_message="Sentinel service encountered an unexpected error",
             )
-            return self.build_response(
+            resp = self.build_response(
                 location=request.location if request else "UNKNOWN",
                 safety_assessment=fallback_assessment,
+            )
+            self._record_pipeline_telemetry(resp, request, start_t)
+            return resp
+
+    def _record_pipeline_telemetry(
+        self,
+        response: PredictionResponse,
+        request: Optional[PredictionRequest],
+        start_time_perf: float,
+    ) -> None:
+        """Record operational metrics and structured operational log for prediction event."""
+        duration_ms = round((time.perf_counter() - start_time_perf) * 1000, 2)
+        model_ver = response.model_version or "unknown"
+        var_name = request.variable if request and request.variable else "temperature_2m"
+
+        if response.abstain:
+            reason_raw = response.reason_codes[0] if response.reason_codes else "UNKNOWN_ABSTENTION"
+            reason = getattr(reason_raw, "value", str(reason_raw))
+            default_metrics.record_prediction(outcome="ABSTAINED", risk_level="NONE", model_version=model_ver)
+            default_metrics.record_abstention(reason_code=reason)
+            logger.info(
+                "event=prediction_abstained model=%s variable=%s reason=%s duration_ms=%.2f",
+                model_ver,
+                var_name,
+                reason,
+                duration_ms,
+            )
+        else:
+            risk = getattr(response.risk_level, "value", str(response.risk_level)) if response.risk_level else "UNKNOWN"
+            default_metrics.record_prediction(outcome="COMPLETED", risk_level=risk, model_version=model_ver)
+            logger.info(
+                "event=prediction_completed model=%s variable=%s risk=%s duration_ms=%.2f",
+                model_ver,
+                var_name,
+                risk,
+                duration_ms,
             )

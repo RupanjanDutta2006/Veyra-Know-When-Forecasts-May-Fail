@@ -53,7 +53,9 @@ Overview/
         ├── Day-14.md
         ├── Day-15.md
         ├── Day-16.md
-        └── Day-17.md
+        ├── Day-17.md
+        ├── Day-18.md
+        └── Day-19.md
 ```
 
 ---
@@ -105,6 +107,7 @@ Overview/
 - [Day 16](./Phase-2/Builder-1/Day-16.md) — Visual Forecast Risk
 - [Day 17](./Phase-2/Builder-1/Day-17.md) — End-to-End Integration + Upstream Efficiency Hardening
 - [Day 18](./Phase-2/Builder-1/Day-18.md) — Deployment & Production Readiness
+- [Day 19](./Phase-2/Builder-1/Day-19.md) — Production Monitoring, Observability & Operational Reliability
 
 
 ### Builder 2

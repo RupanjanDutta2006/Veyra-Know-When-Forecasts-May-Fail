@@ -1,5 +1,7 @@
 """Production FastAPI Middleware for Security, Correlation, Logging, and Rate Limiting."""
+import json
 import logging
+import re
 import time
 import uuid
 from typing import Callable
@@ -8,11 +10,11 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from backend.app.core.config import settings
+from backend.app.core.metrics import default_metrics
 from backend.app.core.rate_limiter import default_rate_limiter
 
-import re
-
 logger = logging.getLogger("veyra.access")
+
 
 # Allowed characters for client-supplied request IDs: alphanumeric, hyphen, underscore, dot, colon (max 64 chars)
 _REQUEST_ID_REGEX = re.compile(r"^[a-zA-Z0-9_\-\.:]{1,64}$")
@@ -40,6 +42,8 @@ RATE_LIMIT_EXEMPT_PATHS = {
     "/openapi.json",
     f"{settings.API_V1_STR}/health",
     "/health",
+    f"{settings.API_V1_STR}/metrics",
+    "/metrics",
 }
 
 
@@ -81,37 +85,74 @@ class StructuredLoggingMiddleware(BaseHTTPMiddleware):
     """Middleware recording structured request latency, completion, and diagnostic metrics."""
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        start_time = time.time()
+        start_time = time.perf_counter()
         client_ip = request.client.host if request.client else "unknown"
         request_id = getattr(request.state, "request_id", "-")
 
         try:
             response: Response = await call_next(request)
-            duration_ms = round((time.time() - start_time) * 1000, 2)
+            duration_ms = round((time.perf_counter() - start_time) * 1000, 2)
+
+            default_metrics.record_http_request(
+                method=request.method,
+                path=request.url.path,
+                status_code=response.status_code,
+                duration_ms=duration_ms,
+            )
 
             if settings.STRUCTURED_LOGGING:
-                logger.info(
-                    "request_complete method=%s path=%s status=%d duration_ms=%.2f client_ip=%s request_id=%s",
+                if settings.LOG_FORMAT.lower() == "json":
+                    log_data = {
+                        "event": "request_complete",
+                        "method": request.method,
+                        "path": request.url.path,
+                        "status": response.status_code,
+                        "duration_ms": duration_ms,
+                        "client_ip": client_ip,
+                        "request_id": request_id,
+                    }
+                    logger.info(json.dumps(log_data))
+                else:
+                    logger.info(
+                        "event=request_complete method=%s path=%s status=%d duration_ms=%.2f client_ip=%s request_id=%s",
+                        request.method,
+                        request.url.path,
+                        response.status_code,
+                        duration_ms,
+                        client_ip,
+                        request_id,
+                    )
+
+            return response
+        except Exception as exc:
+            duration_ms = round((time.perf_counter() - start_time) * 1000, 2)
+            default_metrics.record_http_request(
+                method=request.method,
+                path=request.url.path,
+                status_code=500,
+                duration_ms=duration_ms,
+            )
+            if settings.LOG_FORMAT.lower() == "json":
+                log_data = {
+                    "event": "request_failed",
+                    "method": request.method,
+                    "path": request.url.path,
+                    "error": str(exc),
+                    "duration_ms": duration_ms,
+                    "client_ip": client_ip,
+                    "request_id": request_id,
+                }
+                logger.error(json.dumps(log_data))
+            else:
+                logger.error(
+                    "event=request_failed method=%s path=%s error=%s duration_ms=%.2f client_ip=%s request_id=%s",
                     request.method,
                     request.url.path,
-                    response.status_code,
+                    exc,
                     duration_ms,
                     client_ip,
                     request_id,
                 )
-
-            return response
-        except Exception as exc:
-            duration_ms = round((time.time() - start_time) * 1000, 2)
-            logger.error(
-                "request_failed method=%s path=%s error=%s duration_ms=%.2f client_ip=%s request_id=%s",
-                request.method,
-                request.url.path,
-                exc,
-                duration_ms,
-                client_ip,
-                request_id,
-            )
             raise exc
 
 
@@ -130,6 +171,19 @@ class RateLimitingMiddleware(BaseHTTPMiddleware):
 
         if is_limited:
             request_id = getattr(request.state, "request_id", "-")
+            default_metrics.record_http_request(
+                method=request.method,
+                path=path,
+                status_code=429,
+                duration_ms=0.0,
+            )
+            logger.warning(
+                "event=rate_limit_exceeded path=%s client_ip=%s retry_after=%d request_id=%s",
+                path,
+                client_ip,
+                retry_after,
+                request_id,
+            )
             response = JSONResponse(
                 status_code=429,
                 content={
