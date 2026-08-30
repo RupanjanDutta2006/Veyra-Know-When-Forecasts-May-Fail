@@ -41,11 +41,13 @@ def create_application() -> FastAPI:
     # 1. Register centralized safe error handlers
     register_exception_handlers(app)
 
-    # 2. Configure CORS middleware
+    # 2. Configure CORS middleware (configurable & secure for production)
+    cors_origins = settings.CORS_ORIGINS
+    allow_all = settings.CORS_ALLOW_ALL or ("*" in cors_origins)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=True,
+        allow_origins=["*"] if allow_all else cors_origins,
+        allow_credentials=not allow_all,
         allow_methods=["*"],
         allow_headers=["*"],
     )
@@ -71,6 +73,7 @@ def create_application() -> FastAPI:
     app.include_router(api_router, prefix=settings.API_V1_STR)
 
     @app.get("/dashboard", include_in_schema=False)
+    @app.get("/dashboard/", include_in_schema=False)
     async def dashboard():
         """Serve built frontend dashboard single-page app."""
         index_file = frontend_dist / "index.html"
@@ -95,3 +98,13 @@ def create_application() -> FastAPI:
 
 
 app = create_application()
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(
+        "backend.app.main:app",
+        host=settings.HOST,
+        port=settings.PORT,
+        reload=settings.DEBUG,
+    )

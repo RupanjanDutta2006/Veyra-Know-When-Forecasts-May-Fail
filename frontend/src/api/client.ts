@@ -13,13 +13,12 @@ import {
   PredictionResponse,
 } from './types';
 
-// Resolve base API URL from environment variable or fallback to empty string (relative) / localhost
+// Resolve base API URL from environment variable or fallback to empty string (same-origin relative URL)
 const DEFAULT_BASE_URL =
-  import.meta.env?.VITE_API_BASE_URL !== undefined
+  import.meta.env?.VITE_API_BASE_URL !== undefined && import.meta.env.VITE_API_BASE_URL !== ''
     ? import.meta.env.VITE_API_BASE_URL
-    : window.location.port === '5173'
-    ? '' // Use Vite proxy in development
-    : 'http://127.0.0.1:8000';
+    : '';
+
 
 export class VeyraApiClient {
   private baseUrl: string;

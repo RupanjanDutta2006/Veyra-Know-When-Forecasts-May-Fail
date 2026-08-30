@@ -31,13 +31,14 @@ export const Footer: React.FC<FooterProps> = ({
           </div>
           <div className="footer-meta-item">
             <a
-              href="http://127.0.0.1:8000/docs"
+              href="/docs"
               target="_blank"
               rel="noopener noreferrer"
               style={{ color: 'var(--accent-cyan)', textDecoration: 'none' }}
             >
               API Docs →
             </a>
+
           </div>
         </div>
       </div>
