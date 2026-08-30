@@ -17,6 +17,7 @@ Overview/
 │
 ├── README.md
 ├── FINAL-PROJECT-VERIFICATION.md
+├── VEYRA-COMPLETE-PROJECT-GUIDE.md
 │
 ├── Phase-1/
 │   ├── Builder-1/
@@ -122,3 +123,4 @@ Phase 2 Builder 2 documentation will be added when Phase 2 Builder 2 development
 ## Full Project Verification
 
 - [Final Full-Project Verification](./FINAL-PROJECT-VERIFICATION.md) — Comprehensive Phase 1 + Phase 2 Integration, Architecture, Safety & Release Verification Report
+- [Complete Project Master Guide & Knowledge Transfer](./VEYRA-COMPLETE-PROJECT-GUIDE.md) — Exhaustive Technical Deep-Dive, Beginner Explanations, Viva & Hackathon Guide
