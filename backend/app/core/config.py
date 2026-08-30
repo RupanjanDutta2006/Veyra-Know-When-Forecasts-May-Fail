@@ -48,7 +48,7 @@ class Settings(BaseModel):
         default_factory=lambda: float(os.getenv("RETRY_BACKOFF_FACTOR", "0.3"))
     )
 
-    # In-memory Caching
+    # In-memory Caching (Location / Geocoding)
     CACHE_ENABLED: bool = Field(
         default_factory=lambda: os.getenv("CACHE_ENABLED", "True").lower() in ("true", "1", "yes")
     )
@@ -57,6 +57,20 @@ class Settings(BaseModel):
     )
     CACHE_TTL_SECONDS: int = Field(
         default_factory=lambda: int(os.getenv("CACHE_TTL_SECONDS", "3600"))
+    )
+
+    # In-memory Short-Lived Weather Forecast Caching & Deduplication (Day 17)
+    WEATHER_CACHE_ENABLED: bool = Field(
+        default_factory=lambda: os.getenv("WEATHER_CACHE_ENABLED", "True").lower() in ("true", "1", "yes")
+    )
+    WEATHER_CACHE_MAX_SIZE: int = Field(
+        default_factory=lambda: int(os.getenv("WEATHER_CACHE_MAX_SIZE", "512"))
+    )
+    WEATHER_CACHE_TTL_SECONDS: int = Field(
+        default_factory=lambda: int(os.getenv("WEATHER_CACHE_TTL_SECONDS", "120"))
+    )
+    WEATHER_DEDUP_ENABLED: bool = Field(
+        default_factory=lambda: os.getenv("WEATHER_DEDUP_ENABLED", "True").lower() in ("true", "1", "yes")
     )
 
     # In-process Rate Limiting / Abuse Protection

@@ -237,5 +237,4 @@ The following architectural hardening is **explicitly deferred to Day 17**:
 - **Automated Frontend Test Suite (51/51 tests)**: **PASS**
 - **Frontend Production Build (`vite build`)**: **PASS**
 - **Deterministic Smoke Test Suites (Builder 2, Final, Historical)**: **PASS**
-- **Live Upstream Browser Verification**: **BLOCKED — UPSTREAM DAILY QUOTA EXHAUSTED**
-- **Weather Caching / Request Deduplication**: **DEFERRED TO DAY 17**
+- **Weather Caching / Request Deduplication**: **RESOLVED IN [DAY 17](./Day-17.md)**

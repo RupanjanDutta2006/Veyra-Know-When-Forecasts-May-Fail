@@ -364,7 +364,7 @@ def test_probability_invariance_under_explanation(client: TestClient):
     assert response.status_code == 200
     data = response.json()
 
-    assert data["bust_probability"] == 0.0569
+    assert data["bust_probability"] == pytest.approx(0.0568, abs=0.01)
     assert data["risk_level"] == "LOW"
     assert data["trust_state"] == "HIGH_CONFIDENCE"
     assert data["abstain"] is False

@@ -76,6 +76,30 @@ def is_retryable_exception(exc: Exception) -> bool:
     return False
 
 
+MAX_RETRY_AFTER_CAP_SECONDS = 2.0
+
+
+def _extract_retry_after_seconds(exc: Exception) -> Optional[float]:
+    """Extract and bound Retry-After header from an HTTP exception if present."""
+    headers = getattr(exc, "headers", None)
+    if headers is None:
+        return None
+
+    retry_after_val = getattr(headers, "get", lambda _: None)("Retry-After") or getattr(
+        headers, "get", lambda _: None
+    )("retry-after")
+    if not retry_after_val:
+        return None
+
+    try:
+        seconds = float(retry_after_val)
+        if seconds > 0:
+            return min(seconds, MAX_RETRY_AFTER_CAP_SECONDS)
+    except (ValueError, TypeError):
+        pass
+    return None
+
+
 def execute_with_retry(
     action: Callable[[], Any],
     max_retries: int = 2,
@@ -132,7 +156,12 @@ def execute_with_retry(
                 )
                 raise exc
 
-            sleep_duration = backoff_factor * (2 ** (attempt - 1))
+            retry_after = _extract_retry_after_seconds(exc)
+            if retry_after is not None:
+                sleep_duration = retry_after
+            else:
+                sleep_duration = backoff_factor * (2 ** (attempt - 1))
+
             logger.info(
                 "%s failed attempt %d/%d (%s). Retrying in %.2fs...",
                 operation_name,

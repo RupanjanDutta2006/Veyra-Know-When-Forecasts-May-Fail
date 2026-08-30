@@ -1,10 +1,17 @@
 """Real Weather Ingestion Service using Open-Meteo GEFS / GFS public ensemble API."""
+import copy
 import json
 import logging
 import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
 from typing import Any, Callable, Optional
+from backend.app.core.cache import (
+    BoundedTTLCache,
+    SingleFlight,
+    forecast_cache,
+    forecast_deduplicator,
+)
 from backend.app.core.config import settings
 from backend.app.core.http_retry import execute_with_retry
 from backend.app.data.qc import ForecastQualityControl, QualityControlResult
@@ -36,6 +43,7 @@ class OpenMeteoGEFSWeatherService(BaseWeatherService):
 
     Implements BaseWeatherService. Strictly converts raw vendor responses
     into CanonicalForecastRecord structures and runs rigorous Quality Control.
+    Features bounded short-lived in-memory caching and concurrent in-flight request deduplication.
     """
 
     def __init__(
@@ -48,6 +56,11 @@ class OpenMeteoGEFSWeatherService(BaseWeatherService):
         location_service: Optional[BaseLocationService] = None,
         max_retries: Optional[int] = None,
         retry_backoff_factor: Optional[float] = None,
+        cache: Optional[BoundedTTLCache] = None,
+        enable_cache: Optional[bool] = None,
+        cache_ttl: Optional[int] = None,
+        deduplicator: Optional[SingleFlight] = None,
+        enable_dedup: Optional[bool] = None,
     ):
         self.api_url = api_url
         self.qc = qc_validator or ForecastQualityControl()
@@ -69,6 +82,24 @@ class OpenMeteoGEFSWeatherService(BaseWeatherService):
             if retry_backoff_factor is not None
             else settings.RETRY_BACKOFF_FACTOR
         )
+        self.enable_cache = (
+            enable_cache
+            if enable_cache is not None
+            else settings.WEATHER_CACHE_ENABLED
+        )
+        self.cache_ttl = (
+            cache_ttl
+            if cache_ttl is not None
+            else settings.WEATHER_CACHE_TTL_SECONDS
+        )
+        self.cache = cache if cache is not None else forecast_cache
+        self.enable_dedup = (
+            enable_dedup
+            if enable_dedup is not None
+            else settings.WEATHER_DEDUP_ENABLED
+        )
+        self.deduplicator = deduplicator if deduplicator is not None else forecast_deduplicator
+
 
     def _default_http_client(self, url: str) -> dict[str, Any]:
         """Perform HTTP GET request using standard library urllib with bounded retry and backoff."""
@@ -195,6 +226,37 @@ class OpenMeteoGEFSWeatherService(BaseWeatherService):
 
         return records
 
+    def _fetch_raw_forecast(self, query_url: str) -> dict[str, Any]:
+        """Fetch raw JSON payload with bounded TTL caching and in-flight deduplication."""
+        # 1. Fast-path cache lookup
+        if self.enable_cache and self.cache is not None:
+            cached = self.cache.get(query_url)
+            if cached is not None:
+                logger.debug("Forecast cache HIT for %s", query_url)
+                return copy.deepcopy(cached)
+
+        # 2. Worker action executed under deduplication leader
+        def _do_fetch() -> dict[str, Any]:
+            # Double-check cache inside leader in case another flight populated it
+            if self.enable_cache and self.cache is not None:
+                cached = self.cache.get(query_url)
+                if cached is not None:
+                    return copy.deepcopy(cached)
+
+            raw = self.http_client(query_url)
+            # Store in cache only on successful, non-empty response
+            if self.enable_cache and self.cache is not None and raw:
+                self.cache.set(query_url, raw, ttl=self.cache_ttl)
+            return raw
+
+        # 3. Deduplicate in-flight concurrent requests for identical query_url
+        if self.enable_dedup and self.deduplicator is not None:
+            result = self.deduplicator.do(query_url, _do_fetch)
+        else:
+            result = _do_fetch()
+
+        return copy.deepcopy(result)
+
     def get_forecast(
         self, location: str, target_date: Optional[str] = None
     ) -> WeatherResult:
@@ -214,7 +276,7 @@ class OpenMeteoGEFSWeatherService(BaseWeatherService):
         query_url = self.build_query_url(latitude, longitude, target_date)
 
         try:
-            raw_data = self.http_client(query_url)
+            raw_data = self._fetch_raw_forecast(query_url)
         except Exception as exc:
             logger.error("Failed to query weather API for location '%s': %s", location, exc)
             return WeatherResult(
@@ -225,6 +287,7 @@ class OpenMeteoGEFSWeatherService(BaseWeatherService):
                 metadata={"status": ReasonCode.DATA_UNAVAILABLE.value},
                 error=f"Weather ingestion failed: {exc}",
             )
+
 
         # Parse canonical records
         records = self.parse_canonical_records(raw_data, location, latitude, longitude)

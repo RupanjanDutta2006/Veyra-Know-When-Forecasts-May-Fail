@@ -52,7 +52,8 @@ Overview/
         ├── Day-13.md
         ├── Day-14.md
         ├── Day-15.md
-        └── Day-16.md
+        ├── Day-16.md
+        └── Day-17.md
 ```
 
 ---
@@ -102,6 +103,8 @@ Overview/
 - [Day 14](./Phase-2/Builder-1/Day-14.md) — Production API Hardening
 - [Day 15](./Phase-2/Builder-1/Day-15.md) — Frontend Dashboard
 - [Day 16](./Phase-2/Builder-1/Day-16.md) — Visual Forecast Risk
+- [Day 17](./Phase-2/Builder-1/Day-17.md) — End-to-End Integration + Upstream Efficiency Hardening
+
 
 ### Builder 2
 

@@ -18,10 +18,15 @@ def default_agent() -> ForecastBustAgent:
 
 
 @pytest.fixture(autouse=True)
-def reset_rate_limiter_between_tests():
-    """Reset rate limiter state between test cases for deterministic test isolation."""
+def reset_state_between_tests():
+    """Reset rate limiter, forecast cache, and deduplicator between test cases for test isolation."""
+    from backend.app.core.cache import forecast_cache, forecast_deduplicator
     from backend.app.core.rate_limiter import default_rate_limiter
 
     default_rate_limiter.reset()
+    forecast_cache.clear()
+    forecast_deduplicator.reset()
     yield
     default_rate_limiter.reset()
+    forecast_cache.clear()
+    forecast_deduplicator.reset()
