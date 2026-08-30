@@ -2,6 +2,7 @@
 import copy
 import json
 import logging
+import time
 import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
@@ -14,6 +15,7 @@ from backend.app.core.cache import (
 )
 from backend.app.core.config import settings
 from backend.app.core.http_retry import execute_with_retry
+from backend.app.core.metrics import default_metrics
 from backend.app.data.qc import ForecastQualityControl, QualityControlResult
 from backend.app.schemas.location import ResolvedLocation
 from backend.app.schemas.prediction import ReasonCode
@@ -226,14 +228,32 @@ class OpenMeteoGEFSWeatherService(BaseWeatherService):
 
         return records
 
+    @staticmethod
+    def _classify_upstream_error(exc: Exception) -> str:
+        """Categorize upstream exceptions into standardized operational telemetry outcomes."""
+        err_str = str(exc).lower()
+        if "429" in err_str:
+            return "HTTP_429"
+        if any(code in err_str for code in ("500", "502", "503", "504")):
+            return "HTTP_5XX"
+        if "timeout" in err_str or isinstance(exc, TimeoutError):
+            return "TIMEOUT"
+        if isinstance(exc, (json.JSONDecodeError, ValueError)):
+            return "MALFORMED_RESPONSE"
+        return "NETWORK_ERROR"
+
     def _fetch_raw_forecast(self, query_url: str) -> dict[str, Any]:
-        """Fetch raw JSON payload with bounded TTL caching and in-flight deduplication."""
+        """Fetch raw JSON payload with bounded TTL caching, deduplication, and operational telemetry."""
         # 1. Fast-path cache lookup
         if self.enable_cache and self.cache is not None:
             cached = self.cache.get(query_url)
             if cached is not None:
-                logger.debug("Forecast cache HIT for %s", query_url)
+                logger.debug("event=cache_hit component=openmeteo_service query_url=%s", query_url)
                 return copy.deepcopy(cached)
+            else:
+                logger.debug("event=cache_miss component=openmeteo_service query_url=%s", query_url)
+        elif not self.enable_cache:
+            logger.debug("event=cache_disabled component=openmeteo_service")
 
         # 2. Worker action executed under deduplication leader
         def _do_fetch() -> dict[str, Any]:
@@ -243,7 +263,27 @@ class OpenMeteoGEFSWeatherService(BaseWeatherService):
                 if cached is not None:
                     return copy.deepcopy(cached)
 
-            raw = self.http_client(query_url)
+            start_t = time.perf_counter()
+            try:
+                raw = self.http_client(query_url)
+                duration_ms = round((time.perf_counter() - start_t) * 1000, 2)
+                default_metrics.record_upstream_request("openmeteo", "SUCCESS", duration_ms)
+                logger.info(
+                    "event=upstream_fetch_complete provider=openmeteo outcome=SUCCESS duration_ms=%.2f",
+                    duration_ms,
+                )
+            except Exception as exc:
+                duration_ms = round((time.perf_counter() - start_t) * 1000, 2)
+                outcome = self._classify_upstream_error(exc)
+                default_metrics.record_upstream_request("openmeteo", outcome, duration_ms)
+                logger.warning(
+                    "event=upstream_fetch_failed provider=openmeteo outcome=%s duration_ms=%.2f error=%s",
+                    outcome,
+                    duration_ms,
+                    exc,
+                )
+                raise exc
+
             # Store in cache only on successful, non-empty response
             if self.enable_cache and self.cache is not None and raw:
                 self.cache.set(query_url, raw, ttl=self.cache_ttl)
@@ -263,6 +303,8 @@ class OpenMeteoGEFSWeatherService(BaseWeatherService):
         """Fetch live or mocked forecast data, validate QC, and return standardized WeatherResult."""
         coords = self.resolve_coordinates(location)
         if coords is None:
+            default_metrics.record_abstention(ReasonCode.INVALID_LOCATION.value)
+            logger.info("event=location_resolution_failed location=%s", location)
             return WeatherResult(
                 location=location,
                 target_date=target_date,
@@ -278,6 +320,7 @@ class OpenMeteoGEFSWeatherService(BaseWeatherService):
         try:
             raw_data = self._fetch_raw_forecast(query_url)
         except Exception as exc:
+            default_metrics.record_abstention(ReasonCode.DATA_UNAVAILABLE.value)
             logger.error("Failed to query weather API for location '%s': %s", location, exc)
             return WeatherResult(
                 location=location,
@@ -288,10 +331,10 @@ class OpenMeteoGEFSWeatherService(BaseWeatherService):
                 error=f"Weather ingestion failed: {exc}",
             )
 
-
         # Parse canonical records
         records = self.parse_canonical_records(raw_data, location, latitude, longitude)
         if not records:
+            default_metrics.record_abstention(ReasonCode.DATA_NOT_READY.value)
             return WeatherResult(
                 location=location,
                 target_date=target_date,
@@ -304,6 +347,8 @@ class OpenMeteoGEFSWeatherService(BaseWeatherService):
         # Execute Quality Control checks
         qc_result = self.qc.validate_records(records)
         if not qc_result.passed:
+            reason = qc_result.reason_code.value if qc_result.reason_code else ReasonCode.QC_FAILED.value
+            default_metrics.record_abstention(reason)
             logger.warning("Quality control failed for location '%s': %s", location, qc_result.violations)
             return WeatherResult(
                 location=location,
@@ -313,7 +358,7 @@ class OpenMeteoGEFSWeatherService(BaseWeatherService):
                 is_available=False,
                 quality_flags=qc_result.flags,
                 metadata={
-                    "status": qc_result.reason_code.value if qc_result.reason_code else ReasonCode.QC_FAILED.value,
+                    "status": reason,
                     "violations": qc_result.violations,
                 },
                 error=f"Quality control checks failed: {'; '.join(qc_result.violations[:3])}",

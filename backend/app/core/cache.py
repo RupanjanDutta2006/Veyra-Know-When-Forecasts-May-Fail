@@ -6,6 +6,7 @@ import time
 from typing import Any, Callable, Dict, Iterator, Optional, Tuple
 
 from backend.app.core.config import settings
+from backend.app.core.metrics import default_metrics
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +41,7 @@ class BoundedTTLCache:
         with self._lock:
             if key not in self._cache:
                 self._misses += 1
+                default_metrics.record_cache_miss()
                 return default
 
             value, expiry_time = self._cache[key]
@@ -47,11 +49,13 @@ class BoundedTTLCache:
                 # Remove expired entry
                 del self._cache[key]
                 self._misses += 1
+                default_metrics.record_cache_miss()
                 return default
 
             # Move to end to signify recent access (LRU)
             self._cache.move_to_end(key)
             self._hits += 1
+            default_metrics.record_cache_hit()
             return value
 
     def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
@@ -81,12 +85,14 @@ class BoundedTTLCache:
                 if k in self._cache:
                     del self._cache[k]
                     self._evictions += 1
+                    default_metrics.record_cache_eviction()
             return
 
         # Evict oldest (least recently used)
         if self._cache:
             self._cache.popitem(last=False)
             self._evictions += 1
+            default_metrics.record_cache_eviction()
 
     def delete(self, key: str) -> bool:
         """Remove a key from the cache."""
@@ -212,6 +218,8 @@ class SingleFlight:
                 flight = self._Flight()
                 self._flights[key] = flight
                 is_leader = True
+
+        default_metrics.record_singleflight(is_leader)
 
         if not is_leader:
             flight.event.wait()

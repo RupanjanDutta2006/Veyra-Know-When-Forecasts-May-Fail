@@ -88,8 +88,14 @@ class Settings(BaseModel):
     LOG_LEVEL: str = Field(
         default_factory=lambda: os.getenv("LOG_LEVEL", "INFO")
     )
+    LOG_FORMAT: str = Field(
+        default_factory=lambda: os.getenv("LOG_FORMAT", "text")
+    )
     STRUCTURED_LOGGING: bool = Field(
         default_factory=lambda: os.getenv("STRUCTURED_LOGGING", "True").lower() in ("true", "1", "yes")
+    )
+    METRICS_ENABLED: bool = Field(
+        default_factory=lambda: os.getenv("METRICS_ENABLED", "True").lower() in ("true", "1", "yes")
     )
     ENABLE_SECURITY_HEADERS: bool = Field(
         default_factory=lambda: os.getenv("ENABLE_SECURITY_HEADERS", "True").lower() in ("true", "1", "yes")
