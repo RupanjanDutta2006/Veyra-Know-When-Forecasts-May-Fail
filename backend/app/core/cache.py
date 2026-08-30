@@ -165,3 +165,91 @@ location_cache = BoundedTTLCache(
     default_ttl=settings.CACHE_TTL_SECONDS,
     enabled=settings.CACHE_ENABLED,
 )
+
+# Default global short-lived weather forecast response cache (Day 17)
+forecast_cache = BoundedTTLCache(
+    maxsize=settings.WEATHER_CACHE_MAX_SIZE,
+    default_ttl=settings.WEATHER_CACHE_TTL_SECONDS,
+    enabled=settings.WEATHER_CACHE_ENABLED,
+)
+
+
+class SingleFlight:
+    """Thread-safe in-flight request deduplication (Flight Coalescing).
+
+    Ensures that for any given key, only one execution of a slow/network operation
+    is in progress at any time. Concurrent callers for the same key await the active
+    flight and share the identical result (or exception) without duplicate upstream calls.
+    """
+
+    class _Flight:
+        def __init__(self):
+            self.event = threading.Event()
+            self.result: Any = None
+            self.exception: Optional[BaseException] = None
+            self.waiters: int = 1
+
+    def __init__(self, enabled: bool = True):
+        self.enabled = enabled
+        self._lock = threading.Lock()
+        self._flights: Dict[str, SingleFlight._Flight] = {}
+        self._total_calls: int = 0
+        self._coalesced_calls: int = 0
+
+    def do(self, key: str, action: Callable[[], Any]) -> Any:
+        """Execute action or await active flight for key."""
+        if not self.enabled:
+            return action()
+
+        with self._lock:
+            self._total_calls += 1
+            if key in self._flights:
+                flight = self._flights[key]
+                flight.waiters += 1
+                self._coalesced_calls += 1
+                is_leader = False
+            else:
+                flight = self._Flight()
+                self._flights[key] = flight
+                is_leader = True
+
+        if not is_leader:
+            flight.event.wait()
+            if flight.exception is not None:
+                raise flight.exception
+            return flight.result
+
+        try:
+            result = action()
+            flight.result = result
+            return result
+        except BaseException as exc:
+            flight.exception = exc
+            raise exc
+        finally:
+            with self._lock:
+                self._flights.pop(key, None)
+            flight.event.set()
+
+    def stats(self) -> Dict[str, Any]:
+        """Return operational metrics."""
+        with self._lock:
+            return {
+                "active_flights": len(self._flights),
+                "total_calls": self._total_calls,
+                "coalesced_calls": self._coalesced_calls,
+                "enabled": self.enabled,
+            }
+
+    def reset(self) -> None:
+        """Reset internal metrics and flights."""
+        with self._lock:
+            self._flights.clear()
+            self._total_calls = 0
+            self._coalesced_calls = 0
+
+
+# Default global in-flight request deduplicator (Day 17)
+forecast_deduplicator = SingleFlight(
+    enabled=settings.WEATHER_DEDUP_ENABLED,
+)
