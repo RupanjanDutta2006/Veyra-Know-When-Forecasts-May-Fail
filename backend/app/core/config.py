@@ -103,5 +103,28 @@ class Settings(BaseModel):
         default_factory=lambda: int(os.getenv("MAX_MULTI_LOCATION_BATCH_SIZE", "50"))
     )
 
+    # Server & Deployment Configuration
+    HOST: str = Field(
+        default_factory=lambda: os.getenv("HOST", "0.0.0.0")
+    )
+    PORT: int = Field(
+        default_factory=lambda: int(os.getenv("PORT", "8000"))
+    )
+
+    # CORS Configuration (Production Security)
+    CORS_ORIGINS: list[str] = Field(
+        default_factory=lambda: [
+            origin.strip()
+            for origin in os.getenv(
+                "CORS_ORIGINS",
+                "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000,http://localhost:8000,http://127.0.0.1:8000",
+            ).split(",")
+            if origin.strip()
+        ]
+    )
+    CORS_ALLOW_ALL: bool = Field(
+        default_factory=lambda: os.getenv("CORS_ALLOW_ALL", "False").lower() in ("true", "1", "yes")
+    )
+
 
 settings = Settings()

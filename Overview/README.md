@@ -104,6 +104,7 @@ Overview/
 - [Day 15](./Phase-2/Builder-1/Day-15.md) — Frontend Dashboard
 - [Day 16](./Phase-2/Builder-1/Day-16.md) — Visual Forecast Risk
 - [Day 17](./Phase-2/Builder-1/Day-17.md) — End-to-End Integration + Upstream Efficiency Hardening
+- [Day 18](./Phase-2/Builder-1/Day-18.md) — Deployment & Production Readiness
 
 
 ### Builder 2
