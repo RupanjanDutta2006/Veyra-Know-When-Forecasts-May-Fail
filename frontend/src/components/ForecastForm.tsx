@@ -305,7 +305,7 @@ export const ForecastForm: React.FC<ForecastFormProps> = ({
           <div className="form-group">
             <label htmlFor="valid-time-input" className="form-label">
               Valid Target (UTC)
-              <span className="form-hint">Optional valid timestamp (defaults to entire horizon)</span>
+              <span className="form-hint">Optional valid timestamp (defaults to 24h forecast horizon)</span>
             </label>
             <input
               id="valid-time-input"

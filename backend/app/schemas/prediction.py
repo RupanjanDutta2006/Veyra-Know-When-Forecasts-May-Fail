@@ -65,6 +65,7 @@ SUPPORTED_MODEL_TYPES: set[str] = {
     "logistic",
     "baseline",
     "default",
+    "veyra-v3-benchmark-lightgbm",
 }
 
 MAX_SUPPORTED_LEAD_HOURS: int = 384  # 16-day NOAA GEFS operational horizon
@@ -100,13 +101,32 @@ class PredictionRequest(BaseModel):
     )
     model_type: Optional[str] = Field(
         default=None,
-        description="Optional model type identifier or override (e.g., prototype-gbm-v1, baseline-logistic-v1.0)",
+        description="Optional model type identifier or compatibility override (e.g., prototype-gbm-v1, baseline-logistic-v1.0, veyra-v3-benchmark-lightgbm)",
+        examples=["prototype-gbm-v1"],
+        json_schema_extra={
+            "enum": [
+                "prototype-gbm-v1",
+                "baseline-logistic-v1.0",
+                "veyra-v3-benchmark-lightgbm",
+            ],
+            "example": "prototype-gbm-v1",
+        },
     )
     target_date: Optional[str] = Field(
         default=None,
         description="Optional target forecast date (ISO format YYYY-MM-DD)",
         examples=["2026-09-01"],
     )
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "location": "Kolkata",
+                "variable": "temperature_2m",
+                "model_type": "prototype-gbm-v1",
+            }
+        }
+    }
 
     @model_validator(mode="after")
     def validate_request_payload(self) -> "PredictionRequest":
@@ -137,7 +157,7 @@ class PredictionRequest(BaseModel):
             if not mt_clean or mt_clean not in SUPPORTED_MODEL_TYPES:
                 raise ValueError(
                     f"Unsupported model_type '{self.model_type}'. "
-                    f"Supported model types: prototype-gbm-v1, baseline-logistic-v1.0"
+                    f"Supported model types: prototype-gbm-v1, baseline-logistic-v1.0, veyra-v3-benchmark-lightgbm"
                 )
 
         # 4. Target Date validation
