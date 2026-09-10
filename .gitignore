@@ -87,6 +87,15 @@ data/training/*
 !data/training/.gitkeep
 models/*
 !models/.gitkeep
+!models/*/
+!models/day4/*.joblib
+!models/day4/*.json
+!models/v2/*.joblib
+!models/v2/*.json
+!models/v3/*.joblib
+!models/v3/*.json
+!models/champion/*.joblib
+!models/champion/*.json
 *.nc
 *.grib
 *.grib2
@@ -94,6 +103,10 @@ models/*
 *.h5
 *.hdf5
 *.joblib
+!models/day4/*.joblib
+!models/v2/*.joblib
+!models/v3/*.joblib
+!models/champion/*.joblib
 *.pkl
 # Frontend dependencies & build artifacts
 node_modules/
@@ -101,4 +114,8 @@ frontend/node_modules/
 frontend/dist/
 .vite/
 .eslintcache
+
+# Local scratch and temporary test verification
+scratch/
+
 

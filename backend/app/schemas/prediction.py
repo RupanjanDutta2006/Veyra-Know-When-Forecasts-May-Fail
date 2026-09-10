@@ -1,7 +1,7 @@
 """Prediction request and response schemas."""
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Optional
+from typing import Any, Optional
 from pydantic import BaseModel, Field, model_validator
 
 from backend.app.schemas.explainability import ExplanationItem
@@ -239,6 +239,55 @@ class PredictionResponse(BaseModel):
     explanation: Optional["ExplanationItem"] = Field(
         default=None,
         description="Deterministic physical feature attribution and explanation summary",
+    )
+    # Builder 2 Advanced Intelligence Fields
+    confidence_index: Optional[float] = Field(
+        default=None,
+        ge=0.0,
+        le=1.0,
+        description="Confidence index (0.0 - 1.0) assessing prediction certainty",
+    )
+    uncertainty_pct: Optional[float] = Field(
+        default=None,
+        ge=0.0,
+        le=100.0,
+        description="Estimated uncertainty percentage associated with the prediction",
+    )
+    ood_score: Optional[float] = Field(
+        default=None,
+        description="Out-of-distribution score from training distribution",
+    )
+    stability_index: Optional[float] = Field(
+        default=None,
+        description="Trajectory and spread stability index",
+    )
+    structural_overconfidence: Optional[bool] = Field(
+        default=None,
+        description="Flag indicating narrow ensemble spread despite high historical error growth",
+    )
+    failure_fingerprint: Optional[dict[str, Any]] = Field(
+        default=None,
+        description="Structured multi-group instability fingerprint and trajectory regime evidence",
+    )
+    dominant_risk_drivers: Optional[list[str]] = Field(
+        default=None,
+        description="Top physical features driving bust risk",
+    )
+    decision_mode: Optional[str] = Field(
+        default=None,
+        description="Operational decision mode (e.g. STANDARD_MONITORING, ACTIVE_ALERT, ABSTAINED)",
+    )
+    decision_guidance: Optional[str] = Field(
+        default=None,
+        description="Human-readable operational guidance based on risk level and trust state",
+    )
+    within_trust_horizon: Optional[bool] = Field(
+        default=None,
+        description="Whether current forecast lead time is within the operational trust horizon",
+    )
+    operational_trust_horizon_hours: Optional[int] = Field(
+        default=None,
+        description="Maximum forecast lead time (hours) where model error remains bounded",
     )
 
     model_config = {

@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import pandas as pd
 
+from backend.app.data.unit_conversion import UnitConverter
 from backend.app.schemas.weather import CanonicalForecastRecord
 from backend.app.services.base import WeatherResult
 
@@ -56,6 +57,26 @@ def weather_result_to_dataframe(weather_result: WeatherResult) -> pd.DataFrame:
         q10_val = rec_dict.get("q10", np.nan)
         q90_val = rec_dict.get("q90", np.nan)
         member_cnt = rec_dict.get("member_count", 31)
+
+        # Standardize wind speed unit to km/h expected by Builder 2 ML models
+        if var_name == "wind_speed_10m":
+            norm_unit = UnitConverter.normalize_unit_string(unit_str)
+            if norm_unit != "km/h":
+                if val is not None:
+                    val = UnitConverter.convert(float(val), norm_unit, "km/h")
+                if ens_mean is not None:
+                    ens_mean = UnitConverter.convert(float(ens_mean), norm_unit, "km/h")
+                if ens_std is not None and not np.isnan(ens_std):
+                    ens_std = UnitConverter.convert(float(ens_std), norm_unit, "km/h")
+                if ens_min is not None and not np.isnan(ens_min):
+                    ens_min = UnitConverter.convert(float(ens_min), norm_unit, "km/h")
+                if ens_max is not None and not np.isnan(ens_max):
+                    ens_max = UnitConverter.convert(float(ens_max), norm_unit, "km/h")
+                if q10_val is not None and not np.isnan(q10_val):
+                    q10_val = UnitConverter.convert(float(q10_val), norm_unit, "km/h")
+                if q90_val is not None and not np.isnan(q90_val):
+                    q90_val = UnitConverter.convert(float(q90_val), norm_unit, "km/h")
+                unit_str = "km/h"
 
         rows.append({
             "location": loc,

@@ -17,10 +17,38 @@ class QualityControlResult:
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
+def calculate_standard_pressure_at_elevation(elevation_m: float) -> float:
+    """Compute standard atmospheric pressure (hPa) at a given elevation (m) using the
+    International Standard Atmosphere (ISA) barometric formula for the troposphere:
+    P(h) = 1013.25 * (1 - 2.25577e-5 * h) ** 5.25588
+    """
+    h = max(-500.0, min(elevation_m, 9000.0))
+    return 1013.25 * ((1.0 - 2.25577e-5 * h) ** 5.25588)
+
+
+def get_surface_pressure_bounds(elevation_m: Optional[float] = None) -> tuple[float, float, str]:
+    """Return scientifically valid physical bounds (min_hPa, max_hPa, unit) for surface pressure.
+
+    - If elevation is known:
+      Uses standard atmospheric pressure at that elevation with synoptic variation margin:
+      [max(300.0, P_std - 120.0), min(1100.0, P_std + 80.0)]
+    - If elevation is unknown:
+      Covers terrestrial surface elevations on Earth (Dead Sea -430m to high settlements ~6000m):
+      [450.0, 1100.0] hPa.
+    Values below 300.0 hPa or above 1100.0 hPa are physically impossible on Earth's surface.
+    """
+    if elevation_m is not None:
+        p_std = calculate_standard_pressure_at_elevation(elevation_m)
+        min_p = max(300.0, round(p_std - 120.0, 1))
+        max_p = min(1100.0, round(p_std + 80.0, 1))
+        return (min_p, max_p, "hPa")
+    return (450.0, 1100.0, "hPa")
+
+
 # Physical bounds dictionary for meteorological parameters
 PHYSICAL_BOUNDS: dict[str, tuple[float, float, str]] = {
     "temperature_2m": (-90.0, 60.0, "celsius"),
-    "surface_pressure": (800.0, 1100.0, "hPa"),
+    "surface_pressure": (450.0, 1100.0, "hPa"),
     "wind_speed_10m": (0.0, 150.0, "m/s"),
     "relative_humidity_2m": (0.0, 100.0, "%"),
     "precipitation": (0.0, 1000.0, "mm"),
@@ -106,6 +134,19 @@ class ForecastQualityControl:
             var_name = rec.variable
             if var_name in PHYSICAL_BOUNDS:
                 min_val, max_val, expected_unit = PHYSICAL_BOUNDS[var_name]
+
+                # Elevation-aware surface pressure refinement
+                if var_name == "surface_pressure":
+                    elev = getattr(rec, "elevation", None)
+                    if elev is None:
+                        try:
+                            from backend.app.services.location_service import KNOWN_BENCHMARK_LOCATIONS
+                            loc_key = rec.location.lower().strip()
+                            if loc_key in KNOWN_BENCHMARK_LOCATIONS:
+                                elev = KNOWN_BENCHMARK_LOCATIONS[loc_key].elevation_m
+                        except Exception:
+                            pass
+                    min_val, max_val, expected_unit = get_surface_pressure_bounds(elev)
 
                 # Check unit
                 if rec.unit.lower() != expected_unit.lower():

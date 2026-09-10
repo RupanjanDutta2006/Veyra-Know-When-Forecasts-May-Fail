@@ -1,2 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Git LFS tracking for authoritative V3 model artifacts
+models/v3/*.joblib filter=lfs diff=lfs merge=lfs -text
+

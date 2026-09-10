@@ -65,7 +65,7 @@ def test_full_pipeline_builder2_model_inference_and_calibration():
     if not response.abstain:
         assert response.bust_probability is not None
         assert 0.0 <= response.bust_probability <= 1.0
-        assert response.model_version == "prototype-gbm-v1"
+        assert response.model_version in ("veyra-v3-benchmark-lightgbm", "prototype-gbm-v1")
         assert response.risk_level in ["LOW", "MEDIUM", "HIGH"]
         assert response.explanation is not None
         assert response.explanation.primary_driver is not None

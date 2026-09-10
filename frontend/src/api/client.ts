@@ -87,6 +87,8 @@ export class VeyraApiClient {
       request.custom_leads ||
       (preset === '16_DAY'
         ? [24, 48, 72, 96, 120, 144, 168, 192, 216, 240, 264, 288, 312, 336, 360, 384]
+        : preset === '10_DAY'
+        ? [24, 48, 72, 96, 120, 144, 168, 192, 216, 240]
         : [24, 48, 72, 96, 120, 144, 168]);
 
     const baseIssueTime = request.issue_time || new Date().toISOString();

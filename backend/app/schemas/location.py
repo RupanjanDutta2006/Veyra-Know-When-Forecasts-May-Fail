@@ -39,6 +39,10 @@ class ResolvedLocation(BaseModel):
         default=None,
         description="Local timezone identifier (e.g., 'Asia/Kolkata', 'Europe/London')",
     )
+    elevation: Optional[float] = Field(
+        default=None,
+        description="Station elevation in meters above mean sea level",
+    )
     source: str = Field(
         default="dynamic_geocoding",
         description="Resolution mechanism ('direct_coordinates', 'geocoding_api', 'registry', 'cache')",
@@ -58,5 +62,6 @@ class ResolvedLocation(BaseModel):
             "country": self.country,
             "state_region": self.state_region,
             "timezone": self.timezone,
+            "elevation": self.elevation,
             "source": self.source,
         }

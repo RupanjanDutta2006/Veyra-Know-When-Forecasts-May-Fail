@@ -7,6 +7,7 @@ import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
 from typing import Any, Callable, Optional
+import numpy as np
 from backend.app.core.cache import (
     BoundedTTLCache,
     SingleFlight,
@@ -137,6 +138,7 @@ class OpenMeteoGEFSWeatherService(BaseWeatherService):
         latitude: float,
         longitude: float,
         target_date: Optional[str] = None,
+        forecast_days: int = 16,
     ) -> str:
         """Construct the Open-Meteo GEFS ensemble query URL."""
         params: dict[str, str] = {
@@ -150,6 +152,8 @@ class OpenMeteoGEFSWeatherService(BaseWeatherService):
         if target_date:
             params["start_date"] = target_date
             params["end_date"] = target_date
+        else:
+            params["forecast_days"] = str(forecast_days)
 
         return f"{self.api_url}?{urllib.parse.urlencode(params)}"
 
@@ -165,6 +169,12 @@ class OpenMeteoGEFSWeatherService(BaseWeatherService):
         hourly = raw_response.get("hourly", {})
         hourly_units = raw_response.get("hourly_units", {})
         times = hourly.get("time", [])
+        elevation = raw_response.get("elevation")
+        if elevation is not None:
+            try:
+                elevation = float(elevation)
+            except (ValueError, TypeError):
+                elevation = None
 
         if not times:
             return []
@@ -188,6 +198,13 @@ class OpenMeteoGEFSWeatherService(BaseWeatherService):
             "precipitation": ("precipitation", "mm"),
         }
 
+        # Pre-scan member column keys in hourly payload for each source variable
+        # GEFS ensemble members in Open-Meteo are named e.g. 'temperature_2m_member01' .. 'temperature_2m_member30'
+        var_member_cols: dict[str, list[str]] = {}
+        for src_var in var_mapping:
+            m_keys = sorted([k for k in hourly.keys() if k.startswith(f"{src_var}_member")])
+            var_member_cols[src_var] = m_keys
+
         for i, valid_time_str in enumerate(times):
             try:
                 valid_dt = datetime.fromisoformat(valid_time_str)
@@ -210,10 +227,47 @@ class OpenMeteoGEFSWeatherService(BaseWeatherService):
                         raw_val = vals[i]
                         val_float = float(raw_val) if raw_val is not None else None
 
+                        # Collect valid ensemble member values
+                        m_keys = var_member_cols.get(src_var, [])
+                        member_vals: list[float] = []
+                        if m_keys:
+                            # Include control forecast member if valid
+                            if val_float is not None:
+                                member_vals.append(val_float)
+                            for mk in m_keys:
+                                m_series = hourly.get(mk, [])
+                                if i < len(m_series) and m_series[i] is not None:
+                                    try:
+                                        mv = float(m_series[i])
+                                        if not np.isnan(mv):
+                                            member_vals.append(mv)
+                                    except (ValueError, TypeError):
+                                        pass
+
+                        if member_vals:
+                            n_members = len(member_vals)
+                            m_arr = np.array(member_vals, dtype=float)
+                            ens_mean = float(np.mean(m_arr))
+                            ens_std = float(np.std(m_arr, ddof=1)) if n_members > 1 else 0.0
+                            ens_min = float(np.min(m_arr))
+                            ens_max = float(np.max(m_arr))
+                            ens_q10 = float(np.percentile(m_arr, 10))
+                            ens_q90 = float(np.percentile(m_arr, 90))
+                        else:
+                            # Upstream provided no ensemble member arrays
+                            n_members = 31  # Nominal GEFS member count fallback for backward compatibility
+                            ens_mean = val_float
+                            ens_std = None  # Genuine missing ensemble: DO NOT fabricate fake 0.0
+                            ens_min = val_float
+                            ens_max = val_float
+                            ens_q10 = val_float
+                            ens_q90 = val_float
+
                         record = CanonicalForecastRecord(
                             location=location,
                             latitude=latitude,
                             longitude=longitude,
+                            elevation=elevation,
                             issue_time=issue_time_iso,
                             valid_time=valid_time_iso,
                             lead_hours=lead_hours,
@@ -221,8 +275,13 @@ class OpenMeteoGEFSWeatherService(BaseWeatherService):
                             unit=canon_unit,
                             value=val_float,
                             source="NOAA_GEFS_OPENMETEO",
-                            member_count=31,  # Standard GEFS member count
-                            ensemble_mean=val_float,
+                            member_count=n_members,
+                            ensemble_mean=ens_mean,
+                            ensemble_std=ens_std,
+                            ensemble_min=ens_min,
+                            ensemble_max=ens_max,
+                            q10=ens_q10,
+                            q90=ens_q90,
                         )
                         records.append(record)
 

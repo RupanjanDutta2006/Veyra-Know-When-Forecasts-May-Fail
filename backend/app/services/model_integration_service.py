@@ -14,6 +14,8 @@ from typing import Any, Optional, Union
 
 from backend.app.builder2.feature_pipeline import FEATURE_COLUMN_NAMES
 from backend.app.builder2.model_adapter import Builder2ModelAdapter
+from backend.app.builder2.v3_feature_pipeline import V3_FEATURE_NAMES
+from backend.app.builder2.v3_model_adapter import Builder2V3ModelAdapter
 from backend.app.core.config import settings
 from backend.app.schemas.model_integration import (
     FORBIDDEN_GROUND_TRUTH_FIELDS,
@@ -35,6 +37,7 @@ from backend.app.services.model_service import (
 logger = logging.getLogger(__name__)
 
 DEFAULT_BUILDER2_MODEL_PATH = Path("models/builder2/prototype-gbm-v1")
+DEFAULT_V3_MODEL_PATH = Path("models/v3")
 DEFAULT_BASELINE_MODEL_PATH = Path("models/baseline_logistic_v1.joblib")
 
 
@@ -64,7 +67,9 @@ class ModelIntegrationService(BaseModelIntegrationService):
         self,
         primary_model: Optional[BaseModelService] = None,
         builder2_model_dir: Optional[Union[str, Path]] = None,
-        fallback_to_baseline: bool = True,
+        v3_model_dir: Optional[Union[str, Path]] = None,
+        fallback_to_baseline: bool = False,
+        active_model_key: Optional[str] = None,
     ):
         self._models: dict[str, BaseModelService] = {}
         self._active_model_name: str = "unavailable"
@@ -73,13 +78,38 @@ class ModelIntegrationService(BaseModelIntegrationService):
         if primary_model is not None:
             self.register_model("custom_primary", primary_model, set_active=True)
         else:
-            self._auto_discover_and_register_models(builder2_model_dir)
+            self._auto_discover_and_register_models(
+                custom_builder2_dir=builder2_model_dir,
+                custom_v3_dir=v3_model_dir,
+                requested_active_key=active_model_key,
+            )
 
     def _auto_discover_and_register_models(
-        self, custom_builder2_dir: Optional[Union[str, Path]] = None
+        self,
+        custom_builder2_dir: Optional[Union[str, Path]] = None,
+        custom_v3_dir: Optional[Union[str, Path]] = None,
+        requested_active_key: Optional[str] = None,
     ) -> None:
         """Discover and initialize available model adapters based on environment and disk artifacts."""
-        # 1. Check for Builder 2 LightGBM model
+        # 1. Authoritative V3 Challenger Model (Primary)
+        target_v3_dir = (
+            custom_v3_dir
+            or (custom_builder2_dir if custom_builder2_dir and "v3" in str(custom_builder2_dir) else None)
+            or os.getenv("BUILDER2_V3_MODEL_DIR")
+            or (str(DEFAULT_V3_MODEL_PATH) if DEFAULT_V3_MODEL_PATH.exists() else None)
+        )
+
+        v3_registered = False
+        if target_v3_dir and Path(target_v3_dir).exists():
+            try:
+                v3_adapter = Builder2V3ModelAdapter(model_dir=target_v3_dir)
+                self.register_model("builder2_v3", v3_adapter)
+                v3_registered = True
+                logger.info("ModelIntegrationService registered authoritative model 'builder2_v3' (is_ready=%s)", v3_adapter.is_ready)
+            except Exception as exc:
+                logger.warning("Failed to initialize Builder2V3ModelAdapter from %s: %s", target_v3_dir, exc)
+
+        # 2. Builder 2 Prototype Model (Legacy/Regression)
         target_b2_dir = (
             custom_builder2_dir
             or settings.BUILDER2_MODEL_DIR
@@ -87,31 +117,43 @@ class ModelIntegrationService(BaseModelIntegrationService):
             or (str(DEFAULT_BUILDER2_MODEL_PATH) if DEFAULT_BUILDER2_MODEL_PATH.exists() else None)
         )
 
-        b2_loaded = False
-        if target_b2_dir:
+        b2_registered = False
+        if target_b2_dir and Path(target_b2_dir).exists() and not (custom_builder2_dir and "v3" in str(custom_builder2_dir)):
             try:
                 b2_adapter = Builder2ModelAdapter(model_dir=target_b2_dir)
-                if b2_adapter.is_ready:
-                    self.register_model("builder2_gbm", b2_adapter, set_active=True)
-                    b2_loaded = True
-                    logger.info("ModelIntegrationService registered primary model 'builder2_gbm' from %s", target_b2_dir)
+                self.register_model("builder2_gbm", b2_adapter)
+                b2_registered = True
+                logger.info("ModelIntegrationService registered legacy model 'builder2_gbm' (is_ready=%s)", b2_adapter.is_ready)
             except Exception as exc:
                 logger.warning("Failed to initialize Builder2ModelAdapter from %s: %s", target_b2_dir, exc)
 
-        # 2. Check for Baseline Logistic model as fallback
+        # 3. Check for Baseline Logistic model (Historical regression only)
         if self.fallback_to_baseline and DEFAULT_BASELINE_MODEL_PATH.exists():
             try:
                 baseline_service = LiveLogisticModelService()
                 if baseline_service.is_ready:
-                    self.register_model("baseline_logistic", baseline_service, set_active=not b2_loaded)
+                    self.register_model("baseline_logistic", baseline_service)
                     logger.info("ModelIntegrationService registered fallback model 'baseline_logistic'")
             except Exception as exc:
                 logger.warning("Failed to initialize LiveLogisticModelService: %s", exc)
 
-        # 3. If no model loaded successfully, register explicit unavailable service
-        if not self._models:
+        # Determine active model key
+        env_active = os.getenv("BUILDER2_ACTIVE_MODEL")
+        if requested_active_key and requested_active_key in self._models:
+            self._active_model_name = requested_active_key
+        elif env_active and env_active in self._models:
+            self._active_model_name = env_active
+        elif custom_v3_dir or (custom_builder2_dir and "v3" in str(custom_builder2_dir)):
+            self._active_model_name = "builder2_v3" if "builder2_v3" in self._models else "unavailable"
+        elif "builder2_gbm" in self._models:
+            self._active_model_name = "builder2_gbm"
+        elif "builder2_v3" in self._models:
+            self._active_model_name = "builder2_v3"
+        elif not self._models:
             self.register_model("unavailable", UnavailableModelService(), set_active=True)
             logger.warning("ModelIntegrationService initialized in UNAVAILABLE state (no valid artifacts found)")
+        else:
+            self._active_model_name = list(self._models.keys())[0]
 
     def register_model(
         self, name: str, model_service: BaseModelService, set_active: bool = False
@@ -165,8 +207,18 @@ class ModelIntegrationService(BaseModelIntegrationService):
                 if math.isnan(val) or math.isinf(val):
                     return f"Non-finite feature value for '{feat_name}': {val}"
 
-        # If active model is Builder 2 LightGBM, check canonical 26-column contract
-        if self._active_model_name == "builder2_gbm":
+        # If active model is Builder 2 V3, check authoritative 50-column contract
+        if self._active_model_name == "builder2_v3":
+            missing_cols = [c for c in V3_FEATURE_NAMES if c not in features and c not in (feature_result.metadata.get("feature_names") or [])]
+            matrix_rows = feature_result.metadata.get("feature_matrix_rows")
+            if matrix_rows and isinstance(matrix_rows, list) and len(matrix_rows) > 0:
+                first_row = matrix_rows[0]
+                missing_cols = [c for c in V3_FEATURE_NAMES if c not in first_row]
+            if missing_cols:
+                return f"Missing required canonical features for Builder 2 V3 model: {missing_cols[:5]}"
+
+        # If active model is Builder 2 LightGBM prototype, check canonical 26-column contract
+        elif self._active_model_name == "builder2_gbm":
             missing_cols = [c for c in FEATURE_COLUMN_NAMES if c not in features and c not in (feature_result.metadata.get("feature_names") or [])]
             # If feature_matrix_rows exists, check columns there
             matrix_rows = feature_result.metadata.get("feature_matrix_rows")
@@ -300,6 +352,20 @@ class ModelIntegrationService(BaseModelIntegrationService):
         active = self.active_model
         version = getattr(active, "model_version", "unknown")
         is_ready = getattr(active, "is_ready", False)
+
+        if self._active_model_name == "builder2_v3":
+            return ModelMetadataInfo(
+                model_name="builder2_v3",
+                model_version=version or "veyra-v3-benchmark-lightgbm",
+                model_type="LightGBMBooster + IsotonicCalibrator",
+                feature_schema_version="veyra-50-features-v3.0",
+                expected_features=list(V3_FEATURE_NAMES),
+                expected_feature_count=len(V3_FEATURE_NAMES),
+                decision_threshold=getattr(active, "threshold", 0.060),
+                is_calibrated=True,
+                is_ready=is_ready,
+                artifact_path=str(getattr(active, "model_dir", DEFAULT_V3_MODEL_PATH)),
+            )
 
         if self._active_model_name == "builder2_gbm":
             return ModelMetadataInfo(
