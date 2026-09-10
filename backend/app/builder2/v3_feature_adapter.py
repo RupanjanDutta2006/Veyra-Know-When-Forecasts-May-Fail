@@ -109,8 +109,24 @@ class Builder2V3FeatureAdapter(BaseFeatureService):
             )
 
         # 4. Target record selection (match valid_time / target_date if specified)
-        selected_idx = 0
         target_valid = weather_result.metadata.get("valid_time") if weather_result.metadata else None
+        target_date = weather_result.target_date or (weather_result.metadata.get("target_date") if weather_result.metadata else None)
+        DEFAULT_OPERATIONAL_LEAD_HOURS = 24
+
+        def find_default_lead_idx(rows: List[Dict[str, Any]]) -> int:
+            """Find index of canonical 24h operational horizon (strictly valid_time > issue_time)."""
+            positive_candidates = [
+                (abs(m.get("lead_hours", 0) - DEFAULT_OPERATIONAL_LEAD_HOURS), idx)
+                for idx, m in enumerate(rows)
+                if m.get("lead_hours", 0) > 0
+            ]
+            if positive_candidates:
+                return min(positive_candidates, key=lambda x: x[0])[1]
+            return 0
+
+        default_idx = find_default_lead_idx(meta_rows) if meta_rows else 0
+        selected_idx = default_idx
+
         if target_valid and meta_rows:
             try:
                 dt_target = pd.to_datetime(target_valid, utc=True)
@@ -118,21 +134,29 @@ class Builder2V3FeatureAdapter(BaseFeatureService):
                     abs(pd.to_datetime(m["valid_time"], utc=True) - dt_target)
                     for m in meta_rows
                 ]
-                selected_idx = int(np.argmin(diffs))
+                best_idx = int(np.argmin(diffs))
+                if meta_rows[best_idx].get("lead_hours", 0) > 0:
+                    selected_idx = best_idx
+                else:
+                    selected_idx = default_idx
             except Exception as match_err:
                 logger.debug("Failed matching valid_time '%s': %s", target_valid, match_err)
-                selected_idx = 0
-        elif weather_result.target_date and meta_rows:
+                selected_idx = default_idx
+        elif target_date and meta_rows:
             try:
-                dt_target = pd.to_datetime(weather_result.target_date, utc=True)
+                dt_target = pd.to_datetime(target_date, utc=True)
                 diffs = [
                     abs(pd.to_datetime(m["valid_time"], utc=True) - dt_target)
                     for m in meta_rows
                 ]
-                selected_idx = int(np.argmin(diffs))
+                best_idx = int(np.argmin(diffs))
+                if meta_rows[best_idx].get("lead_hours", 0) > 0:
+                    selected_idx = best_idx
+                else:
+                    selected_idx = default_idx
             except Exception as match_err:
-                logger.debug("Failed matching target_date '%s': %s", weather_result.target_date, match_err)
-                selected_idx = 0
+                logger.debug("Failed matching target_date '%s': %s", target_date, match_err)
+                selected_idx = default_idx
 
         # 5. Extract target row and metadata
         target_row = X.iloc[selected_idx].to_dict()
@@ -159,7 +183,7 @@ class Builder2V3FeatureAdapter(BaseFeatureService):
             try:
                 import math
                 calc_lead = int(round((pd.to_datetime(target_valid, utc=True) - pd.to_datetime(target_issue, utc=True)).total_seconds() / 3600.0))
-                if calc_lead >= 0:
+                if calc_lead > 0:
                     features_dict["lead_hours"] = calc_lead
                     features_dict["lead_days"] = round(calc_lead / 24.0, 3)
                     features_dict["lead_decay_factor"] = round(max(0.0, 1.0 - (calc_lead / 240.0)), 4)

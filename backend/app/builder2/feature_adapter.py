@@ -89,7 +89,18 @@ class Builder2FeatureAdapter(BaseFeatureService):
                     candidate_indices = var_matches
 
             target_valid = weather_result.metadata.get("valid_time")
-            selected_idx = candidate_indices[0]
+            # Default to canonical 24h operational horizon among candidate indices
+            default_idx = candidate_indices[0]
+            if not metadata_df.empty and "lead_hours" in metadata_df.columns:
+                pos_leads = [
+                    (abs(metadata_df.loc[idx, "lead_hours"] - 24), idx)
+                    for idx in candidate_indices
+                    if metadata_df.loc[idx, "lead_hours"] > 0
+                ]
+                if pos_leads:
+                    default_idx = min(pos_leads, key=lambda x: x[0])[1]
+
+            selected_idx = default_idx
 
             if target_valid and not metadata_df.empty and "valid_time" in metadata_df.columns:
                 try:
@@ -97,20 +108,28 @@ class Builder2FeatureAdapter(BaseFeatureService):
                     sub_meta = metadata_df.loc[candidate_indices]
                     valid_times = pd.to_datetime(sub_meta["valid_time"], utc=True)
                     diffs = (valid_times - dt_target).abs()
-                    selected_idx = int(diffs.idxmin())
+                    best_idx = int(diffs.idxmin())
+                    if metadata_df.loc[best_idx, "lead_hours"] > 0:
+                        selected_idx = best_idx
+                    else:
+                        selected_idx = default_idx
                 except Exception as match_err:
                     logger.debug("Failed to match target valid_time '%s': %s", target_valid, match_err)
-                    selected_idx = candidate_indices[0]
+                    selected_idx = default_idx
             elif weather_result.target_date and not metadata_df.empty and "valid_time" in metadata_df.columns:
                 try:
                     dt_target = pd.to_datetime(weather_result.target_date, utc=True)
                     sub_meta = metadata_df.loc[candidate_indices]
                     valid_times = pd.to_datetime(sub_meta["valid_time"], utc=True)
                     diffs = (valid_times - dt_target).abs()
-                    selected_idx = int(diffs.idxmin())
+                    best_idx = int(diffs.idxmin())
+                    if metadata_df.loc[best_idx, "lead_hours"] > 0:
+                        selected_idx = best_idx
+                    else:
+                        selected_idx = default_idx
                 except Exception as match_err:
                     logger.debug("Failed to match target_date '%s': %s", weather_result.target_date, match_err)
-                    selected_idx = candidate_indices[0]
+                    selected_idx = default_idx
 
             # Extract selected target row
             target_row = X.loc[selected_idx].to_dict()
