@@ -1,0 +1,221 @@
+# Day 24 — Probabilistic Intelligence & Calibrated Serving Architecture
+
+**Phase**: 3 — Scientific Rigor, Retraining Decision & Probabilistic Intelligence
+**Day**: 24 — Probabilistic Intelligence
+**Authoritative Main Base**: `125dd131c9b6fb79121fa326990bbf8b171a472c` (Day 23 Merged & Certified)
+**Branch**: `phase3/day24-probabilistic-intelligence`
+**Status**: Verification & Handoff Audit Complete — Ready for Delivery
+
+---
+
+## 1. Objective
+
+Day 24 establishes **Probabilistic Intelligence** for the Veyra serving architecture. Following the frozen Day 23 championship decision (`RETAIN_WITH_TARGETED_FOLLOWUP`), this stage establishes rigorous probabilistic serving semantics, guarantees internal contract consistency, repairs physical explainability contradictions, and safely exposes certified benchmark evaluation metrics through dedicated API and UI layers without modifying frozen model artifacts or inventing unauthenticated thresholds.
+
+---
+
+## 2. Frozen Scientific Baseline
+
+This stage strictly preserves the scientific foundations certified in preceding milestones:
+- **Day 22**: Dataset, label, and anti-leakage certification (`Overview/Phase-3/Day-22-Dataset-Label-Leakage-Certification.md`).
+- **Day 23**: Championship decision retaining the V3 LightGBM model with Isotonic calibration (`Overview/Phase-3/Day-23-Model-Championship-Retraining-Decision.md`).
+- **Zero Retraining / Recalibration**: Model binaries, calibration mapping, and feature definitions are strictly frozen and bitwise preserved.
+
+---
+
+## 3. Active Serving Model
+
+- **Model Version**: `veyra-v3-benchmark-lightgbm`
+- **Model Family**: LightGBM Gradient Boosted Trees (Isotonic Calibrated)
+- **Feature Count**: Exactly 50 canonical meteorological features in fixed order
+- **Artifacts**:
+  - `models/v3/lightgbm_v3_challenger.joblib` (SHA-256: `00A8410746F4A0EECBF7E76AAA0565143FC948D0E06AEA65E7BCC4CE28A1C660`)
+  - `models/v3/probability_calibrator_v3.joblib` (SHA-256: `9F448606CE4338DED92F238A551B3A9D8E6D2CB5902E8BC687BCE5F5850AF531`)
+  - `models/v3/feature_names.json` (50 features)
+
+---
+
+## 4. Probability Contract
+
+- `bust_probability` in the public API represents the **calibrated probability** that forecast absolute error meets or exceeds the stratum-specific 95th-percentile error threshold ($q_{95}$) derived from historical Train reforecasts (2000–2013).
+- **Domain**: Strictly finite float in $[0.0, 1.0]$ for successful predictions; `null` when abstained or unavailable.
+- **Explicit Exclusions**: It is **not** severe weather probability, rain probability, or a generic weather accuracy score.
+- **Raw Probability Non-Exposure**: Raw uncalibrated LightGBM probabilities are restricted to internal diagnostics/logging and are strictly omitted from public response schemas.
+
+---
+
+## 5. Calibration Safety
+
+- **Zero Silent Fallback**: The serving pipeline never falls back to raw uncalibrated probabilities upon calibrator failure.
+- **Failure Behavior**: If the calibrator artifact is missing, unpickling fails, an exception occurs, or non-finite outputs (`NaN`, `inf`) are generated, the pipeline safely abstains:
+  - `bust_probability = null`
+  - `risk_level = null`
+  - `decision_mode = "ABSTAINED"`
+  - `trust_state = "UNAVAILABLE"`
+  - `reason_codes = ["CALIBRATION_FAILURE"]`
+  - `calibration_status = "FAILED"`
+- **Additive Status Contract**: Emits `calibration_status: "CALIBRATED" | "FAILED" | "UNAVAILABLE"`.
+
+---
+
+## 6. Risk Tier Contract
+
+Authoritative backend categorical risk boundaries are preserved without drift:
+- $P < 0.20 \rightarrow$ `LOW`
+- $0.20 \le P < 0.50 \rightarrow$ `MEDIUM`
+- $0.50 \le P < 0.75 \rightarrow$ `HIGH`
+- $P \ge 0.75 \rightarrow$ `CRITICAL`
+
+Frontend consumers must directly consume the backend `risk_level` and never recalculate thresholds client-side.
+
+---
+
+## 7. Probability Separation / Ambiguity Heuristics
+
+The response exposes two operational certainty heuristics derived from calibrated probability:
+- **Probability Separation Score (`confidence_index`)**: $2 \cdot |P - 0.5|$, assessing heuristic distance from maximum decision boundary ambiguity. Bounded in $[0.0, 1.0]$.
+- **Decision Boundary Ambiguity (`uncertainty_pct`)**: $100 \cdot (1 - 2 \cdot |P - 0.5|)$, assessing proximity to the 0.5 ambiguity threshold. Bounded in $[0.0, 100.0]\%$.
+- **Handoff Requirement**: These are mathematical heuristics assessing decision boundary proximity. They are **not** formal Bayesian confidence intervals or predictive uncertainty intervals.
+
+---
+
+## 8. OOD Diagnostics
+
+- Out-of-distribution Mahalanobis distance is exposed as `ood_score`.
+- **Serialization Safety**: Explicit `None` checks preserve valid numeric `0.0` values without null-coercion.
+- **Governance**: OOD remains strictly `DIAGNOSTIC_ONLY` and does **not** trigger production safety abstention.
+
+---
+
+## 9. Explanation / Failure Fingerprint Contract
+
+- **Physical Explanations**: Generated by `ForecastBustExplainer` as deterministic, rule-based physical heuristics assessing revision drift, ensemble spread, and lead horizon.
+- **Failure Fingerprints**: Classifies steps into 6 mutually exclusive physical regime archetypes (`RAPID_REVISION_SHOCK`, `LONG_LEAD_DECAY`, `DIURNAL_CONVECTIVE_MISMATCH`, `WIND_GRADIENT_SHEAR`, `TIGHT_CLUSTER_BREAKDOWN`, `STABLE_SYNOPTIC_CONSENSUS`).
+- **Terminology Rule**: Must **not** be described as TreeSHAP or causal meteorology models.
+
+---
+
+## 10. Pressure Explanation Repair
+
+- Repaired previous contradiction where surface pressure ensemble spread (recorded in Pascals, e.g. $\sim 84.2\text{ Pa}$) was erroneously evaluated against temperature spread thresholds ($^{\circ}\text{C}$), generating contradictory alarms.
+- Uses neutral scale-preserving factor semantics (`signal="ENSEMBLE_SPREAD"`, raw spread in $Pa$).
+- Primary driver correctly reports `stable_ensemble_agreement` with synoptic consensus in Pascals.
+
+---
+
+## 11. Evaluation API Architecture
+
+1. **`GET /v1/model/evaluation`**:
+   - Returns legacy prototype evaluation (`prototype-gbm-v1`, 26 features) for backward compatibility.
+2. **`GET /v1/model/evaluation?model=legacy`**:
+   - Explicit selector for legacy prototype evaluation.
+3. **`GET /v1/model/evaluation?model=v3`**:
+   - Selector query returning authoritative frozen V3 championship metrics.
+4. **`GET /v1/model/evaluation/v3`**:
+   - Dedicated authoritative endpoint returning certified V3 championship evaluation.
+5. **Unknown Selector (`?model=unknown`)**:
+   - Returns structured `UNAVAILABLE` status with reason code `UNKNOWN_MODEL`; never silently defaults to legacy.
+
+---
+
+## 12. Frozen V3 Metrics
+
+Authoritative Test partition metrics (116,250 rows, 155 cycles, 2017–2019):
+- **Average Precision (AP)**: `0.2047`
+- **PR-AUC (Trapezoidal)**: `0.2124` (preserved separate from AP)
+- **ROC-AUC**: `0.7698`
+- **Brier Score**: `0.053798`
+- **Brier Skill Score vs E0 ($BSS_{E0}$)**: `+0.0807`
+- **Brier Skill Score vs E1b ($BSS_{E1b}$)**: `+0.0778`
+- **Expected Calibration Error (ECE)**: `0.0064`
+
+---
+
+## 13. Generalization Limits
+
+The V3 championship evaluation is accompanied by certified boundaries:
+1. Certified across 25 canonical NOAA stations in India only.
+2. Certified for 3 surface target variables (`temperature_2m`, `wind_speed_10m`, `surface_pressure`).
+3. Certified across 10 benchmark lead horizons (24h to 240h).
+4. Evaluated on historical GEFS $N=5$ reforecasts; operational live $N=31$ equivalence is uncertified.
+5. Chronological holdout restricted to 2017–2019; post-2019 operational performance is uncertified.
+6. Geographic generalization to unseen stations is uncertified.
+
+---
+
+## 14. Reliability Data Safety
+
+- `models/v3/v3_reliability_bins.json` does **not** exist.
+- Zero synthetic reliability bins or fabricated calibration curves were introduced.
+- Scalar ECE (`0.0064`) remains the only authenticated calibration metric.
+
+---
+
+## 15. Observability
+
+In-process, thread-safe, bounded metrics (`GET /v1/metrics`) track:
+- Calibration outcomes: `calibration_statuses_total` (`CALIBRATED`, `FAILED`, `UNAVAILABLE`).
+- Calibrator failure count: `calibrator_failures_total`.
+- Upstream telemetry, latency, cache hits/misses, and SingleFlight coalescing.
+- Zero raw uncalibrated probabilities logged at INFO level.
+
+---
+
+## 16. Backend → Frontend Contract
+
+- **Authoritative Ownership**: The backend authoritatively owns probability calculation, risk categorization, trust assessment, abstention, decision modes, and physical explanations.
+- **Frontend Role**: Formatting and display only. Frontend must not recalculate risk, infer decision modes from numbers, or convert abstentions to 0% probability.
+
+---
+
+## 17. Timeline Integration
+
+- Multi-horizon timelines are obtained via concurrent client calls to `POST /v1/predict` (or `POST /v1/predict/batch`) with stepped `valid_time` horizons (24h to 384h).
+- Upstream 16-day forecast ingestion is fetched once and shared across horizon steps via backend SingleFlight deduplication and TTL caching.
+- Disallowed: Client-side interpolation of missing or abstained timeline points.
+
+---
+
+## 18. CORS / Deployment Handoff
+
+- Development CORS permits `http://localhost:5173`, `http://localhost:3000`, `http://localhost:8000`, etc.
+- For an externally deployed frontend domain, the `CORS_ORIGINS` environment variable must be set to include the client's origin domain.
+- Frontend should discover the API via `VITE_API_BASE_URL` or relative reverse proxy, never hard-coding `127.0.0.1:8000`.
+
+---
+
+## 19. Verification
+
+- **Day 24 Focused Backend Suite**: 27 passed, 0 failed in 0.39s.
+- **Comprehensive Focused Audit Suite**: 173 passed, 0 failed in 51.10s.
+- **Full Backend Regression Suite**: **398 passed, 0 failed, 0 skipped in 118.80s**.
+- **Frontend Automated Test Suite**: 55 passed, 0 failed in 2.54s.
+- **Frontend Production Build**: Built cleanly with zero TypeScript or Vite errors in 1.08s.
+- **Smoke Tests**: `smoke_test_builder2.py` (100% pass), `smoke_test_final.py` (100% pass).
+
+---
+
+## 20. Backend Handoff Audit
+
+**Audit Verdict**: **B. BACKEND VERIFIED WITH NON-BLOCKING HANDOFF NOTES**
+
+Three non-blocking operational notes documented for the separate frontend team:
+1. **Timeline Architecture**: The backend does not maintain a dedicated stateful timeline route; the client-driven concurrent `/v1/predict` pattern is the certified, cache-optimized integration pattern.
+2. **CORS Configuration**: Deployment on external hosting requires configuring the `CORS_ORIGINS` environment variable.
+3. **Internal Endpoint Scoping**: `POST /v1/historical/batch` is an internal research tool and should not be wired into standard end-user UI.
+
+---
+
+## 21. Day 24 Final Verdict
+
+**DAY 24 PROBABILISTIC INTELLIGENCE CONTRACTS VERIFIED AND FINALIZED.**
+Calibrated serving semantics, failure safety, evaluation API separation, and handoff contracts are verified and ready for pull request review.
+
+---
+
+## Related Documentation
+
+- [Day 23 — Model Championship & Retraining Decision](./Day-23-Model-Championship-Retraining-Decision.md)
+- [Day 22 — Dataset, Label & Leakage Scientific Certification](./Day-22-Dataset-Label-Leakage-Certification.md)
+- [Day 21 — Authoritative V3 Model & Feature Pipeline Integration](./Day-21-V3-Integration.md)
+- [Central Development Overview](../README.md)

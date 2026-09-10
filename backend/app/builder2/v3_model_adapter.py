@@ -288,8 +288,31 @@ class Builder2V3ModelAdapter(BaseModelService):
             raw_prob = float(raw_prob_arr[0])
 
             # Predict calibrated probability using authoritative Isotonic Calibrator
-            cal_prob_arr = self.calibrator.predict(np.array([raw_prob]))
-            cal_prob = float(np.clip(cal_prob_arr[0], 0.0, 1.0))
+            try:
+                if self.calibrator is None:
+                    raise ValueError("Calibrator artifact is not loaded")
+                cal_prob_arr = self.calibrator.predict(np.array([raw_prob]))
+                val_cal = float(cal_prob_arr[0])
+                if math.isnan(val_cal) or math.isinf(val_cal):
+                    raise ValueError(f"Calibrator produced non-finite output: {val_cal}")
+                cal_prob = float(np.clip(val_cal, 0.0, 1.0))
+                calibration_status = "CALIBRATED"
+            except Exception as cal_err:
+                logger.error("V3 probability calibration failed: %s", cal_err)
+                return ModelResult(
+                    probability=None,
+                    model_version=self.model_version,
+                    is_ready=False,
+                    metadata={
+                        "status": ReasonCode.CALIBRATION_FAILURE.value,
+                        "calibration_status": "FAILED",
+                        "raw_probability": float(raw_prob),
+                        "historical_f1_threshold": self.threshold,
+                        "threshold": self.threshold,
+                        "calibration_error": str(cal_err),
+                    },
+                    error=f"Probability calibration failure: {cal_err}",
+                )
 
             # TreeSHAP feature contributions
             contribs = self.booster.predict(df_features, pred_contrib=True)[0]
@@ -306,11 +329,13 @@ class Builder2V3ModelAdapter(BaseModelService):
             # Metadata enrichment
             metadata: Dict[str, Any] = {
                 "status": "SUCCESS",
+                "calibration_status": calibration_status,
                 "model_name": "V3_Benchmark_Challenger",
                 "model_version": self.model_version,
                 "features_count": 50,
                 "raw_probability": float(raw_prob),
                 "calibrated_probability": float(cal_prob),
+                "historical_f1_threshold": self.threshold,
                 "threshold": self.threshold,
                 "ood_score": float(first_row_dict.get("ood_score", 0.0)),
                 "failure_fingerprint": {

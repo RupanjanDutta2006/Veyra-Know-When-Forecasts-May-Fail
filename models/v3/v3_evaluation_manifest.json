@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_type": "veyra_v3_championship_evaluation_manifest",
+  "model_name": "lightgbm_v3_challenger",
+  "model_version": "veyra-v3-benchmark-lightgbm",
+  "model_family": "LightGBM + Isotonic Calibration",
+  "model_artifact_sha256": "00A8410746F4A0EECBF7E76AAA0565143FC948D0E06AEA65E7BCC4CE28A1C660",
+  "calibrator_artifact_sha256": "9F448606CE4338DED92F238A551B3A9D8E6D2CB5902E8BC687BCE5F5850AF531",
+  "feature_contract_sha256": "265CFFBBD157A2B8B8B46D3702438050980043B5ED3A6A646A7969CDB9853355",
+  "feature_count": 50,
+  "calibration_method": "isotonic",
+  "evaluation_dataset": "canonical_reforecast_test",
+  "evaluation_split": "test",
+  "evaluation_period": "2017-01-01 to 2019-12-31",
+  "test_sample_count": 116250,
+  "test_cycle_count": 155,
+  "benchmark_scope": "25 canonical stations, 3 variables, 10 lead horizons",
+  "evaluation_status": "FROZEN_CHAMPIONSHIP",
+  "metric_definitions": {
+    "average_precision": "Weighted mean of precisions at each threshold (sklearn.metrics.average_precision_score)",
+    "pr_auc_trapezoidal": "Trapezoidal area under the precision-recall curve (np.trapz)",
+    "roc_auc": "Area under the receiver operating characteristic curve",
+    "brier_score": "Mean squared probability error against binary bust event",
+    "bss_vs_e0": "Brier Skill Score relative to climatology reference E0: 1 - (BS_V3 / BS_E0)",
+    "bss_vs_e1b": "Brier Skill Score relative to persistence/ensemble logistic reference E1b: 1 - (BS_V3 / BS_E1b)",
+    "ece": "Expected Calibration Error across 10 equal-width bins on [0, 1] with sample weighting"
+  },
+  "metrics": {
+    "average_precision": 0.2047,
+    "pr_auc_trapezoidal": 0.2124,
+    "roc_auc": 0.7698,
+    "brier_score": 0.053798,
+    "bss_vs_e0": 0.0807,
+    "bss_vs_e1b": 0.0778,
+    "ece": 0.0064
+  },
+  "provenance": {
+    "source_document": "Overview/Phase-3/Day-23-Model-Championship-Retraining-Decision.md",
+    "training_manifest": "models/v3/training_manifest.json",
+    "training_rows": 547500,
+    "validation_rows": 116250,
+    "test_rows": 116250,
+    "evaluation_date": "2026-09-10"
+  },
+  "generalization_limits": [
+    "Certified across 25 canonical synoptic stations in India only",
+    "Certified for 3 target variables: temperature_2m, wind_speed_10m, surface_pressure",
+    "Certified across 10 benchmark lead horizons (24h to 240h)",
+    "Certified on historical Test partition (2017-2019)",
+    "Evaluated on historical N=5 ensemble; operational live N=31 equivalence uncertified",
+    "Post-2019 operational performance uncertified",
+    "Unseen-station / universal geographic generalization uncertified",
+    "Model estimates empirical forecast-bust probability, not severe weather, disaster risk, or general meteorological failure"
+  ],
+  "frozen": true,
+  "generated_at": "2026-09-10T12:00:00Z"
+}

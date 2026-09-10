@@ -9,7 +9,7 @@ import logging
 import math
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 from backend.app.schemas.evaluation import (
     CalibrationMetadata,
@@ -17,6 +17,8 @@ from backend.app.schemas.evaluation import (
     EvaluationMetrics,
     EvaluationStatus,
     ModelEvaluationResponse,
+    V3EvaluationMetrics,
+    V3ModelEvaluationResponse,
 )
 from backend.app.services.model_integration_service import (
     ModelIntegrationService,
@@ -26,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_BUILDER2_METADATA_PATH = Path("models/day4/model_metadata.json")
 DEFAULT_BASELINE_METADATA_PATH = Path("models/baseline_logistic_v1_metadata.json")
+DEFAULT_V3_EVALUATION_PATH = Path("models/v3/v3_evaluation_manifest.json")
 
 # Recognized model identifier aliases
 SUPPORTED_ACTIVE_MODEL_ALIASES = {
@@ -33,6 +36,8 @@ SUPPORTED_ACTIVE_MODEL_ALIASES = {
     "prototype-gbm-v1",
     "gbm",
     "lightgbm",
+    "legacy",
+    "prototype",
 }
 
 SUPPORTED_BASELINE_MODEL_ALIASES = {
@@ -42,6 +47,13 @@ SUPPORTED_BASELINE_MODEL_ALIASES = {
     "logistic",
 }
 
+SUPPORTED_V3_MODEL_ALIASES = {
+    "v3",
+    "veyra-v3",
+    "veyra-v3-benchmark-lightgbm",
+    "lightgbm_v3_challenger",
+}
+
 
 class BaseEvaluationService(ABC):
     """Abstract interface for model evaluation access."""
@@ -49,7 +61,7 @@ class BaseEvaluationService(ABC):
     @abstractmethod
     def get_evaluation(
         self, model_name: Optional[str] = None
-    ) -> ModelEvaluationResponse:
+    ) -> Union[ModelEvaluationResponse, V3ModelEvaluationResponse]:
         """Retrieve validated evaluation metadata for the active or requested model."""
         pass
 
@@ -72,10 +84,12 @@ class EvaluationIntegrationService(BaseEvaluationService):
         model_integration_service: Optional[ModelIntegrationService] = None,
         builder2_metadata_path: Optional[Path] = None,
         baseline_metadata_path: Optional[Path] = None,
+        v3_evaluation_path: Optional[Path] = None,
     ):
         self.model_integration_service = model_integration_service or ModelIntegrationService()
         self.builder2_metadata_path = builder2_metadata_path or DEFAULT_BUILDER2_METADATA_PATH
         self.baseline_metadata_path = baseline_metadata_path or DEFAULT_BASELINE_METADATA_PATH
+        self.v3_evaluation_path = v3_evaluation_path or DEFAULT_V3_EVALUATION_PATH
 
     def _read_json_file(self, filepath: Path) -> Optional[dict[str, Any]]:
         """Safely read and parse a JSON metadata file from disk."""
@@ -88,6 +102,39 @@ class EvaluationIntegrationService(BaseEvaluationService):
         except Exception as exc:
             logger.warning("Failed to parse evaluation metadata JSON from '%s': %s", filepath, exc)
             return None
+
+    def get_v3_evaluation(self) -> V3ModelEvaluationResponse:
+        """Retrieve authoritative V3 frozen championship evaluation metadata."""
+        metadata = self._read_json_file(self.v3_evaluation_path)
+        if not metadata:
+            raise FileNotFoundError(f"V3 evaluation manifest not found at '{self.v3_evaluation_path}'")
+
+        metrics_dict = metadata.get("metrics", {})
+        v3_metrics = V3EvaluationMetrics(
+            average_precision=float(metrics_dict["average_precision"]),
+            pr_auc_trapezoidal=float(metrics_dict["pr_auc_trapezoidal"]),
+            roc_auc=float(metrics_dict["roc_auc"]),
+            brier_score=float(metrics_dict["brier_score"]),
+            bss_vs_e0=float(metrics_dict["bss_vs_e0"]),
+            bss_vs_e1b=float(metrics_dict["bss_vs_e1b"]),
+            ece=float(metrics_dict["ece"]),
+        )
+        return V3ModelEvaluationResponse(
+            model_name=metadata["model_name"],
+            model_version=metadata["model_version"],
+            model_family=metadata["model_family"],
+            feature_count=int(metadata["feature_count"]),
+            calibration_method=metadata["calibration_method"],
+            evaluation_dataset=metadata["evaluation_dataset"],
+            evaluation_period=metadata["evaluation_period"],
+            test_samples=int(metadata["test_sample_count"]),
+            test_cycles=int(metadata["test_cycle_count"]),
+            benchmark_scope=metadata["benchmark_scope"],
+            evaluation_status=metadata["evaluation_status"],
+            metrics=v3_metrics,
+            provenance=metadata.get("provenance", {}),
+            generalization_limits=metadata.get("generalization_limits", []),
+        )
 
     def _validate_and_build_metrics(self, raw: dict[str, Any]) -> Optional[EvaluationMetrics]:
         """Validate and construct EvaluationMetrics container enforcing value finiteness."""
@@ -123,7 +170,7 @@ class EvaluationIntegrationService(BaseEvaluationService):
 
     def get_evaluation(
         self, model_name: Optional[str] = None
-    ) -> ModelEvaluationResponse:
+    ) -> Union[ModelEvaluationResponse, V3ModelEvaluationResponse]:
         """Retrieve validated evaluation metadata for the active or requested model."""
         try:
             active_info = self.model_integration_service.get_active_model_info()
@@ -141,7 +188,9 @@ class EvaluationIntegrationService(BaseEvaluationService):
             # 1. Validate requested model name
             if req_name is not None:
                 req_lower = req_name.lower()
-                if req_lower in SUPPORTED_BASELINE_MODEL_ALIASES:
+                if req_lower in SUPPORTED_V3_MODEL_ALIASES:
+                    return self.get_v3_evaluation()
+                elif req_lower in SUPPORTED_BASELINE_MODEL_ALIASES:
                     return self.get_baseline_evaluation()
                 elif req_lower in active_aliases:
                     target_name = active_info.model_name

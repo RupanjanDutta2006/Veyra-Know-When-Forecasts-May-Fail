@@ -17,6 +17,14 @@ class TrustState(str, Enum):
     ABSTAINED = "ABSTAINED"
 
 
+class CalibrationStatus(str, Enum):
+    """Minimal status contract for probability calibration."""
+
+    CALIBRATED = "CALIBRATED"
+    FAILED = "FAILED"
+    UNAVAILABLE = "UNAVAILABLE"
+
+
 class RiskLevel(str, Enum):
     """Categorical risk level of forecast bust."""
 
@@ -41,6 +49,7 @@ class ReasonCode(str, Enum):
     OOD_DETECTED = "OOD_DETECTED"
     INSUFFICIENT_DATA = "INSUFFICIENT_DATA"
     EXTREME_VOLATILITY = "EXTREME_VOLATILITY"
+    CALIBRATION_FAILURE = "CALIBRATION_FAILURE"
     INTERNAL_ERROR = "INTERNAL_ERROR"
     SUCCESS = "SUCCESS"
 
@@ -230,7 +239,7 @@ class PredictionResponse(BaseModel):
         default=None,
         ge=0.0,
         le=1.0,
-        description="Estimated probability (0.0 - 1.0) of forecast bust. null when unavailable or abstained.",
+        description="Calibrated probability (0.0 - 1.0) that forecast absolute error meets or exceeds the stratum-specific bust threshold derived from historical Train reforecasts (2000-2013). null when unavailable or abstained.",
     )
     risk_level: Optional[RiskLevel] = Field(
         default=None,
@@ -260,22 +269,26 @@ class PredictionResponse(BaseModel):
         default=None,
         description="Deterministic physical feature attribution and explanation summary",
     )
+    calibration_status: Optional[str] = Field(
+        default=None,
+        description="Probability calibration status: CALIBRATED, FAILED, or UNAVAILABLE",
+    )
     # Builder 2 Advanced Intelligence Fields
     confidence_index: Optional[float] = Field(
         default=None,
         ge=0.0,
         le=1.0,
-        description="Confidence index (0.0 - 1.0) assessing prediction certainty",
+        description="Heuristic probability separation score 2*|P - 0.5| assessing distance from maximum decision boundary ambiguity (not a formal statistical confidence interval)",
     )
     uncertainty_pct: Optional[float] = Field(
         default=None,
         ge=0.0,
         le=100.0,
-        description="Estimated uncertainty percentage associated with the prediction",
+        description="Decision boundary ambiguity percentage 100*(1 - 2*|P - 0.5|) assessing proximity to 0.5 threshold (not a formal predictive uncertainty interval)",
     )
     ood_score: Optional[float] = Field(
         default=None,
-        description="Out-of-distribution score from training distribution",
+        description="Diagnostic out-of-distribution score from training distribution (diagnostic only, not active safety gate)",
     )
     stability_index: Optional[float] = Field(
         default=None,

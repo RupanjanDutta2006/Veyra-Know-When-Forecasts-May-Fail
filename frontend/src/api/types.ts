@@ -50,6 +50,7 @@ export interface PredictionResponse {
   model_version: string | null;
   data_version: string | null;
   explanation: ExplanationItem | null;
+  calibration_status?: string | null;
   confidence_index?: number | null;
   uncertainty_pct?: number | null;
   ood_score?: number | null;
@@ -137,4 +138,32 @@ export interface HorizonTimelineResult {
   successful_count: number;
   abstained_count: number;
   error_count: number;
+}
+
+export interface V3EvaluationMetrics {
+  average_precision: number;
+  pr_auc_trapezoidal: number;
+  roc_auc: number;
+  brier_score: number;
+  bss_vs_e0: number;
+  bss_vs_e1b: number;
+  ece: number;
+}
+
+export interface V3ModelEvaluationResponse {
+  model_name: string;
+  model_version: string;
+  model_family: string;
+  feature_count: number;
+  calibration_method: string;
+  evaluation_dataset: string;
+  evaluation_split?: string;
+  evaluation_period: string;
+  test_samples: number;
+  test_cycles: number;
+  benchmark_scope: string;
+  evaluation_status: string;
+  metrics: V3EvaluationMetrics;
+  provenance: Record<string, any>;
+  generalization_limits: string[];
 }
