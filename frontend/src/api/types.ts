@@ -167,3 +167,81 @@ export interface V3ModelEvaluationResponse {
   provenance: Record<string, any>;
   generalization_limits: string[];
 }
+
+export type DashboardMode = 'single' | 'standard_7d' | 'full_16d';
+export type DashboardStatus = 'SUCCESS' | 'PARTIAL' | 'ABSTAINED';
+
+export interface DashboardLocationContext {
+  query: string;
+  resolved_name?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  region_id?: string | null;
+}
+
+export interface DashboardTimelinePoint {
+  lead_hours: number;
+  lead_days: number;
+  valid_time: string;
+  bust_probability: number | null;
+  risk_level: RiskLevel | null;
+  trust_state: TrustState;
+  abstain: boolean;
+  reason_codes: string[];
+  calibration_status?: string | null;
+  decision_mode?: string | null;
+  within_trust_horizon?: boolean | null;
+  operational_trust_horizon_hours?: number | null;
+  is_certified_horizon: boolean;
+}
+
+export interface DashboardSummary {
+  available_points: number;
+  abstained_points: number;
+  total_points: number;
+  max_bust_probability: number | null;
+  max_risk_level: RiskLevel | null;
+  max_risk_lead_hours: number | null;
+  mean_bust_probability: number | null;
+  elevated_risk_points: number;
+  first_elevated_risk_lead_hours: number | null;
+  overall_decision_mode: string;
+}
+
+export interface DashboardScientificContext {
+  model_version: string;
+  model_family: string;
+  calibration_method: string;
+  feature_count: number;
+  probability_semantics: string;
+  benchmark_scope: string;
+  benchmark_lead_horizon_max_hours: number;
+  operational_horizon_max_hours: number;
+  historical_benchmark: V3EvaluationMetrics & {
+    dataset: string;
+    period: string;
+    test_samples: number;
+    test_cycles: number;
+  };
+  generalization_limits: string[];
+}
+
+export interface DashboardRequest {
+  location: string;
+  variable?: string;
+  mode?: DashboardMode;
+  issue_time?: string | null;
+}
+
+export interface DashboardIntelligenceResponse {
+  status: DashboardStatus;
+  location: DashboardLocationContext;
+  variable: string;
+  issue_time?: string | null;
+  mode: DashboardMode;
+  selected_prediction: PredictionResponse;
+  timeline: DashboardTimelinePoint[];
+  summary: DashboardSummary;
+  scientific_context: DashboardScientificContext;
+  request_id?: string | null;
+}

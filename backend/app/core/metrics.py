@@ -47,6 +47,12 @@ class ProcessMetrics:
         self._calibration_statuses: Dict[str, int] = defaultdict(int)
         self._calibrator_failures: int = 0
 
+        # Dashboard Intelligence Telemetry
+        self._dashboard_requests: Dict[str, int] = defaultdict(int)
+        self._dashboard_points_total: int = 0
+        self._dashboard_valid_points_total: int = 0
+        self._dashboard_abstained_points_total: int = 0
+
         self._start_time: float = time.time()
 
     def record_http_request(self, method: str, path: str, status_code: int, duration_ms: float) -> None:
@@ -140,6 +146,18 @@ class ProcessMetrics:
             if status == "FAILED":
                 self._calibrator_failures += 1
 
+    def record_dashboard_request(
+        self, outcome: str, total_points: int, valid_points: int, abstained_points: int
+    ) -> None:
+        """Record a dashboard intelligence orchestration request and points telemetry."""
+        if not self.enabled:
+            return
+        with self._lock:
+            self._dashboard_requests[outcome] += 1
+            self._dashboard_points_total += total_points
+            self._dashboard_valid_points_total += valid_points
+            self._dashboard_abstained_points_total += abstained_points
+
     def snapshot(self) -> Dict[str, Any]:
         """Return a read-only snapshot of all process-local metrics."""
         with self._lock:
@@ -157,6 +175,10 @@ class ProcessMetrics:
                 "abstentions_total": dict(self._abstentions),
                 "calibration_statuses_total": dict(self._calibration_statuses),
                 "calibrator_failures_total": self._calibrator_failures,
+                "dashboard_requests_total": dict(self._dashboard_requests),
+                "dashboard_points_total": self._dashboard_points_total,
+                "dashboard_valid_points_total": self._dashboard_valid_points_total,
+                "dashboard_abstained_points_total": self._dashboard_abstained_points_total,
                 "upstream_requests_total": dict(self._upstream_requests),
                 "upstream_failures_total": self._upstream_failures,
                 "upstream_429_total": self._upstream_429,
@@ -178,6 +200,10 @@ class ProcessMetrics:
             self._abstentions.clear()
             self._calibration_statuses.clear()
             self._calibrator_failures = 0
+            self._dashboard_requests.clear()
+            self._dashboard_points_total = 0
+            self._dashboard_valid_points_total = 0
+            self._dashboard_abstained_points_total = 0
             self._upstream_requests.clear()
             self._upstream_failures = 0
             self._upstream_429 = 0
