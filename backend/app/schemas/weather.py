@@ -13,6 +13,7 @@ class CanonicalForecastRecord(BaseModel):
     location: str = Field(..., description="Location name or identifier")
     latitude: float = Field(..., ge=-90.0, le=90.0, description="Geographical latitude in decimal degrees")
     longitude: float = Field(..., ge=-180.0, le=180.0, description="Geographical longitude in decimal degrees")
+    elevation: Optional[float] = Field(default=None, description="Station or grid elevation in meters above sea level")
     issue_time: str = Field(..., description="Model initialization / run cycle time (ISO 8601 format)")
     valid_time: str = Field(..., description="Target forecast verification time (ISO 8601 format)")
     lead_hours: int = Field(..., ge=0, description="Lead time in hours between issue_time and valid_time")

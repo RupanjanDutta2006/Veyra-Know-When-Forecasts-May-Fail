@@ -14,6 +14,7 @@ from backend.app.schemas.prediction import (
     PredictionRequest,
     PredictionResponse,
     ReasonCode,
+    RiskLevel,
 )
 from backend.app.services.base import (
     BaseFeatureService,
@@ -142,6 +143,74 @@ class ForecastBustAgent:
                     is_abstained=safety_assessment.abstain,
                 )
 
+        # Extract Builder 2 advanced intelligence metadata
+        model_meta = model_result.metadata if (model_result and model_result.metadata) else {}
+        feat_meta = feature_result.metadata if (feature_result and feature_result.metadata) else {}
+
+        # 1. Failure / Instability Fingerprint
+        fingerprint = model_meta.get("instability_fingerprint") or feat_meta.get("instability_fingerprint")
+
+        # 2. Dominant risk drivers from explanation
+        dominant_drivers = None
+        if explanation is not None:
+            drivers: list[str] = []
+            if getattr(explanation, "primary_driver", None):
+                drivers.append(explanation.primary_driver)
+            factors = getattr(explanation, "top_contributing_factors", [])
+            for f in factors:
+                factor_name = getattr(f, "factor", None) or (f.get("factor") if isinstance(f, dict) else None)
+                if factor_name and factor_name not in drivers:
+                    drivers.append(factor_name)
+            if drivers:
+                dominant_drivers = drivers
+
+        # 3. Decision Mode and Guidance
+        if safety_assessment.abstain:
+            decision_mode = "ABSTAINED"
+            decision_guidance = "Model safely abstained due to data/QC or OOD limits. Revert to raw NWP ensemble."
+        elif safety_assessment.risk_level in (RiskLevel.CRITICAL, RiskLevel.HIGH):
+            decision_mode = "ACTIVE_ALERT"
+            decision_guidance = "Elevated forecast failure risk detected. High probability of model divergence; prepare contingency plans."
+        elif safety_assessment.risk_level == RiskLevel.MEDIUM:
+            decision_mode = "ELEVATED_RISK"
+            decision_guidance = "Moderate forecast failure risk. Monitor upcoming ensemble revision cycles."
+        else:
+            decision_mode = "STANDARD_MONITORING"
+            decision_guidance = "Forecast within nominal stability bounds. Low bust probability; standard operations recommended."
+
+        # 4. Operational Trust Horizon (120 hours default for medium-range GFS/GEFS)
+        op_trust_horizon = 120
+        within_trust_h = None
+        if feature_result and feature_result.features:
+            lead_h = feature_result.features.get("lead_hours")
+            if lead_h is not None:
+                within_trust_h = bool(lead_h <= op_trust_horizon)
+
+        # 5. Uncertainty and Confidence Index
+        conf_index = None
+        uncert_pct = None
+        if not safety_assessment.abstain and safety_assessment.bust_probability is not None:
+            prob = safety_assessment.bust_probability
+            uncert_pct = round(min(100.0, max(0.0, (1.0 - abs(prob - 0.5) * 2) * 100)), 1)
+            conf_index = round(max(0.0, min(1.0, 1.0 - (uncert_pct / 100.0))), 3)
+
+        # 6. Structural Overconfidence & Stability from fingerprint
+        struct_overconf = None
+        stab_index = None
+        if fingerprint and isinstance(fingerprint, dict):
+            struct_overconf = fingerprint.get("structural_overconfidence", False)
+            traj_data = fingerprint.get("revision_instability", {})
+            if isinstance(traj_data, dict):
+                mag6 = traj_data.get("magnitude_6h")
+                if mag6 is not None:
+                    try:
+                        stab_index = round(max(0.0, 1.0 / (1.0 + float(mag6))), 3)
+                    except (ValueError, TypeError, ZeroDivisionError):
+                        stab_index = None
+
+        # 7. OOD Score
+        ood_score = model_meta.get("ood_score") or feat_meta.get("ood_distance")
+
         return PredictionResponse(
             location=location,
             bust_probability=safety_assessment.bust_probability,
@@ -152,6 +221,17 @@ class ForecastBustAgent:
             model_version=model_result.model_version if model_result else None,
             data_version=weather_result.data_version if weather_result else None,
             explanation=explanation,
+            confidence_index=conf_index,
+            uncertainty_pct=uncert_pct,
+            ood_score=ood_score,
+            stability_index=stab_index,
+            structural_overconfidence=struct_overconf,
+            failure_fingerprint=fingerprint,
+            dominant_risk_drivers=dominant_drivers,
+            decision_mode=decision_mode,
+            decision_guidance=decision_guidance,
+            within_trust_horizon=within_trust_h,
+            operational_trust_horizon_hours=op_trust_horizon,
         )
 
     def analyze(self, request: PredictionRequest) -> PredictionResponse:

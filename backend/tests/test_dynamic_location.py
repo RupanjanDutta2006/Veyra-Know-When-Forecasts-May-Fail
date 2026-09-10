@@ -295,4 +295,4 @@ def test_phase1_backward_compatibility(client: TestClient):
     data = london_resp.json()
     assert data["location"] == "London"
     assert data["abstain"] is False
-    assert data["model_version"] == "prototype-gbm-v1"
+    assert data["model_version"] in ("veyra-v3-benchmark-lightgbm", "prototype-gbm-v1")

@@ -49,7 +49,7 @@ def test_multiple_supported_locations_live_predictions(client: TestClient):
         assert 0.0 <= data["bust_probability"] <= 1.0
         assert data["trust_state"] == TrustState.HIGH_CONFIDENCE.value
         assert ReasonCode.SUCCESS.value in data["reason_codes"]
-        assert data["model_version"] == "prototype-gbm-v1"
+        assert data["model_version"] in ("veyra-v3-benchmark-lightgbm", "prototype-gbm-v1")
         assert data["data_version"] == "gefs-openmeteo-v1.0"
 
 

@@ -50,6 +50,17 @@ export interface PredictionResponse {
   model_version: string | null;
   data_version: string | null;
   explanation: ExplanationItem | null;
+  confidence_index?: number | null;
+  uncertainty_pct?: number | null;
+  ood_score?: number | null;
+  stability_index?: number | null;
+  structural_overconfidence?: boolean | null;
+  failure_fingerprint?: Record<string, any> | null;
+  dominant_risk_drivers?: string[] | null;
+  decision_mode?: string | null;
+  decision_guidance?: string | null;
+  within_trust_horizon?: boolean | null;
+  operational_trust_horizon_hours?: number | null;
 }
 
 export interface HealthResponse {
@@ -98,7 +109,7 @@ export interface ApiError {
   status_code?: number;
 }
 
-export type HorizonPreset = '7_DAY' | '16_DAY';
+export type HorizonPreset = '7_DAY' | '10_DAY' | '16_DAY';
 
 export interface HorizonPointResult {
   lead_hours: number;

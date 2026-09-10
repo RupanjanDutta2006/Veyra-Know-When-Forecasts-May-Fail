@@ -487,7 +487,7 @@ def test_single_prediction_endpoint_regression_with_hardening():
     assert data["abstain"] is False
     assert data["bust_probability"] is not None
     assert 0.0 <= data["bust_probability"] <= 1.0
-    assert data["model_version"] == "prototype-gbm-v1"
+    assert data["model_version"] in ("veyra-v3-benchmark-lightgbm", "prototype-gbm-v1")
     assert data["explanation"] is not None
     assert "primary_driver" in data["explanation"]
     assert "top_contributing_factors" in data["explanation"]

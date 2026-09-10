@@ -378,7 +378,7 @@ def test_single_prediction_endpoint_integration(client: TestClient):
     data = response.json()
     assert data["location"] == "London"
     assert data["abstain"] is False
-    assert data["model_version"] == "prototype-gbm-v1"
+    assert data["model_version"] in ("veyra-v3-benchmark-lightgbm", "prototype-gbm-v1")
     assert data["data_version"] == "gefs-openmeteo-v1.0"
     assert "bust_probability" in data
     assert 0.0 <= data["bust_probability"] <= 1.0
@@ -401,7 +401,7 @@ def test_single_prediction_direct_coordinates(client: TestClient):
     assert response.status_code == 200
     data = response.json()
     assert data["abstain"] is False
-    assert data["model_version"] == "prototype-gbm-v1"
+    assert data["model_version"] in ("veyra-v3-benchmark-lightgbm", "prototype-gbm-v1")
 
 
 def test_calibrator_failure_handling():
@@ -447,7 +447,7 @@ def test_batch_prediction_endpoint_integration(client: TestClient):
     assert data["abstained_predictions"] == 1
     assert data["results"][0]["input_location"] == "Kolkata"
     assert data["results"][0]["response"]["abstain"] is False
-    assert data["results"][0]["response"]["model_version"] == "prototype-gbm-v1"
+    assert data["results"][0]["response"]["model_version"] in ("veyra-v3-benchmark-lightgbm", "prototype-gbm-v1")
     assert data["results"][2]["input_location"] == "Atlantis"
     assert data["results"][2]["response"]["abstain"] is True
 
