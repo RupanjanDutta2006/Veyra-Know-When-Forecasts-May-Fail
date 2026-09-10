@@ -43,6 +43,10 @@ class ProcessMetrics:
         # Retries
         self._retries_attempted: int = 0
 
+        # Calibration Telemetry
+        self._calibration_statuses: Dict[str, int] = defaultdict(int)
+        self._calibrator_failures: int = 0
+
         self._start_time: float = time.time()
 
     def record_http_request(self, method: str, path: str, status_code: int, duration_ms: float) -> None:
@@ -127,6 +131,15 @@ class ProcessMetrics:
         with self._lock:
             self._retries_attempted += 1
 
+    def record_calibration(self, status: str) -> None:
+        """Record a probability calibration outcome (CALIBRATED, FAILED, UNAVAILABLE)."""
+        if not self.enabled:
+            return
+        with self._lock:
+            self._calibration_statuses[status] += 1
+            if status == "FAILED":
+                self._calibrator_failures += 1
+
     def snapshot(self) -> Dict[str, Any]:
         """Return a read-only snapshot of all process-local metrics."""
         with self._lock:
@@ -142,6 +155,8 @@ class ProcessMetrics:
                 "http_avg_latency_ms": avg_latency,
                 "predictions_total": dict(self._predictions),
                 "abstentions_total": dict(self._abstentions),
+                "calibration_statuses_total": dict(self._calibration_statuses),
+                "calibrator_failures_total": self._calibrator_failures,
                 "upstream_requests_total": dict(self._upstream_requests),
                 "upstream_failures_total": self._upstream_failures,
                 "upstream_429_total": self._upstream_429,
@@ -161,6 +176,8 @@ class ProcessMetrics:
             self._http_latencies_ms.clear()
             self._predictions.clear()
             self._abstentions.clear()
+            self._calibration_statuses.clear()
+            self._calibrator_failures = 0
             self._upstream_requests.clear()
             self._upstream_failures = 0
             self._upstream_429 = 0

@@ -91,3 +91,34 @@ class ModelEvaluationResponse(BaseModel):
     reason_codes: list[str] = Field(default_factory=list, description="Descriptive status / diagnostic reason codes")
     evaluated_at: Optional[str] = Field(default=None, description="Timestamp of evaluation execution")
     metadata: dict[str, Any] = Field(default_factory=dict, description="Additional contextual evaluation metadata")
+
+
+class V3EvaluationMetrics(BaseModel):
+    """Authoritative frozen metrics container for V3 model evaluation."""
+
+    average_precision: float = Field(..., description="Average precision score (weighted mean of precisions at each threshold)")
+    pr_auc_trapezoidal: float = Field(..., description="Trapezoidal area under the precision-recall curve")
+    roc_auc: float = Field(..., description="Area under ROC curve")
+    brier_score: float = Field(..., description="Brier score (mean squared error of calibrated probabilities)")
+    bss_vs_e0: float = Field(..., description="Brier Skill Score relative to climatology reference E0")
+    bss_vs_e1b: float = Field(..., description="Brier Skill Score relative to persistence/ensemble logistic reference E1b")
+    ece: float = Field(..., description="Expected Calibration Error across 10 equal-width bins on [0, 1]")
+
+
+class V3ModelEvaluationResponse(BaseModel):
+    """Authoritative V3 frozen championship model evaluation API contract."""
+
+    model_name: str = Field(..., description="Model name identifier")
+    model_version: str = Field(..., description="Evaluated model version string")
+    model_family: str = Field(..., description="Algorithm and calibration family")
+    feature_count: int = Field(..., description="Number of model features (50 for canonical V3)")
+    calibration_method: str = Field(..., description="Calibration algorithm (isotonic)")
+    evaluation_dataset: str = Field(..., description="Evaluation dataset split / identifier")
+    evaluation_period: str = Field(..., description="Chronological holdout evaluation period")
+    test_samples: int = Field(..., description="Number of evaluated test samples")
+    test_cycles: int = Field(..., description="Number of evaluated forecast cycles")
+    benchmark_scope: str = Field(..., description="Evaluated stations, variables, and lead horizons")
+    evaluation_status: str = Field(..., description="Evaluation status (e.g. FROZEN_CHAMPIONSHIP)")
+    metrics: V3EvaluationMetrics = Field(..., description="Certified frozen evaluation metrics")
+    provenance: dict[str, Any] = Field(default_factory=dict, description="Dataset and document provenance metadata")
+    generalization_limits: list[str] = Field(default_factory=list, description="Explicit boundaries of scientific certification")

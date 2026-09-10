@@ -44,11 +44,18 @@ class ForecastBustExplainer:
         else:
             factors.append(ContributingFactor(factor="forecast_delta_24h", value=None, signal="NO_PRIOR_CYCLE_BASELINE"))
 
-        # 2. Inspect Ensemble Spread & Dispersion
+        # 2. Inspect Ensemble Spread & Dispersion (Preserve variable scale without unauthenticated thresholds)
         ens_std = feature_row.get("ensemble_std")
+        is_pressure = bool(
+            feature_row.get("is_surface_pressure") == 1.0
+            or str(feature_row.get("variable", "")).lower() in ("surface_pressure", "pressure")
+        )
         if ens_std is not None and not (isinstance(ens_std, float) and np.isnan(ens_std)):
             val_std = float(ens_std)
-            if val_std >= 3.0:
+            if is_pressure:
+                # Surface pressure is recorded in Pascals; preserve raw spread with neutral signal
+                factors.append(ContributingFactor(factor="ensemble_std", value=val_std, signal="ENSEMBLE_SPREAD"))
+            elif val_std >= 3.0:
                 factors.append(ContributingFactor(factor="ensemble_std", value=val_std, signal="HIGH_ENSEMBLE_SPREAD"))
             elif val_std >= 1.5:
                 factors.append(ContributingFactor(factor="ensemble_std", value=val_std, signal="ELEVATED_ENSEMBLE_SPREAD"))
@@ -73,29 +80,44 @@ class ForecastBustExplainer:
             if val_spr_delta > 1.0:
                 factors.append(ContributingFactor(factor="ensemble_spread_delta_24h", value=val_spr_delta, signal="SPREAD_GROWTH"))
 
-        # Determine Primary Driver and Summary Narrative
+        # Determine Primary Driver and Summary Narrative with Guaranteed Factor-Level Consistency
+        signals = [f.signal for f in factors]
+        has_high_spread = "HIGH_ENSEMBLE_SPREAD" in signals or "SPREAD_GROWTH" in signals
+        has_high_drift = "HIGH_REVISION_DRIFT" in signals
+        has_ext_lead = "EXTENDED_RANGE_DEGRADATION" in signals
+        std_val = next((f.value for f in factors if f.factor == "ensemble_std"), 0.0) or 0.0
+        delta_val = next((f.value for f in factors if f.factor == "forecast_delta_24h"), 0.0) or 0.0
+
         is_alert = bust_probability >= threshold
 
-        if not is_alert:
-            primary_driver = "stable_ensemble_agreement"
-            summary = "Forecast is stable with low ensemble dispersion and consistent inter-cycle agreement."
-        else:
-            # Check highest contributing signal
-            signals = [f.signal for f in factors]
-            if "HIGH_REVISION_DRIFT" in signals:
+        if is_alert:
+            # Active alert mode
+            if has_high_drift:
                 primary_driver = "rapid_inter_cycle_revision"
-                delta_val = next((f.value for f in factors if f.factor == "forecast_delta_24h"), 0.0)
                 summary = f"High risk driven by rapid 24h run-to-run forecast revision ({delta_val:+.2f} unit drift)."
-            elif "HIGH_ENSEMBLE_SPREAD" in signals or "SPREAD_GROWTH" in signals:
+            elif has_high_spread:
                 primary_driver = "high_ensemble_uncertainty"
-                std_val = next((f.value for f in factors if f.factor == "ensemble_std"), 0.0)
                 summary = f"High risk driven by strong physical ensemble dispersion (spread = {std_val:.2f})."
-            elif "EXTENDED_RANGE_DEGRADATION" in signals:
+            elif has_ext_lead:
                 primary_driver = "extended_horizon_uncertainty"
                 summary = "Risk elevated due to long lead horizon degradation and accumulated forecast uncertainty."
             else:
                 primary_driver = "multi_factor_risk"
                 summary = "Elevated risk driven by combination of ensemble spread and lead-time horizon."
+        else:
+            # Non-alert mode: Guarantee narrative does not contradict factor state
+            if has_high_spread:
+                primary_driver = "elevated_ensemble_spread"
+                summary = f"Forecast exhibits notable ensemble dispersion (spread = {std_val:.2f}) despite moderate overall bust probability."
+            elif has_high_drift:
+                primary_driver = "moderate_inter_cycle_revision"
+                summary = f"Forecast exhibits run-to-run revision ({delta_val:+.2f} unit drift) with low overall bust probability."
+            elif is_pressure:
+                primary_driver = "stable_ensemble_agreement"
+                summary = f"Forecast is stable with consistent synoptic pressure consensus (ensemble spread = {std_val:.2f} Pa)."
+            else:
+                primary_driver = "stable_ensemble_agreement"
+                summary = "Forecast is stable with low ensemble dispersion and consistent inter-cycle agreement."
 
         return ExplanationItem(
             primary_driver=primary_driver,

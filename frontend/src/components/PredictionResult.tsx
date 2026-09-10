@@ -38,7 +38,16 @@ function getRiskClass(risk: RiskLevel | null): string {
 }
 
 export const PredictionResult: React.FC<PredictionResultProps> = ({ prediction }) => {
-  const { location, bust_probability, risk_level, trust_state, model_version, data_version } = prediction;
+  const {
+    location,
+    bust_probability,
+    risk_level,
+    trust_state,
+    model_version,
+    data_version,
+    confidence_index,
+    uncertainty_pct,
+  } = prediction;
 
   const percentage =
     bust_probability !== null && bust_probability !== undefined
@@ -49,8 +58,12 @@ export const PredictionResult: React.FC<PredictionResultProps> = ({ prediction }
 
   return (
     <section className="hero-prob-card" aria-labelledby="prob-heading" aria-live="polite">
-      <div className="prob-metric-title" id="prob-heading">
-        Estimated Forecast Bust Probability
+      <div
+        className="prob-metric-title"
+        id="prob-heading"
+        title="Estimated calibrated probability that forecast error meets or exceeds the stratum-specific bust threshold derived from historical Train reforecasts (2000-2013)."
+      >
+        Calibrated Bust Probability
       </div>
 
       <div className={`prob-value-large ${riskClass}`} aria-label={`Bust probability: ${percentage} percent`}>
@@ -58,8 +71,8 @@ export const PredictionResult: React.FC<PredictionResultProps> = ({ prediction }
       </div>
 
       <p className="prob-summary-text">
-        Estimated probability that the medium-range weather forecast for{' '}
-        <strong style={{ color: 'var(--text-primary)' }}>{location}</strong> will fail unusually badly (exceed historical 95th percentile error).
+        Estimated calibrated probability that the forecast for{' '}
+        <strong style={{ color: 'var(--text-primary)' }}>{location}</strong> will meet or exceed the historical 95th percentile error threshold for this station, variable, and lead-horizon bin.
       </p>
 
       <div className="meta-badges-row">
@@ -76,7 +89,12 @@ export const PredictionResult: React.FC<PredictionResultProps> = ({ prediction }
         )}
 
         {/* Trust State Badge */}
-        <div className="trust-badge" role="status" aria-label={`Model Trust State: ${formatTrustState(trust_state)}`}>
+        <div
+          className="trust-badge"
+          role="status"
+          aria-label={`Model Trust State: ${formatTrustState(trust_state)}`}
+          title="Operational Trust: Nominal Pipeline Integrity (valid location, QC passed, model loaded)"
+        >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" strokeWidth="2">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           </svg>
@@ -91,6 +109,20 @@ export const PredictionResult: React.FC<PredictionResultProps> = ({ prediction }
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
             </svg>
             <span>{model_version}</span>
+          </div>
+        )}
+
+        {/* Heuristic Decision Certainty Badge */}
+        {confidence_index !== null && confidence_index !== undefined && (
+          <div className="trust-badge" title="Probability Separation Score: 2*|P - 0.5| (heuristic distance from boundary ambiguity; not a formal statistical confidence interval)">
+            <span>Certainty: {(confidence_index * 100).toFixed(1)}%</span>
+          </div>
+        )}
+
+        {/* Boundary Ambiguity Badge */}
+        {uncertainty_pct !== null && uncertainty_pct !== undefined && (
+          <div className="trust-badge" title="Decision Boundary Ambiguity: proximity to 0.5 threshold (not a formal predictive uncertainty interval)">
+            <span>Ambiguity: {uncertainty_pct.toFixed(1)}%</span>
           </div>
         )}
       </div>

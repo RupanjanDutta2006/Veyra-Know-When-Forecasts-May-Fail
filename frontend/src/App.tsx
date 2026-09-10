@@ -15,6 +15,7 @@ import { ForecastForm } from './components/ForecastForm';
 import { ForecastRiskTimeline } from './components/ForecastRiskTimeline';
 import { Header } from './components/Header';
 import { HorizonRiskDetails } from './components/HorizonRiskDetails';
+import { ModelEvaluationView } from './components/ModelEvaluationView';
 import { PredictionResult } from './components/PredictionResult';
 
 export const App: React.FC = () => {
@@ -238,6 +239,9 @@ export const App: React.FC = () => {
             )}
           </div>
         </div>
+
+        {/* Model Evaluation & Scientific Diagnostics Panel */}
+        <ModelEvaluationView />
       </main>
 
       <Footer

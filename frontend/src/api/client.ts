@@ -11,6 +11,7 @@ import {
   ModelEvaluationResponse,
   PredictionRequest,
   PredictionResponse,
+  V3ModelEvaluationResponse,
 } from './types';
 
 // Resolve base API URL from environment variable or fallback to empty string (same-origin relative URL)
@@ -218,6 +219,34 @@ export class VeyraApiClient {
         error: {
           error: 'EVALUATION_FETCH_FAILED',
           message: 'Unable to fetch model evaluation metadata.',
+          status_code: 0,
+        },
+      };
+    }
+  }
+
+  /**
+   * Fetch frozen V3 championship evaluation metrics and generalization limits.
+   */
+  async getV3Evaluation(): Promise<{ data?: V3ModelEvaluationResponse; error?: ApiError }> {
+    try {
+      const response = await fetch(`${this.baseUrl}/v1/model/evaluation/v3`, {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+      });
+
+      if (!response.ok) {
+        const error = await this.parseErrorResponse(response);
+        return { error };
+      }
+
+      const data: V3ModelEvaluationResponse = await response.json();
+      return { data };
+    } catch (err: unknown) {
+      return {
+        error: {
+          error: 'V3_EVALUATION_FETCH_FAILED',
+          message: 'Unable to fetch V3 model evaluation metadata.',
           status_code: 0,
         },
       };

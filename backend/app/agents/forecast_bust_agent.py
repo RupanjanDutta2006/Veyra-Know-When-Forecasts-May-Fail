@@ -6,6 +6,7 @@ Request -> Weather Data -> Feature Pipeline -> ML Model -> Safety/Abstention -> 
 Designed with strict Dependency Injection and Fail-Safe Short-Circuiting.
 """
 import logging
+import math
 import time
 from typing import Optional
 from backend.app.core.metrics import default_metrics
@@ -208,8 +209,30 @@ class ForecastBustAgent:
                     except (ValueError, TypeError, ZeroDivisionError):
                         stab_index = None
 
-        # 7. OOD Score
-        ood_score = model_meta.get("ood_score") or feat_meta.get("ood_distance")
+        # 7. OOD Score (Fixed: explicit None check preserves valid numeric 0.0)
+        ood_score = None
+        raw_ood = model_meta.get("ood_score")
+        if raw_ood is None:
+            raw_ood = feat_meta.get("ood_distance")
+        if raw_ood is not None:
+            try:
+                val_ood = float(raw_ood)
+                if not (math.isnan(val_ood) or math.isinf(val_ood)):
+                    ood_score = val_ood
+            except (ValueError, TypeError):
+                ood_score = None
+
+        # 8. Calibration Status
+        cal_status = model_meta.get("calibration_status")
+        if safety_assessment.abstain:
+            if "CALIBRATION_FAILURE" in safety_assessment.reason_codes:
+                cal_status = "FAILED"
+            elif cal_status is None:
+                cal_status = "UNAVAILABLE"
+        elif cal_status is None:
+            cal_status = "CALIBRATED" if safety_assessment.bust_probability is not None else "UNAVAILABLE"
+
+        default_metrics.record_calibration(cal_status)
 
         return PredictionResponse(
             location=location,
@@ -221,6 +244,7 @@ class ForecastBustAgent:
             model_version=model_result.model_version if model_result else None,
             data_version=weather_result.data_version if weather_result else None,
             explanation=explanation,
+            calibration_status=cal_status,
             confidence_index=conf_index,
             uncertainty_pct=uncert_pct,
             ood_score=ood_score,

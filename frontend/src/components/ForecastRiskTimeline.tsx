@@ -148,8 +148,11 @@ export const ForecastRiskTimeline: React.FC<ForecastRiskTimelineProps> = ({
               );
             })}
 
-            {/* Decision Threshold Reference Guideline (0.280) */}
-            <g className="threshold-guide-group">
+            {/* Reference Alert Guideline (0.280) */}
+            <g
+              className="threshold-guide-group"
+              aria-label="Reference alert guideline 28% (separate from operational risk tiers; MEDIUM risk begins at 20%)"
+            >
               <line
                 x1={0}
                 y1={thresholdY}
@@ -167,7 +170,7 @@ export const ForecastRiskTimeline: React.FC<ForecastRiskTimelineProps> = ({
                 textAnchor="end"
                 fill="var(--color-amber-400, #fbbf24)"
               >
-                0.280 Decision Threshold
+                Reference Alert Guideline 28%
               </text>
             </g>
 
