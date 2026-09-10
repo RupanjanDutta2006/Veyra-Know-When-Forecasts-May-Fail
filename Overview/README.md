@@ -59,6 +59,11 @@ Overview/
         ├── Day-18.md
         ├── Day-19.md
         └── Day-20.md
+│
+└── Phase-3/
+    ├── Day-21-V3-Integration.md
+    ├── Day-21-Controlled-Repair.md
+    └── Day-22-Dataset-Label-Leakage-Certification.md
 ```
 
 ---
@@ -117,6 +122,16 @@ Overview/
 ### Builder 2
 
 Phase 2 Builder 2 documentation will be added when Phase 2 Builder 2 development begins.
+
+---
+
+## Phase 3
+
+### Authoritative V3 Scientific Integration & Certification
+
+- [Day 21](./Phase-3/Day-21-V3-Integration.md) — Authoritative V3 Model & Feature Pipeline Production Integration
+- [Day 21 Post-Merge Repair](./Phase-3/Day-21-Controlled-Repair.md) — Single Target 24h Default & Multi-City API Contract Alignment
+- [Day 22](./Phase-3/Day-22-Dataset-Label-Leakage-Certification.md) — Dataset, Label & Leakage Scientific Certification (Stages 1–8 Synthesis)
 
 ---
 
