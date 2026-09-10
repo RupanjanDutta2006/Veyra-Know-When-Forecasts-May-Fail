@@ -4,6 +4,8 @@
  */
 import {
   ApiError,
+  DashboardIntelligenceResponse,
+  DashboardRequest,
   HealthResponse,
   HorizonPointResult,
   HorizonTimelineRequest,
@@ -247,6 +249,51 @@ export class VeyraApiClient {
         error: {
           error: 'V3_EVALUATION_FETCH_FAILED',
           message: 'Unable to fetch V3 model evaluation metadata.',
+          status_code: 0,
+        },
+      };
+    }
+  }
+
+  /**
+   * Fetch complete, dashboard-ready intelligence orchestration for a given location and horizon mode.
+   */
+  async getDashboardIntelligence(
+    request: DashboardRequest,
+    customRequestId?: string
+  ): Promise<{ data?: DashboardIntelligenceResponse; error?: ApiError; requestId?: string }> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    };
+
+    if (customRequestId) {
+      headers['X-Request-ID'] = customRequestId;
+    }
+
+    try {
+      const endpoint = `${this.baseUrl}/v1/dashboard/intelligence`;
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(request),
+      });
+
+      const responseRequestId =
+        response.headers.get('x-request-id') || response.headers.get('X-Request-ID') || undefined;
+
+      if (!response.ok) {
+        const error = await this.parseErrorResponse(response, responseRequestId);
+        return { error, requestId: responseRequestId };
+      }
+
+      const data: DashboardIntelligenceResponse = await response.json();
+      return { data, requestId: responseRequestId };
+    } catch (err: unknown) {
+      return {
+        error: {
+          error: 'NETWORK_ERROR',
+          message: err instanceof Error ? err.message : 'Failed to communicate with Veyra dashboard API.',
           status_code: 0,
         },
       };

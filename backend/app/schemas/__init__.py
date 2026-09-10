@@ -50,6 +50,18 @@ from backend.app.schemas.weather import (
     CanonicalForecastRecord,
 )
 
+from backend.app.schemas.dashboard import (
+    DashboardIntelligenceResponse,
+    DashboardLocationContext,
+    DashboardMode,
+    DashboardRequest,
+    DashboardScientificContext,
+    DashboardStatus,
+    DashboardSummary,
+    DashboardTimelinePoint,
+    HistoricalBenchmarkContext,
+)
+
 __all__ = [
     "HealthResponse",
     "PredictionRequest",
@@ -85,4 +97,13 @@ __all__ = [
     "ExplanationItem",
     "ExplainabilityStatus",
     "ModelExplanationResponse",
+    "DashboardMode",
+    "DashboardStatus",
+    "DashboardLocationContext",
+    "DashboardTimelinePoint",
+    "DashboardSummary",
+    "HistoricalBenchmarkContext",
+    "DashboardScientificContext",
+    "DashboardRequest",
+    "DashboardIntelligenceResponse",
 ]
