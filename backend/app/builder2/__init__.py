@@ -3,6 +3,10 @@
 Contains adapted copies of Builder 2 scientific modules and thin adapter
 wrappers implementing Builder 1 abstract service interfaces.
 """
+from backend.app.core.runtime_compat import ensure_linux_runtimes
+
+ensure_linux_runtimes()
+
 from backend.app.builder2.feature_pipeline import (
     FEATURE_COLUMN_NAMES,
     METADATA_COLUMNS,
