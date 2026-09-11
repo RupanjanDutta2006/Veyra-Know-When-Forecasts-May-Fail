@@ -1,0 +1,33 @@
+GCC RUNTIME LIBRARY EXCEPTION
+
+Version 3.1, 31 March 2009
+
+Copyright (C) 2009 Free Software Foundation, Inc. <https://fsf.org/>
+
+Everyone is permitted to copy and distribute verbatim copies of this license document, but changing it is not allowed.
+
+This GCC Runtime Library Exception ("Exception") is an additional permission under section 7 of the GNU General Public License, version 3 ("GPLv3"). It applies to a given file (the "Runtime Library") that bears a notice placed by the copyright holder of the file stating that the file is governed by GPLv3 along with this Exception.
+
+When you use GCC to compile a program, GCC may combine portions of certain GCC header files and runtime libraries with the compiled program. The purpose of this Exception is to allow compilation of non-GPL (including proprietary) programs to use, in this way, the header files and runtime libraries covered by this Exception.
+
+1. Definitions.
+A file is an "Independent Module" if it either requires the Runtime Library for execution after a Compilation Process, or makes use of an interface provided by the Runtime Library, but is not otherwise based on the Runtime Library.
+"Used Commercial Product" refers to a product that is distributed in quantity for commercial use.
+"Target Code" refers to output from any compiler for a real or virtual target processor architecture, in executable form or suitable for input to an assembler, loader, runtime library, or similar utility.
+The "Compilation Process" transforms code entirely represented in non-intermediate languages designed for human-written code, and/or in Java Virtual Machine byte code, into Target Code.
+
+2. Grant of Additional Permission.
+You have permission to propagate a work of Target Code formed by combining the Runtime Library with Independent Modules, even if such propagation would otherwise violate the terms of GPLv3, and to convey the resulting work under terms of your choice, provided that neither the Target Code nor the Compilation Process combines portions of the Runtime Library with other code, except as permitted by other provisions of this Exception.
+
+================================================================================
+PROVENANCE AND METADATA:
+Artifact: libgomp.so.1 (OpenMP Runtime Library)
+Source Package: libgomp1_10.5.0-1ubuntu1~20.04_amd64.deb
+Upstream: GNU Compiler Collection (GCC) 10.5.0
+Architecture: ELF 64-bit LSB shared object, x86-64 (Machine 0x3E)
+SONAME: libgomp.so.1
+SHA256: 98b21ff32bb07b53f1fb266d887d2db0086ea66c8ad03696a1db53f65321cd94
+Size: 265,856 bytes
+GLIBC Compatibility: GLIBC_2.2.5 - GLIBC_2.17 (fully compatible with Amazon Linux 2 & Amazon Linux 2023)
+Purpose: Provides libgomp.so.1 for LightGBM execution in minimal serverless Linux runtimes (AWS Lambda / Vercel Python Function).
+================================================================================
