@@ -94,15 +94,21 @@ class Builder2V3ModelAdapter(BaseModelService):
         """Locate, verify SHA-256, and deserialize authoritative V3 model and calibrator."""
         target_dir = self.model_dir
         if not target_dir.exists():
-            # Check relative to project root or workspace
+            # 1. Check relative to current working directory
             alt_path = Path.cwd() / target_dir
             if alt_path.exists():
                 target_dir = alt_path
             else:
-                self.init_error = f"V3 model directory not found: {self.model_dir}"
-                self.is_ready = False
-                logger.warning(self.init_error)
-                return
+                # 2. Check relative to repository root (handles serverless lambda cwd differences)
+                repo_root = Path(__file__).resolve().parents[3]
+                repo_path = repo_root / target_dir
+                if repo_path.exists():
+                    target_dir = repo_path
+                else:
+                    self.init_error = f"V3 model directory not found: {self.model_dir}"
+                    self.is_ready = False
+                    logger.warning(self.init_error)
+                    return
 
         model_path = target_dir / "lightgbm_v3_challenger.joblib"
         calibrator_path = target_dir / "probability_calibrator_v3.joblib"
