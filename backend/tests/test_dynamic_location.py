@@ -1,7 +1,7 @@
 """Day 8 Dynamic Location Resolution Automated Tests.
 
 Verifies:
-- Case 1-5: Dynamic resolution of benchmark and global cities (Kolkata, London, Paris, Tokyo, New Delhi, Siliguri, etc.)
+- Case 1-5: Dynamic resolution of benchmark and Indian canonical cities (Kolkata, Delhi, Mumbai, Chennai, Bengaluru, Siliguri, etc.)
 - Case 6-7: Direct coordinate validation and normalization (-90 <= lat <= 90, -180 <= lon <= 180)
 - Case 8: Safe abstention on unresolvable / fictional locations (Atlantis, InvalidCityXYZ123)
 - Case 9: Coordinate boundary enforcement (out-of-bounds rejection: 999, 999)
@@ -83,7 +83,7 @@ def mock_geocoding_service() -> DynamicLocationService:
 
 def test_dynamic_city_resolution_benchmark_cities(mock_geocoding_service: DynamicLocationService):
     """Case 1, 2, 4, 5: Verify pre-seeded benchmark cities resolve with high accuracy."""
-    for city_name in ["Kolkata", "London", "Tokyo", "New Delhi", "Mumbai", "Berlin"]:
+    for city_name in ["Kolkata", "Delhi", "Mumbai", "New Delhi", "Chennai", "Bengaluru"]:
         resolved = mock_geocoding_service.resolve(city_name)
         assert resolved is not None
         assert isinstance(resolved, ResolvedLocation)
@@ -289,10 +289,10 @@ def test_phase1_backward_compatibility(client: TestClient):
     assert health_resp.status_code == 200
     assert health_resp.json()["status"] == "ok"
 
-    # Standard London request
-    london_resp = client.post("/v1/predict", json={"location": "London"})
-    assert london_resp.status_code == 200
-    data = london_resp.json()
-    assert data["location"] == "London"
+    # Standard Delhi request
+    delhi_resp = client.post("/v1/predict", json={"location": "Delhi"})
+    assert delhi_resp.status_code == 200
+    data = delhi_resp.json()
+    assert data["location"] == "Delhi"
     assert data["abstain"] is False
     assert data["model_version"] in ("veyra-v3-benchmark-lightgbm", "prototype-gbm-v1")

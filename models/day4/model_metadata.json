@@ -1,0 +1,68 @@
+{
+  "model_version": "prototype-gbm-v1",
+  "model_type": "LightGBMBustClassifier",
+  "feature_schema_version": "builder2-canonical-26-v1.0",
+  "features": [
+    "ensemble_std",
+    "ensemble_range",
+    "ensemble_iqr",
+    "ensemble_skew_proxy",
+    "ensemble_cv",
+    "ensemble_spread_to_iqr_ratio",
+    "member_count",
+    "has_full_ensemble",
+    "forecast_value",
+    "ensemble_mean",
+    "ensemble_spread_delta_6h",
+    "ensemble_spread_delta_24h",
+    "forecast_delta_6h",
+    "forecast_delta_24h",
+    "lead_hours",
+    "lead_days",
+    "valid_hour",
+    "valid_month",
+    "valid_dayofweek",
+    "sin_hour",
+    "cos_hour",
+    "sin_month",
+    "cos_month",
+    "is_weekend",
+    "latitude",
+    "longitude"
+  ],
+  "decision_threshold": 0.28,
+  "calibration_method": "sigmoid",
+  "sample_counts": {
+    "total": 10800,
+    "train": 7560,
+    "validation": 1620,
+    "test": 1620
+  },
+  "time_ranges": {
+    "train": [
+      "2026-06-01 00:00:00+00:00",
+      "2026-07-12 00:00:00+00:00"
+    ],
+    "val": [
+      "2026-07-13 00:00:00+00:00",
+      "2026-07-21 00:00:00+00:00"
+    ],
+    "test": [
+      "2026-07-22 00:00:00+00:00",
+      "2026-07-30 00:00:00+00:00"
+    ]
+  },
+  "test_metrics": {
+    "accuracy": 0.9463,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1_score": 0.0,
+    "roc_auc": 0.5165,
+    "pr_auc": 0.0579,
+    "brier_score_uncalibrated": 0.2043,
+    "brier_score_calibrated": 0.0508,
+    "brier_improvement_pct": 75.12,
+    "spread_baseline_roc_auc": 0.5502,
+    "spread_baseline_pr_auc": 0.0616
+  }
+}

@@ -83,14 +83,16 @@ export interface ModelEvaluationMetrics {
 export interface ModelEvaluationResponse {
   model_name: string;
   model_version: string;
-  evaluation_dataset: string;
-  sample_count: number;
-  calibration: {
+  model_type?: string;
+  data_version?: string;
+  evaluation_dataset?: string;
+  sample_count?: number;
+  calibration?: {
     is_calibrated: boolean;
-    method: string;
-    decision_threshold: number;
+    method?: string;
+    decision_threshold?: number;
   };
-  metrics: ModelEvaluationMetrics;
+  metrics?: ModelEvaluationMetrics;
   feature_importance?: Record<string, number>;
 }
 
@@ -245,3 +247,27 @@ export interface DashboardIntelligenceResponse {
   scientific_context: DashboardScientificContext;
   request_id?: string | null;
 }
+
+export interface MultiLocationPredictionRequest {
+  locations: string[];
+  variable?: string;
+  target_date?: string;
+  issue_time?: string;
+  valid_time?: string;
+  model_type?: string;
+}
+
+export interface MultiLocationPredictionItemResult {
+  input_location: string;
+  is_success: boolean;
+  response: PredictionResponse;
+}
+
+export interface MultiLocationPredictionResult {
+  batch_size: number;
+  successful_predictions: number;
+  abstained_predictions: number;
+  results: MultiLocationPredictionItemResult[];
+  metadata?: Record<string, any>;
+}
+

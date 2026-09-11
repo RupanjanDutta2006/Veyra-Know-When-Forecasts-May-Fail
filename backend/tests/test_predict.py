@@ -18,10 +18,10 @@ from backend.app.services.model_service import UnavailableModelService
 
 def test_predict_valid_location_accepted(client: TestClient):
     """Test that POST /v1/predict accepts a valid location with HTTP 200."""
-    response = client.post("/v1/predict", json={"location": "London"})
+    response = client.post("/v1/predict", json={"location": "Delhi"})
     assert response.status_code == 200
     data = response.json()
-    assert data["location"] == "London"
+    assert data["location"] == "Delhi"
 
 
 def test_predict_bust_probability_is_null_when_model_unavailable(client: TestClient):
@@ -29,7 +29,7 @@ def test_predict_bust_probability_is_null_when_model_unavailable(client: TestCli
     unavailable_agent = ForecastBustAgent(model_service=UnavailableModelService())
     app.dependency_overrides[get_forecast_bust_agent] = lambda: unavailable_agent
     try:
-        response = client.post("/v1/predict", json={"location": "Tokyo"})
+        response = client.post("/v1/predict", json={"location": "Kolkata"})
         assert response.status_code == 200
         data = response.json()
         assert data["bust_probability"] is None
@@ -43,7 +43,7 @@ def test_predict_abstain_is_true_when_model_unavailable(client: TestClient):
     unavailable_agent = ForecastBustAgent(model_service=UnavailableModelService())
     app.dependency_overrides[get_forecast_bust_agent] = lambda: unavailable_agent
     try:
-        response = client.post("/v1/predict", json={"location": "Paris"})
+        response = client.post("/v1/predict", json={"location": "Mumbai"})
         assert response.status_code == 200
         data = response.json()
         assert data["abstain"] is True
@@ -56,7 +56,7 @@ def test_predict_trust_state_is_unavailable(client: TestClient):
     unavailable_agent = ForecastBustAgent(model_service=UnavailableModelService())
     app.dependency_overrides[get_forecast_bust_agent] = lambda: unavailable_agent
     try:
-        response = client.post("/v1/predict", json={"location": "Berlin"})
+        response = client.post("/v1/predict", json={"location": "Chennai"})
         assert response.status_code == 200
         data = response.json()
         assert data["trust_state"] == "UNAVAILABLE"
@@ -69,7 +69,7 @@ def test_predict_model_not_ready_in_reason_codes(client: TestClient):
     unavailable_agent = ForecastBustAgent(model_service=UnavailableModelService())
     app.dependency_overrides[get_forecast_bust_agent] = lambda: unavailable_agent
     try:
-        response = client.post("/v1/predict", json={"location": "New York"})
+        response = client.post("/v1/predict", json={"location": "Bengaluru"})
         assert response.status_code == 200
         data = response.json()
         assert "MODEL_NOT_READY" in data["reason_codes"]
@@ -84,11 +84,11 @@ def test_predict_with_optional_target_date(client: TestClient):
     try:
         response = client.post(
             "/v1/predict",
-            json={"location": "Sydney", "target_date": "2026-09-01"},
+            json={"location": "Hyderabad", "target_date": "2026-09-01"},
         )
         assert response.status_code == 200
         data = response.json()
-        assert data["location"] == "Sydney"
+        assert data["location"] == "Hyderabad"
         assert data["abstain"] is True
         assert data["bust_probability"] is None
     finally:
@@ -133,10 +133,10 @@ def test_predict_dependency_injection_override(client: TestClient):
 
     app.dependency_overrides[get_forecast_bust_agent] = lambda: custom_agent
     try:
-        response = client.post("/v1/predict", json={"location": "Geneva"})
+        response = client.post("/v1/predict", json={"location": "Ahmedabad"})
         assert response.status_code == 200
         data = response.json()
-        assert data["location"] == "Geneva"
+        assert data["location"] == "Ahmedabad"
         assert data["bust_probability"] == 0.15
         assert data["risk_level"] == "LOW"
         assert data["trust_state"] == "HIGH_CONFIDENCE"

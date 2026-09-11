@@ -11,6 +11,8 @@ import {
   HorizonTimelineRequest,
   HorizonTimelineResult,
   ModelEvaluationResponse,
+  MultiLocationPredictionRequest,
+  MultiLocationPredictionResult,
   PredictionRequest,
   PredictionResponse,
   V3ModelEvaluationResponse,
@@ -299,6 +301,69 @@ export class VeyraApiClient {
       };
     }
   }
+
+  /**
+   * Execute forecast bust prediction across multiple locations in a single batch.
+   */
+  async predictBatch(
+    request: MultiLocationPredictionRequest
+  ): Promise<{ data?: MultiLocationPredictionResult; error?: ApiError }> {
+    try {
+      const response = await fetch(`${this.baseUrl}/v1/predict/batch`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(request),
+      });
+
+      if (!response.ok) {
+        const error = await this.parseErrorResponse(response);
+        return { error };
+      }
+
+      const data: MultiLocationPredictionResult = await response.json();
+      return { data };
+    } catch (err: unknown) {
+      return {
+        error: {
+          error: 'BATCH_PREDICTION_FAILED',
+          message: err instanceof Error ? err.message : 'Batch prediction request failed.',
+          status_code: 0,
+        },
+      };
+    }
+  }
+
+  /**
+   * Retrieve process-local operational metrics telemetry.
+   */
+  async getMetrics(): Promise<{ data?: Record<string, any>; error?: ApiError }> {
+    try {
+      const response = await fetch(`${this.baseUrl}/v1/metrics`, {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+      });
+
+      if (!response.ok) {
+        const error = await this.parseErrorResponse(response);
+        return { error };
+      }
+
+      const data = await response.json();
+      return { data };
+    } catch (err: unknown) {
+      return {
+        error: {
+          error: 'METRICS_FETCH_FAILED',
+          message: 'Unable to fetch operational metrics.',
+          status_code: 0,
+        },
+      };
+    }
+  }
+
 
   /**
    * Helper to parse structured error payloads from FastAPI handlers.

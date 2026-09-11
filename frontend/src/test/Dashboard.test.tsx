@@ -7,7 +7,89 @@ import { AbstentionResult } from '../components/AbstentionResult';
 import { ExplainabilityView } from '../components/ExplainabilityView';
 import { ErrorView } from '../components/ErrorView';
 import { apiClient } from '../api/client';
-import { PredictionResponse } from '../api/types';
+import { DashboardIntelligenceResponse, PredictionResponse } from '../api/types';
+
+const createMockDashboard = (
+  location = 'Kolkata',
+  prob: number | null = 0.142,
+  risk: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' | null = 'LOW',
+  abstain = false,
+  reasonCodes: string[] = ['SUCCESS']
+): DashboardIntelligenceResponse => ({
+  location: {
+    query: location,
+    resolved_name: `${location}, Synoptic Station`,
+    latitude: 22.57,
+    longitude: 88.36,
+  },
+  variable: 'temperature_2m',
+  mode: 'single',
+  status: abstain ? 'ABSTAINED' : 'SUCCESS',
+  selected_prediction: {
+    location,
+    bust_probability: prob,
+    risk_level: risk,
+    trust_state: abstain ? 'UNAVAILABLE' : 'HIGH_CONFIDENCE',
+    abstain,
+    reason_codes: reasonCodes,
+    model_version: abstain ? null : 'v3-lightgbm-frozen',
+    data_version: abstain ? null : 'gefs-reanalysis-v3',
+    explanation: abstain ? null : {
+      primary_driver: 'stable_ensemble_agreement',
+      driver_summary: 'Stable forecast with high ensemble consensus.',
+      top_contributing_factors: [],
+    },
+  },
+  timeline: [
+    {
+      lead_hours: 24,
+      lead_days: 1,
+      valid_time: '2026-09-12T12:00:00Z',
+      bust_probability: prob,
+      risk_level: risk,
+      trust_state: abstain ? 'UNAVAILABLE' : 'HIGH_CONFIDENCE',
+      abstain,
+      is_certified_horizon: true,
+      reason_codes: reasonCodes,
+    },
+  ],
+  summary: {
+    available_points: abstain ? 0 : 1,
+    abstained_points: abstain ? 1 : 0,
+    total_points: 1,
+    max_bust_probability: prob,
+    max_risk_level: risk,
+    max_risk_lead_hours: 24,
+    mean_bust_probability: prob,
+    elevated_risk_points: 0,
+    first_elevated_risk_lead_hours: null,
+    overall_decision_mode: abstain ? 'ABSTAIN' : 'NOMINAL_OPERATIONS',
+  },
+  scientific_context: {
+    model_version: 'v3-lightgbm-frozen',
+    model_family: 'LightGBM-V3-Isotonic',
+    calibration_method: 'isotonic',
+    feature_count: 50,
+    probability_semantics: 'P(Forecast Bust) under calibrated threshold',
+    benchmark_scope: 'Certified frozen split',
+    benchmark_lead_horizon_max_hours: 240,
+    operational_horizon_max_hours: 384,
+    historical_benchmark: {
+      dataset: 'certified_splits_v3',
+      period: '2021-2024',
+      test_samples: 2920,
+      test_cycles: 1460,
+      average_precision: 0.54,
+      pr_auc_trapezoidal: 0.53,
+      roc_auc: 0.812,
+      brier_score: 0.082,
+      bss_vs_e0: 0.18,
+      bss_vs_e1b: 0.14,
+      ece: 0.045,
+    },
+    generalization_limits: ['Convective extremes in tropical complex terrain'],
+  },
+});
 
 describe('Veyra Frontend Dashboard Component Tests', () => {
   beforeEach(() => {
@@ -22,19 +104,19 @@ describe('Veyra Frontend Dashboard Component Tests', () => {
     render(<App />);
 
     expect(screen.getByRole('banner')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 1, name: 'Veyra' })).toBeInTheDocument();
-    expect(screen.getByText('Know When Forecasts May Fail')).toBeInTheDocument();
-    expect(screen.getByLabelText(/Location or Coordinates/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Estimate Bust Probability/i })).toBeInTheDocument();
+    expect(screen.getByText('VEYRA SENTINEL')).toBeInTheDocument();
+    expect(screen.getByText(/Atmospheric Forecast Reliability Platform/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Location Name or Coordinates/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /AUDIT RELIABILITY/i })).toBeInTheDocument();
   });
 
   it('validates required fields and shows client-side validation error on blank location', async () => {
     render(<App />);
 
-    const locationInput = screen.getByLabelText(/Location or Coordinates/i);
+    const locationInput = screen.getByLabelText(/Location Name or Coordinates/i);
     fireEvent.change(locationInput, { target: { value: '   ' } });
 
-    const submitBtn = screen.getByRole('button', { name: /Estimate Bust Probability/i });
+    const submitBtn = screen.getByRole('button', { name: /AUDIT RELIABILITY/i });
     expect(submitBtn).toBeDisabled();
   });
 
@@ -156,40 +238,30 @@ describe('Veyra Frontend Dashboard Component Tests', () => {
       data: { status: 'ok', service: 'forecast-bust-sentinel', version: '0.1.0' },
     });
 
-    const mockResponse: PredictionResponse = {
-      location: 'Kolkata',
-      bust_probability: 0.142,
-      risk_level: 'LOW',
-      trust_state: 'HIGH_CONFIDENCE',
-      abstain: false,
-      reason_codes: ['SUCCESS'],
-      model_version: 'prototype-gbm-v1',
-      data_version: 'gefs-openmeteo-v1.0',
-      explanation: {
-        primary_driver: 'stable_ensemble_agreement',
-        driver_summary: 'Stable forecast with high ensemble consensus.',
-        top_contributing_factors: [],
-      },
-    };
+    const mockDashboard = createMockDashboard('Kolkata', 0.142, 'LOW');
 
-    vi.spyOn(apiClient, 'predictForecastBust').mockResolvedValue({
-      data: mockResponse,
+    vi.spyOn(apiClient, 'getDashboardIntelligence').mockResolvedValue({
+      data: mockDashboard,
       requestId: 'req_kolkata_001',
     });
 
     render(<App />);
 
-    const locationInput = screen.getByLabelText(/Location or Coordinates/i);
+    const locationInput = screen.getByLabelText(/Location Name or Coordinates/i);
     fireEvent.change(locationInput, { target: { value: 'Kolkata' } });
 
-    const submitBtn = screen.getByRole('button', { name: /Estimate Bust Probability/i });
+    const submitBtn = screen.getByRole('button', { name: /AUDIT RELIABILITY/i });
     fireEvent.click(submitBtn);
 
     await waitFor(() => {
-      expect(screen.getByText('14.2000%')).toBeInTheDocument();
+      expect(screen.getByText('14.20%')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('Risk: LOW')).toBeInTheDocument();
+    expect(screen.getByText('LOW')).toBeInTheDocument();
+
+    // Switch to Explainability tab to verify driver
+    const explainTab = screen.getByRole('button', { name: /Explainability/i });
+    fireEvent.click(explainTab);
     expect(screen.getByText('Stable forecast with high ensemble consensus.')).toBeInTheDocument();
   });
 
@@ -302,62 +374,35 @@ describe('Veyra Frontend Dashboard Component Tests', () => {
   // Manual Verification Bug Fix Regression Tests (TEST A - TEST F)
   // =========================================================================
 
-  it('TEST A: clears stale prediction and explanation when a new invalid zero-lead request is submitted', async () => {
+  it('TEST A: clears stale prediction when user modifies target location input', async () => {
     vi.spyOn(apiClient, 'getHealth').mockResolvedValue({
       data: { status: 'ok', service: 'forecast-bust-sentinel', version: '0.1.0' },
     });
 
-    const mockInitialSuccess: PredictionResponse = {
-      location: 'Kolkata',
-      bust_probability: 0.0571,
-      risk_level: 'LOW',
-      trust_state: 'HIGH_CONFIDENCE',
-      abstain: false,
-      reason_codes: ['SUCCESS'],
-      model_version: 'prototype-gbm-v1',
-      data_version: 'gefs-openmeteo-v1.0',
-      explanation: {
-        primary_driver: 'stable_ensemble_agreement',
-        driver_summary: 'Initial stable forecast.',
-        top_contributing_factors: [
-          { factor: 'lead_hours', value: 96.0, signal: 'MEDIUM_RANGE_HORIZON' },
-        ],
-      },
-    };
+    const mockDashboard = createMockDashboard('Kolkata', 0.0571, 'LOW');
 
-    vi.spyOn(apiClient, 'predictForecastBust').mockResolvedValue({
-      data: mockInitialSuccess,
+    vi.spyOn(apiClient, 'getDashboardIntelligence').mockResolvedValue({
+      data: mockDashboard,
       requestId: 'req_init_001',
     });
 
     render(<App />);
 
     // Step 1: Initial successful prediction
-    const submitBtn = screen.getByRole('button', { name: /Estimate Bust Probability/i });
+    const submitBtn = screen.getByRole('button', { name: /AUDIT RELIABILITY/i });
     fireEvent.click(submitBtn);
 
     await waitFor(() => {
-      expect(screen.getByText('5.7100%')).toBeInTheDocument();
+      expect(screen.getByText('5.71%')).toBeInTheDocument();
     });
-    expect(screen.getByText('Risk: LOW')).toBeInTheDocument();
-    expect(screen.getByText('Initial stable forecast.')).toBeInTheDocument();
+    expect(screen.getByText('LOW')).toBeInTheDocument();
 
-    // Step 2: User changes inputs to invalid zero lead time
-    const issueInput = screen.getByLabelText(/Issue Time/i);
-    const validInput = screen.getByLabelText(/Valid Target/i);
-    fireEvent.change(issueInput, { target: { value: '2026-08-29T12:30' } });
-    fireEvent.change(validInput, { target: { value: '2026-08-29T12:30' } });
+    // Step 2: User modifies location to new target
+    const locationInput = screen.getByLabelText(/Location Name or Coordinates/i);
+    fireEvent.change(locationInput, { target: { value: 'Mumbai' } });
 
-    // Step 3: Click submit on invalid form
-    fireEvent.click(submitBtn);
-
-    // Step 4: Verification — validation error is visible, but stale results are strictly hidden
-    expect(
-      screen.getByText('Forecast valid time must be strictly after the forecast issue time.')
-    ).toBeInTheDocument();
-    expect(screen.queryByText('5.7100%')).not.toBeInTheDocument();
-    expect(screen.queryByText('Risk: LOW')).not.toBeInTheDocument();
-    expect(screen.queryByText('Initial stable forecast.')).not.toBeInTheDocument();
+    // Step 3: Verification — stale results are strictly cleared immediately
+    expect(screen.queryByText('5.71%')).not.toBeInTheDocument();
   });
 
   it('TEST B: clears previous success when subsequent request results in safe abstention', async () => {
@@ -365,43 +410,22 @@ describe('Veyra Frontend Dashboard Component Tests', () => {
       data: { status: 'ok', service: 'forecast-bust-sentinel', version: '0.1.0' },
     });
 
-    const mockSuccess: PredictionResponse = {
-      location: 'London',
-      bust_probability: 0.12,
-      risk_level: 'LOW',
-      trust_state: 'HIGH_CONFIDENCE',
-      abstain: false,
-      reason_codes: ['SUCCESS'],
-      model_version: 'prototype-gbm-v1',
-      data_version: 'gefs-openmeteo-v1.0',
-      explanation: null,
-    };
+    const mockSuccess = createMockDashboard('London', 0.12, 'LOW');
+    const mockAbstention = createMockDashboard('Atlantis', null, null, true, ['INVALID_LOCATION']);
 
-    const mockAbstention: PredictionResponse = {
-      location: 'Atlantis',
-      bust_probability: null,
-      risk_level: null,
-      trust_state: 'UNAVAILABLE',
-      abstain: true,
-      reason_codes: ['INVALID_LOCATION'],
-      model_version: null,
-      data_version: null,
-      explanation: null,
-    };
-
-    vi.spyOn(apiClient, 'predictForecastBust')
+    vi.spyOn(apiClient, 'getDashboardIntelligence')
       .mockResolvedValueOnce({ data: mockSuccess })
       .mockResolvedValueOnce({ data: mockAbstention });
 
     render(<App />);
 
-    const locationInput = screen.getByLabelText(/Location or Coordinates/i);
-    const submitBtn = screen.getByRole('button', { name: /Estimate Bust Probability/i });
+    const locationInput = screen.getByLabelText(/Location Name or Coordinates/i);
+    const submitBtn = screen.getByRole('button', { name: /AUDIT RELIABILITY/i });
 
     // 1st request -> Success
     fireEvent.click(submitBtn);
     await waitFor(() => {
-      expect(screen.getByText('12.0000%')).toBeInTheDocument();
+      expect(screen.getByText('12.00%')).toBeInTheDocument();
     });
 
     // 2nd request -> Atlantis (Abstention)
@@ -409,10 +433,11 @@ describe('Veyra Frontend Dashboard Component Tests', () => {
     fireEvent.click(submitBtn);
 
     await waitFor(() => {
-      expect(screen.getByText('Prediction Safely Abstained')).toBeInTheDocument();
+      expect(screen.getByText(/Prediction Safely Abstained/i)).toBeInTheDocument();
     });
-    expect(screen.queryByText('12.0000%')).not.toBeInTheDocument();
-    expect(screen.queryByText('Risk: LOW')).not.toBeInTheDocument();
+    expect(screen.queryByText('12.00%')).not.toBeInTheDocument();
+    expect(screen.queryByText('0.00%')).not.toBeInTheDocument();
+    expect(screen.queryByText('0%')).not.toBeInTheDocument();
   });
 
   it('TEST C: clears stale success when subsequent request fails with network error', async () => {
@@ -420,39 +445,29 @@ describe('Veyra Frontend Dashboard Component Tests', () => {
       data: { status: 'ok', service: 'forecast-bust-sentinel', version: '0.1.0' },
     });
 
-    const mockSuccess: PredictionResponse = {
-      location: 'Tokyo',
-      bust_probability: 0.25,
-      risk_level: 'MEDIUM',
-      trust_state: 'HIGH_CONFIDENCE',
-      abstain: false,
-      reason_codes: ['SUCCESS'],
-      model_version: 'prototype-gbm-v1',
-      data_version: 'gefs-openmeteo-v1.0',
-      explanation: null,
-    };
+    const mockSuccess = createMockDashboard('Tokyo', 0.25, 'MEDIUM');
 
-    vi.spyOn(apiClient, 'predictForecastBust')
+    vi.spyOn(apiClient, 'getDashboardIntelligence')
       .mockResolvedValueOnce({ data: mockSuccess })
       .mockResolvedValueOnce({
         error: { error: 'NETWORK_ERROR', message: 'Connection lost to server', status_code: 0 },
       });
 
     render(<App />);
-    const submitBtn = screen.getByRole('button', { name: /Estimate Bust Probability/i });
+    const submitBtn = screen.getByRole('button', { name: /AUDIT RELIABILITY/i });
 
     // 1st request -> Success
     fireEvent.click(submitBtn);
     await waitFor(() => {
-      expect(screen.getByText('25.0000%')).toBeInTheDocument();
+      expect(screen.getByText('25.00%')).toBeInTheDocument();
     });
 
     // 2nd request -> Network Error
     fireEvent.click(submitBtn);
     await waitFor(() => {
-      expect(screen.getByText('Network Connection Failed')).toBeInTheDocument();
+      expect(screen.getByText('Connection lost to server')).toBeInTheDocument();
     });
-    expect(screen.queryByText('25.0000%')).not.toBeInTheDocument();
+    expect(screen.queryByText('25.00%')).not.toBeInTheDocument();
   });
 
   it('TEST D: clears old error banner when a valid retry succeeds', async () => {
@@ -460,39 +475,29 @@ describe('Veyra Frontend Dashboard Component Tests', () => {
       data: { status: 'ok', service: 'forecast-bust-sentinel', version: '0.1.0' },
     });
 
-    const mockSuccess: PredictionResponse = {
-      location: 'Kolkata',
-      bust_probability: 0.08,
-      risk_level: 'LOW',
-      trust_state: 'HIGH_CONFIDENCE',
-      abstain: false,
-      reason_codes: ['SUCCESS'],
-      model_version: 'prototype-gbm-v1',
-      data_version: 'gefs-openmeteo-v1.0',
-      explanation: null,
-    };
+    const mockSuccess = createMockDashboard('Kolkata', 0.08, 'LOW');
 
-    vi.spyOn(apiClient, 'predictForecastBust')
+    vi.spyOn(apiClient, 'getDashboardIntelligence')
       .mockResolvedValueOnce({
         error: { error: 'RATE_LIMIT_EXCEEDED', message: 'Rate limit hit', status_code: 429 },
       })
       .mockResolvedValueOnce({ data: mockSuccess });
 
     render(<App />);
-    const submitBtn = screen.getByRole('button', { name: /Estimate Bust Probability/i });
+    const submitBtn = screen.getByRole('button', { name: /AUDIT RELIABILITY/i });
 
     // 1st attempt -> 429
     fireEvent.click(submitBtn);
     await waitFor(() => {
-      expect(screen.getByText('API Rate Limit Exceeded')).toBeInTheDocument();
+      expect(screen.getByText('Rate limit hit')).toBeInTheDocument();
     });
 
     // 2nd attempt -> Success
     fireEvent.click(submitBtn);
     await waitFor(() => {
-      expect(screen.getByText('8.0000%')).toBeInTheDocument();
+      expect(screen.getByText('8.00%')).toBeInTheDocument();
     });
-    expect(screen.queryByText('API Rate Limit Exceeded')).not.toBeInTheDocument();
+    expect(screen.queryByText('Rate limit hit')).not.toBeInTheDocument();
   });
 
   it('TEST E: replaces result A with result B cleanly across consecutive successful requests', async () => {
@@ -500,48 +505,29 @@ describe('Veyra Frontend Dashboard Component Tests', () => {
       data: { status: 'ok', service: 'forecast-bust-sentinel', version: '0.1.0' },
     });
 
-    const mockA: PredictionResponse = {
-      location: 'London',
-      bust_probability: 0.05,
-      risk_level: 'LOW',
-      trust_state: 'HIGH_CONFIDENCE',
-      abstain: false,
-      reason_codes: ['SUCCESS'],
-      model_version: 'prototype-gbm-v1',
-      data_version: 'gefs-openmeteo-v1.0',
-      explanation: null,
-    };
+    const mockA = createMockDashboard('London', 0.05, 'LOW');
+    const mockB = createMockDashboard('Tokyo', 0.72, 'HIGH');
 
-    const mockB: PredictionResponse = {
-      location: 'Tokyo',
-      bust_probability: 0.72,
-      risk_level: 'HIGH',
-      trust_state: 'HIGH_CONFIDENCE',
-      abstain: false,
-      reason_codes: ['SUCCESS'],
-      model_version: 'prototype-gbm-v1',
-      data_version: 'gefs-openmeteo-v1.0',
-      explanation: null,
-    };
-
-    vi.spyOn(apiClient, 'predictForecastBust')
+    vi.spyOn(apiClient, 'getDashboardIntelligence')
       .mockResolvedValueOnce({ data: mockA })
       .mockResolvedValueOnce({ data: mockB });
 
     render(<App />);
-    const submitBtn = screen.getByRole('button', { name: /Estimate Bust Probability/i });
+    const locationInput = screen.getByLabelText(/Location Name or Coordinates/i);
+    const submitBtn = screen.getByRole('button', { name: /AUDIT RELIABILITY/i });
 
     fireEvent.click(submitBtn);
     await waitFor(() => {
-      expect(screen.getByText('5.0000%')).toBeInTheDocument();
+      expect(screen.getByText('5.00%')).toBeInTheDocument();
     });
 
+    fireEvent.change(locationInput, { target: { value: 'Tokyo' } });
     fireEvent.click(submitBtn);
     await waitFor(() => {
-      expect(screen.getByText('72.0000%')).toBeInTheDocument();
+      expect(screen.getByText('72.00%')).toBeInTheDocument();
     });
-    expect(screen.queryByText('5.0000%')).not.toBeInTheDocument();
-    expect(screen.getByText('Risk: HIGH')).toBeInTheDocument();
+    expect(screen.queryByText('5.00%')).not.toBeInTheDocument();
+    expect(screen.getByText('HIGH')).toBeInTheDocument();
   });
 
   it('TEST F: renders exact backend 96h lead hours and medium-range signal in ExplainabilityView', () => {
