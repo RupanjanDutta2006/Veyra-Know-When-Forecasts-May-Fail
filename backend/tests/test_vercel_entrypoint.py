@@ -129,3 +129,34 @@ def test_v3_artifacts_exact_provenance():
     with open(features_path, "r", encoding="utf-8") as f:
         features = json.load(f)
     assert len(features) == 50, f"Expected 50 features, found {len(features)}"
+
+
+def test_bundled_libgomp_runtime_presence_and_checksum():
+    """Verify bundled libgomp.so.1 exists with verified x86_64 ELF format and SHA-256."""
+    expected_sha = "98b21ff32bb07b53f1fb266d887d2db0086ea66c8ad03696a1db53f65321cd94"
+
+    locations = [
+        REPO_ROOT / "lib" / "libgomp.so.1",
+        REPO_ROOT / "backend" / "app" / "runtimes" / "libgomp.so.1",
+    ]
+
+    for loc in locations:
+        assert loc.is_file(), f"{loc} must exist as a bundled library file"
+        data = loc.read_bytes()
+        # Verify ELF header
+        assert data[:4] == b"\x7fELF", f"{loc} must be an ELF binary"
+        assert data[4] == 2, f"{loc} must be 64-bit"
+        assert data[5] == 1, f"{loc} must be Little-Endian"
+        actual_sha = hashlib.sha256(data).hexdigest()
+        assert actual_sha == expected_sha, f"Checksum mismatch for {loc}: {actual_sha} != {expected_sha}"
+
+    # Verify license notices exist
+    assert (REPO_ROOT / "lib" / "LICENSE.txt").is_file()
+    assert (REPO_ROOT / "backend" / "app" / "runtimes" / "LICENSE.txt").is_file()
+
+
+def test_runtime_compat_module_execution():
+    """Verify runtime_compat.ensure_linux_runtimes runs cleanly without throwing exceptions."""
+    from backend.app.core.runtime_compat import ensure_linux_runtimes
+    assert ensure_linux_runtimes() is True
+

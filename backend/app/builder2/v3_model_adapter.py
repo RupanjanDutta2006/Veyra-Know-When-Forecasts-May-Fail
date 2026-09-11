@@ -22,6 +22,10 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import joblib
+
+from backend.app.core.runtime_compat import ensure_linux_runtimes
+
+ensure_linux_runtimes()
 import lightgbm as lgb
 import numpy as np
 import pandas as pd

@@ -8,6 +8,10 @@ and scale_pos_weight specifically configured to prevent overfitting on small sam
 from typing import Dict, List, Optional
 import numpy as np
 import pandas as pd
+
+from backend.app.core.runtime_compat import ensure_linux_runtimes
+
+ensure_linux_runtimes()
 import lightgbm as lgb
 
 
