@@ -17,9 +17,6 @@ lib/
 !lib/
 !lib/libgomp.so.1
 !lib/LICENSE.txt
-!backend/app/runtimes/
-!backend/app/runtimes/libgomp.so.1
-!backend/app/runtimes/LICENSE.txt
 lib64/
 parts/
 sdist/

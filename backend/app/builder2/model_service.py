@@ -16,6 +16,10 @@ import joblib
 import numpy as np
 import pandas as pd
 
+from backend.app.core.runtime_compat import ensure_linux_runtimes
+
+ensure_linux_runtimes()
+
 from backend.app.builder2.feature_pipeline import FEATURE_COLUMN_NAMES
 import backend.app.builder2.tree_classifier as _tree_classifier
 import backend.app.builder2.calibrator as _calibrator

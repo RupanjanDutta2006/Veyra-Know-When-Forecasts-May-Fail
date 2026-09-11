@@ -1,5 +1,9 @@
 """Main FastAPI Application for Forecast-Bust Sentinel with Production Hardening."""
-import backend.app.core.runtime_compat  # noqa: F401 - Pre-load Linux serverless runtimes (libgomp.so.1)
+# Pre-load Linux serverless runtimes (libgomp.so.1) before any endpoint/model imports
+from backend.app.core.runtime_compat import ensure_linux_runtimes
+
+ensure_linux_runtimes()
+
 import logging
 from pathlib import Path
 from fastapi import FastAPI, Request

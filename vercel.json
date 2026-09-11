@@ -1,4 +1,12 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "cd frontend && npm install && npm run build"
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "functions": {
+    "backend/app/main.py": {
+      "includeFiles": "lib/**"
+    },
+    "**": {
+      "includeFiles": "lib/**"
+    }
+  }
 }
