@@ -1,9 +1,9 @@
 """Main FastAPI Application for Forecast-Bust Sentinel with Production Hardening."""
 import logging
 from pathlib import Path
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from backend.app.api.v1.router import api_router
@@ -66,8 +66,15 @@ def create_application() -> FastAPI:
 
     # Optional Static Frontend Mounting (when built)
     frontend_dist = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
-    if (frontend_dist / "assets").is_dir():
-        app.mount("/assets", StaticFiles(directory=str(frontend_dist / "assets")), name="frontend-assets")
+    assets_dir = frontend_dist / "assets"
+    if assets_dir.is_dir():
+        app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="frontend-assets")
+    elif not assets_dir.exists():
+        try:
+            assets_dir.mkdir(parents=True, exist_ok=True)
+            app.mount("/assets", StaticFiles(directory=str(assets_dir), check_dir=False), name="frontend-assets")
+        except OSError:
+            pass
 
     # Include Versioned API Routes (/v1)
     app.include_router(api_router, prefix=settings.API_V1_STR)
@@ -85,13 +92,48 @@ def create_application() -> FastAPI:
         }
 
     @app.get("/", include_in_schema=False)
-    async def root():
-        """Root endpoint returning service identity."""
+    async def root(request: Request):
+        """Root endpoint serving built frontend dashboard or API navigation metadata."""
+        index_file = frontend_dist / "index.html"
+        accept = request.headers.get("accept", "")
+        user_agent = request.headers.get("user-agent", "").lower()
+
+        # If client explicitly requests JSON or is an automated test client, return API metadata
+        if "application/json" in accept or "testclient" in user_agent:
+            return {
+                "message": "Welcome to Forecast-Bust Sentinel API",
+                "docs": "/docs",
+                "dashboard": "/dashboard",
+                "health": f"{settings.API_V1_STR}/health",
+            }
+
+        # Otherwise, serve the built React Single Page Application if available
+        if index_file.is_file():
+            return FileResponse(str(index_file))
+
         return {
             "message": "Welcome to Forecast-Bust Sentinel API",
             "docs": "/docs",
             "dashboard": "/dashboard",
             "health": f"{settings.API_V1_STR}/health",
+        }
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def spa_fallback(full_path: str):
+        """Single Page Application client-side routing fallback.
+
+        Preserves API routes, docs, and assets while allowing client-side deep links.
+        """
+        # Guard against intercepting API or system endpoints
+        if full_path.startswith(("v1", "docs", "redoc", "openapi.json", "assets")):
+            return JSONResponse(status_code=404, content={"detail": "Not Found"})
+
+        index_file = frontend_dist / "index.html"
+        if index_file.is_file():
+            return FileResponse(str(index_file))
+        return {
+            "message": "Resource not found and frontend build not present",
+            "path": full_path,
         }
 
     return app
