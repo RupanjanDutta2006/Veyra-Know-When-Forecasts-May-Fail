@@ -5,6 +5,9 @@ import { ForecastRiskTimeline } from '../components/ForecastRiskTimeline';
 import { HorizonRiskDetails } from '../components/HorizonRiskDetails';
 import { apiClient } from '../api/client';
 import {
+  DashboardIntelligenceResponse,
+  DashboardMode,
+  DashboardTimelinePoint,
   HorizonPointResult,
   HorizonTimelineResult,
   PredictionResponse,
@@ -58,6 +61,91 @@ const createMockTimeline = (): HorizonTimelineResult => {
     successful_count: 7,
     abstained_count: 0,
     error_count: 0,
+  };
+};
+
+const createMockDashboardResponse = (
+  mode: DashboardMode = 'standard_7d',
+  location = 'London',
+  variable = 'temperature_2m'
+): DashboardIntelligenceResponse => {
+  const leads = mode === 'single' ? [24] : [24, 48, 72, 96, 120, 144, 168];
+  const probs = [0.0561, 0.0563, 0.0568, 0.0575, 0.0582, 0.0590, 0.0610];
+  const timeline: DashboardTimelinePoint[] = leads.map((lead, idx) => ({
+    lead_hours: lead,
+    lead_days: lead / 24,
+    valid_time: `2026-09-0${Math.floor(lead / 24) + 1}T12:00:00Z`,
+    bust_probability: probs[idx] ?? 0.0561,
+    risk_level: 'LOW',
+    trust_state: 'HIGH_CONFIDENCE',
+    abstain: false,
+    is_certified_horizon: lead <= 240,
+    operational_extension: lead > 240,
+    reason_codes: ['SUCCESS'],
+  }));
+
+  return {
+    location: {
+      query: location,
+      resolved_name: `${location}, Synoptic Station`,
+      latitude: 51.5074,
+      longitude: -0.1278,
+    },
+    variable,
+    mode,
+    status: 'SUCCESS',
+    selected_prediction: {
+      location,
+      bust_probability: probs[0],
+      risk_level: 'LOW',
+      trust_state: 'HIGH_CONFIDENCE',
+      abstain: false,
+      reason_codes: ['SUCCESS'],
+      model_version: 'v3-lightgbm-frozen',
+      data_version: 'gefs-reanalysis-v3',
+      explanation: {
+        primary_driver: 'stable_ensemble_agreement',
+        driver_summary: 'Stable forecast across multi-horizon ensemble.',
+        top_contributing_factors: [],
+      },
+    },
+    timeline,
+    summary: {
+      available_points: leads.length,
+      abstained_points: 0,
+      total_points: leads.length,
+      max_bust_probability: probs[probs.length - 1],
+      max_risk_level: 'LOW',
+      max_risk_lead_hours: leads[leads.length - 1],
+      mean_bust_probability: 0.0578,
+      elevated_risk_points: 0,
+      first_elevated_risk_lead_hours: null,
+      overall_decision_mode: 'NOMINAL_OPERATIONS',
+    },
+    scientific_context: {
+      model_version: 'v3-lightgbm-frozen',
+      model_family: 'LightGBM-V3-Isotonic',
+      calibration_method: 'isotonic',
+      feature_count: 50,
+      probability_semantics: 'P(Forecast Bust) under calibrated threshold',
+      benchmark_scope: 'Certified frozen split',
+      benchmark_lead_horizon_max_hours: 240,
+      operational_horizon_max_hours: 384,
+      historical_benchmark: {
+        dataset: 'certified_splits_v3',
+        period: '2021-2024',
+        test_samples: 2920,
+        test_cycles: 1460,
+        average_precision: 0.54,
+        pr_auc_trapezoidal: 0.53,
+        roc_auc: 0.812,
+        brier_score: 0.082,
+        bss_vs_e0: 0.18,
+        bss_vs_e1b: 0.14,
+        ece: 0.045,
+      },
+      generalization_limits: ['Convective extremes in tropical complex terrain'],
+    },
   };
 };
 
@@ -416,73 +504,62 @@ describe('Day 16 — Visual Forecast Risk & Timeline Tests', () => {
   });
 
   it('17. Stale timeline is cleared when new timeline request is initiated', async () => {
-    const mockTimeline = createMockTimeline();
+    const mockTimeline = createMockDashboardResponse('standard_7d');
     vi.spyOn(apiClient, 'getHealth').mockResolvedValue({ data: { status: 'ok', service: 'veyra-api', version: '0.1.0' } });
-    vi.spyOn(apiClient, 'predictHorizonTimeline').mockResolvedValue(mockTimeline);
+    vi.spyOn(apiClient, 'getDashboardIntelligence').mockResolvedValue({ data: mockTimeline, requestId: 'req_1' });
 
     render(<App />);
 
-    const timelineTab = screen.getByRole('tab', { name: /Visual Risk Timeline/i });
-    fireEvent.click(timelineTab);
-
-    const submitBtn = screen.getByRole('button', { name: /Generate Risk Timeline/i });
+    const submitBtn = screen.getByRole('button', { name: /Audit Reliability/i });
     fireEvent.click(submitBtn);
 
     await waitFor(() => {
-      expect(screen.getByText('Forecast Bust Risk Timeline')).toBeInTheDocument();
+      expect(screen.getByText('5.61%')).toBeInTheDocument();
     });
 
     let resolvePromise: (val: any) => void;
     const delayedPromise = new Promise((resolve) => {
       resolvePromise = resolve;
     });
-    vi.spyOn(apiClient, 'predictHorizonTimeline').mockReturnValue(delayedPromise as any);
+    vi.spyOn(apiClient, 'getDashboardIntelligence').mockReturnValue(delayedPromise as any);
 
     fireEvent.click(submitBtn);
 
-    expect(screen.queryByText('Forecast Bust Risk Timeline')).not.toBeInTheDocument();
-    expect(screen.getByText('Evaluating Forecast Trajectory')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Auditing Reliability/i })).toBeInTheDocument();
 
-    resolvePromise!(mockTimeline);
+    resolvePromise!({ data: mockTimeline, requestId: 'req_2' });
   });
 
   it('18. Validation failure clears stale timeline state', async () => {
-    const mockTimeline = createMockTimeline();
+    const mockTimeline = createMockDashboardResponse('standard_7d');
     vi.spyOn(apiClient, 'getHealth').mockResolvedValue({ data: { status: 'ok', service: 'veyra-api', version: '0.1.0' } });
-    vi.spyOn(apiClient, 'predictHorizonTimeline').mockResolvedValue(mockTimeline);
+    vi.spyOn(apiClient, 'getDashboardIntelligence').mockResolvedValue({ data: mockTimeline, requestId: 'req_1' });
 
     render(<App />);
 
-    const timelineTab = screen.getByRole('tab', { name: /Visual Risk Timeline/i });
-    fireEvent.click(timelineTab);
-
-    const submitBtn = screen.getByRole('button', { name: /Generate Risk Timeline/i });
+    const submitBtn = screen.getByRole('button', { name: /Audit Reliability/i });
     fireEvent.click(submitBtn);
 
     await waitFor(() => {
-      expect(screen.getByText('Forecast Bust Risk Timeline')).toBeInTheDocument();
+      expect(screen.getByText('5.61%')).toBeInTheDocument();
     });
 
-    const locInput = screen.getByLabelText(/Location or Coordinates/i);
+    const locInput = screen.getByLabelText(/Location Name or Coordinates/i);
     fireEvent.change(locInput, { target: { value: '' } });
 
-    const form = locInput.closest('form')!;
-    fireEvent.submit(form);
-
-    expect(screen.queryByText('Forecast Bust Risk Timeline')).not.toBeInTheDocument();
-    expect(screen.getByText(/Please enter a valid location/i)).toBeInTheDocument();
+    expect(screen.queryByText('5.61%')).not.toBeInTheDocument();
+    expect(submitBtn).toBeDisabled();
   });
 
   it('19. Handles 429 rate-limit error gracefully', async () => {
     vi.spyOn(apiClient, 'getHealth').mockResolvedValue({ data: { status: 'ok', service: 'veyra-api', version: '0.1.0' } });
-    vi.spyOn(apiClient, 'predictHorizonTimeline').mockRejectedValue(new Error('Rate limit exceeded. Please retry after 15 seconds.'));
+    vi.spyOn(apiClient, 'getDashboardIntelligence').mockResolvedValue({
+      error: { error: 'RATE_LIMIT_EXCEEDED', message: 'Rate limit exceeded. Please retry after 15 seconds.', status_code: 429 },
+    });
 
     render(<App />);
 
-    const timelineTab = screen.getByRole('tab', { name: /Visual Risk Timeline/i });
-    fireEvent.click(timelineTab);
-
-    const submitBtn = screen.getByRole('button', { name: /Generate Risk Timeline/i });
+    const submitBtn = screen.getByRole('button', { name: /Audit Reliability/i });
     fireEvent.click(submitBtn);
 
     await waitFor(() => {
@@ -520,82 +597,72 @@ describe('Day 16 — Visual Forecast Risk & Timeline Tests', () => {
   });
 
   it('22. Day 15 Single Prediction workflow continues functioning flawlessly', async () => {
-    const singlePrediction = createMockPrediction(72, 0.0569, 'LOW');
+    const mockSingle = createMockDashboardResponse('single', 'London');
     vi.spyOn(apiClient, 'getHealth').mockResolvedValue({ data: { status: 'ok', service: 'veyra-api', version: '0.1.0' } });
-    vi.spyOn(apiClient, 'predictForecastBust').mockResolvedValue({ data: singlePrediction });
+    vi.spyOn(apiClient, 'getDashboardIntelligence').mockResolvedValue({ data: mockSingle, requestId: 'req_single' });
 
     render(<App />);
 
-    const submitBtn = screen.getByRole('button', { name: /Estimate Bust Probability/i });
+    const modeSelect = screen.getByLabelText(/Evaluation Horizon Mode/i);
+    fireEvent.change(modeSelect, { target: { value: 'single' } });
+
+    const submitBtn = screen.getByRole('button', { name: /Audit Reliability/i });
     fireEvent.click(submitBtn);
 
     await waitFor(() => {
-      expect(screen.getByText('5.6900%')).toBeInTheDocument();
-      expect(screen.getByText(/Risk: LOW/i)).toBeInTheDocument();
-      expect(screen.getByText(/Physical Explainability & Risk Attribution/i)).toBeInTheDocument();
+      expect(screen.getByText('5.61%')).toBeInTheDocument();
+      expect(screen.getByText('LOW')).toBeInTheDocument();
     });
   });
 
   it('23. [TEST 10 REGRESSION] Switching from Timeline mode to Single mode clears timeline and selected horizon details', async () => {
-    const mockTimeline = createMockTimeline();
+    const mockTimeline = createMockDashboardResponse('standard_7d');
     vi.spyOn(apiClient, 'getHealth').mockResolvedValue({ data: { status: 'ok', service: 'veyra-api', version: '0.1.0' } });
-    vi.spyOn(apiClient, 'predictHorizonTimeline').mockResolvedValue(mockTimeline);
+    vi.spyOn(apiClient, 'getDashboardIntelligence').mockResolvedValue({ data: mockTimeline, requestId: 'req_7d' });
 
     render(<App />);
 
-    // 1. Switch to Timeline mode
-    const timelineTab = screen.getByRole('tab', { name: /Visual Risk Timeline/i });
-    fireEvent.click(timelineTab);
-
-    // 2. Submit timeline
-    const submitBtn = screen.getByRole('button', { name: /Generate Risk Timeline/i });
+    // 1. Submit timeline in standard_7d mode
+    const submitBtn = screen.getByRole('button', { name: /Audit Reliability/i });
     fireEvent.click(submitBtn);
 
     await waitFor(() => {
-      expect(screen.getByText('Forecast Bust Risk Timeline')).toBeInTheDocument();
-      expect(screen.getByText('HORIZON DETAIL EVALUATION')).toBeInTheDocument();
+      expect(screen.getByText('5.61%')).toBeInTheDocument();
     });
 
-    // 3. Switch back to Single Target Forecast mode without submitting
-    const singleTab = screen.getByRole('tab', { name: /Single Target Forecast/i });
-    fireEvent.click(singleTab);
+    // 2. Switch to Single mode without submitting
+    const modeSelect = screen.getByLabelText(/Evaluation Horizon Mode/i);
+    fireEvent.change(modeSelect, { target: { value: 'single' } });
 
-    // 4. Verify timeline chart, risk strip, and horizon details are immediately gone
-    expect(screen.queryByText('Forecast Bust Risk Timeline')).not.toBeInTheDocument();
-    expect(screen.queryByText('HORIZON DETAIL EVALUATION')).not.toBeInTheDocument();
-    expect(screen.queryByText('Risk Profile:')).not.toBeInTheDocument();
-
-    // 5. Verify Single Target empty state is rendered
-    expect(screen.getByText('Sentinel Ready for Assessment')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Estimate Bust Probability/i })).toBeInTheDocument();
+    // 3. Verify previous results are immediately cleared
+    expect(screen.queryByText('5.61%')).not.toBeInTheDocument();
+    expect(screen.getByText(/FORECAST BUST RISK TIMELINE STANDBY/i)).toBeInTheDocument();
   });
 
   it('24. [TEST 10 REGRESSION] Switching from Single mode to Timeline mode clears single prediction results', async () => {
-    const singlePrediction = createMockPrediction(72, 0.0569, 'LOW');
+    const mockSingle = createMockDashboardResponse('single', 'London');
     vi.spyOn(apiClient, 'getHealth').mockResolvedValue({ data: { status: 'ok', service: 'veyra-api', version: '0.1.0' } });
-    vi.spyOn(apiClient, 'predictForecastBust').mockResolvedValue({ data: singlePrediction });
+    vi.spyOn(apiClient, 'getDashboardIntelligence').mockResolvedValue({ data: mockSingle, requestId: 'req_single' });
 
     render(<App />);
 
-    // 1. Submit Single prediction
-    const submitBtn = screen.getByRole('button', { name: /Estimate Bust Probability/i });
+    // 1. Switch to Single mode and submit
+    const modeSelect = screen.getByLabelText(/Evaluation Horizon Mode/i);
+    fireEvent.change(modeSelect, { target: { value: 'single' } });
+
+    const submitBtn = screen.getByRole('button', { name: /Audit Reliability/i });
     fireEvent.click(submitBtn);
 
     await waitFor(() => {
-      expect(screen.getByText('5.6900%')).toBeInTheDocument();
+      expect(screen.getByText('5.61%')).toBeInTheDocument();
     });
 
-    // 2. Switch to Timeline mode without submitting
-    const timelineTab = screen.getByRole('tab', { name: /Visual Risk Timeline/i });
-    fireEvent.click(timelineTab);
+    // 2. Switch to 7-Day Timeline mode without submitting
+    fireEvent.change(modeSelect, { target: { value: 'standard_7d' } });
 
     // 3. Single prediction results must disappear
-    expect(screen.queryByText('5.6900%')).not.toBeInTheDocument();
-    expect(screen.queryByText('Physical Attribution Analysis')).not.toBeInTheDocument();
-
-    // 4. Timeline empty state is shown
-    expect(screen.getByText('Sentinel Ready for Assessment')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Generate Risk Timeline/i })).toBeInTheDocument();
+    expect(screen.queryByText('5.61%')).not.toBeInTheDocument();
+    expect(screen.getByText(/FORECAST BUST RISK TIMELINE STANDBY/i)).toBeInTheDocument();
   });
 
   it('25. Mode switching before submission preserves clean empty states without rendering stale results', () => {
@@ -603,21 +670,18 @@ describe('Day 16 — Visual Forecast Risk & Timeline Tests', () => {
 
     render(<App />);
 
-    const singleTab = screen.getByRole('tab', { name: /Single Target Forecast/i });
-    const timelineTab = screen.getByRole('tab', { name: /Visual Risk Timeline/i });
+    const modeSelect = screen.getByLabelText(/Evaluation Horizon Mode/i);
 
-    // Initially Single mode empty state
-    expect(screen.getByText('Sentinel Ready for Assessment')).toBeInTheDocument();
+    // Initially standby
+    expect(screen.getByText(/FORECAST BUST RISK TIMELINE STANDBY/i)).toBeInTheDocument();
 
-    // Switch to Timeline mode
-    fireEvent.click(timelineTab);
-    expect(screen.getByText('Sentinel Ready for Assessment')).toBeInTheDocument();
-    expect(screen.queryByText('Forecast Bust Risk Timeline')).not.toBeInTheDocument();
+    // Switch to Single mode
+    fireEvent.change(modeSelect, { target: { value: 'single' } });
+    expect(screen.getByText(/FORECAST BUST RISK TIMELINE STANDBY/i)).toBeInTheDocument();
 
-    // Switch back to Single mode
-    fireEvent.click(singleTab);
-    expect(screen.getByText('Sentinel Ready for Assessment')).toBeInTheDocument();
-    expect(screen.queryByText('Estimated Forecast Bust Probability')).not.toBeInTheDocument();
+    // Switch back to 7-Day mode
+    fireEvent.change(modeSelect, { target: { value: 'standard_7d' } });
+    expect(screen.getByText(/FORECAST BUST RISK TIMELINE STANDBY/i)).toBeInTheDocument();
   });
 
   it('26. Location and variable form inputs are preserved across mode switches', () => {
@@ -626,26 +690,25 @@ describe('Day 16 — Visual Forecast Risk & Timeline Tests', () => {
     render(<App />);
 
     // Change location to Kolkata and variable to surface_pressure
-    const locInput = screen.getByLabelText(/Location or Coordinates/i);
+    const locInput = screen.getByLabelText(/Location Name or Coordinates/i);
     fireEvent.change(locInput, { target: { value: 'Kolkata' } });
 
-    const varSelect = screen.getByLabelText(/Meteorological Variable/i);
+    const varSelect = screen.getByLabelText(/Target Meteorological Variable/i);
     fireEvent.change(varSelect, { target: { value: 'surface_pressure' } });
 
-    // Switch to Timeline mode
-    const timelineTab = screen.getByRole('tab', { name: /Visual Risk Timeline/i });
-    fireEvent.click(timelineTab);
+    // Switch to Single mode
+    const modeSelect = screen.getByLabelText(/Evaluation Horizon Mode/i);
+    fireEvent.change(modeSelect, { target: { value: 'single' } });
 
     // Verify inputs preserved
-    expect(screen.getByLabelText(/Location or Coordinates/i)).toHaveValue('Kolkata');
-    expect(screen.getByLabelText(/Meteorological Variable/i)).toHaveValue('surface_pressure');
+    expect(screen.getByLabelText(/Location Name or Coordinates/i)).toHaveValue('Kolkata');
+    expect(screen.getByLabelText(/Target Meteorological Variable/i)).toHaveValue('surface_pressure');
 
-    // Switch back to Single mode
-    const singleTab = screen.getByRole('tab', { name: /Single Target Forecast/i });
-    fireEvent.click(singleTab);
+    // Switch to Full 16-Day mode
+    fireEvent.change(modeSelect, { target: { value: 'full_16d' } });
 
     // Verify inputs still preserved
-    expect(screen.getByLabelText(/Location or Coordinates/i)).toHaveValue('Kolkata');
-    expect(screen.getByLabelText(/Meteorological Variable/i)).toHaveValue('surface_pressure');
+    expect(screen.getByLabelText(/Location Name or Coordinates/i)).toHaveValue('Kolkata');
+    expect(screen.getByLabelText(/Target Meteorological Variable/i)).toHaveValue('surface_pressure');
   });
 });

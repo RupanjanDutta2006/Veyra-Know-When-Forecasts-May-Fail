@@ -20,88 +20,10 @@ DEFAULT_GEOCODING_API_URL = "https://geocoding-api.open-meteo.com/v1/search"
 
 # Standard fast registry of known benchmark locations for offline reliability and canonical resolution
 KNOWN_BENCHMARK_LOCATIONS: Dict[str, Dict[str, Any]] = {
-    # International benchmarks
-    "london": {
-        "name": "London",
-        "latitude": 51.5074,
-        "longitude": -0.1278,
-        "country": "United Kingdom",
-        "state_region": "England",
-        "timezone": "Europe/London",
-        "elevation_m": 25.0,
-    },
-    "tokyo": {
-        "name": "Tokyo",
-        "latitude": 35.6762,
-        "longitude": 139.6503,
-        "country": "Japan",
-        "state_region": "Tokyo",
-        "timezone": "Asia/Tokyo",
-        "elevation_m": 40.0,
-    },
-    "new york": {
-        "name": "New York",
-        "latitude": 40.7128,
-        "longitude": -74.0060,
-        "country": "United States",
-        "state_region": "New York",
-        "timezone": "America/New_York",
-        "elevation_m": 10.0,
-    },
-    "berlin": {
-        "name": "Berlin",
-        "latitude": 52.5200,
-        "longitude": 13.4050,
-        "country": "Germany",
-        "state_region": "Berlin",
-        "timezone": "Europe/Berlin",
-        "elevation_m": 34.0,
-    },
-    "paris": {
-        "name": "Paris",
-        "latitude": 48.8566,
-        "longitude": 2.3522,
-        "country": "France",
-        "state_region": "Ile-de-France",
-        "timezone": "Europe/Paris",
-        "elevation_m": 35.0,
-    },
-    "singapore": {
-        "name": "Singapore",
-        "latitude": 1.3521,
-        "longitude": 103.8198,
-        "country": "Singapore",
-        "state_region": "Singapore",
-        "timezone": "Asia/Singapore",
-        "elevation_m": 15.0,
-    },
-    "sydney": {
-        "name": "Sydney",
-        "latitude": -33.8688,
-        "longitude": 151.2093,
-        "country": "Australia",
-        "state_region": "New South Wales",
-        "timezone": "Australia/Sydney",
-        "elevation_m": 19.0,
-    },
-    "dubai": {
-        "name": "Dubai",
-        "latitude": 25.2048,
-        "longitude": 55.2708,
-        "country": "United Arab Emirates",
-        "state_region": "Dubai",
-        "timezone": "Asia/Dubai",
-        "elevation_m": 5.0,
-    },
-    "geneva": {
-        "name": "Geneva",
-        "latitude": 46.2044,
-        "longitude": 6.1432,
-        "country": "Switzerland",
-        "state_region": "Geneva",
-        "timezone": "Europe/Zurich",
-        "elevation_m": 375.0,
-    },
+    # =========================================================================
+    # 25 Canonical Indian Meteorological Benchmark Stations
+    # Authoritative registry: trained, backtested, and calibrated by ML eng.
+    # =========================================================================
     # Indian canonical stations and authoritative aliases
     "delhi": {
         "name": "Delhi",
@@ -456,24 +378,6 @@ KNOWN_BENCHMARK_LOCATIONS: Dict[str, Dict[str, Any]] = {
         "state_region": "Kerala",
         "timezone": "Asia/Kolkata",
         "elevation_m": 16.0,
-    },
-    "patna": {
-        "name": "Patna",
-        "latitude": 25.5941,
-        "longitude": 85.1376,
-        "country": "India",
-        "state_region": "Bihar",
-        "timezone": "Asia/Kolkata",
-        "elevation_m": 53.0,
-    },
-    "indore": {
-        "name": "Indore",
-        "latitude": 22.7196,
-        "longitude": 75.8577,
-        "country": "India",
-        "state_region": "Madhya Pradesh",
-        "timezone": "Asia/Kolkata",
-        "elevation_m": 553.0,
     },
 }
 

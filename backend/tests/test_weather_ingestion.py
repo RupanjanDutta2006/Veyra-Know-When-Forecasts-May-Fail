@@ -15,8 +15,8 @@ from backend.app.services.openmeteo_service import OpenMeteoGEFSWeatherService
 def _get_mock_vendor_payload() -> dict:
     """Return a deterministic sample payload matching Open-Meteo GFS response."""
     return {
-        "latitude": 51.5,
-        "longitude": -0.12,
+        "latitude": 28.61,
+        "longitude": 77.21,
         "generationtime_ms": 1.2,
         "timezone": "UTC",
         "hourly": {
@@ -46,22 +46,22 @@ def _get_mock_vendor_payload() -> dict:
 def test_openmeteo_service_coordinate_resolution():
     """Test resolution of named cities and coordinate strings."""
     service = OpenMeteoGEFSWeatherService()
-    assert service.resolve_coordinates("London") == (51.5074, -0.1278)
-    assert service.resolve_coordinates("tokyo") == (35.6762, 139.6503)
-    assert service.resolve_coordinates("40.7128, -74.0060") == (40.7128, -74.0060)
+    assert service.resolve_coordinates("Delhi") == (28.6139, 77.2090)
+    assert service.resolve_coordinates("kolkata") == (22.5726, 88.3639)
+    assert service.resolve_coordinates("22.5726, 88.3639") == (22.5726, 88.3639)
     assert service.resolve_coordinates("UnknownCityXYZ") is None
 
 
 def test_openmeteo_service_query_url_builder():
     """Test URL generation with and without target date."""
     service = OpenMeteoGEFSWeatherService()
-    url = service.build_query_url(51.5074, -0.1278)
-    assert "latitude=51.5074" in url
-    assert "longitude=-0.1278" in url
+    url = service.build_query_url(28.6139, 77.2090)
+    assert "latitude=28.6139" in url
+    assert "longitude=77.209" in url
     assert "models=gfs_seamless" in url
     assert "wind_speed_unit=ms" in url
 
-    url_with_date = service.build_query_url(51.5074, -0.1278, target_date="2026-09-01")
+    url_with_date = service.build_query_url(28.6139, 77.2090, target_date="2026-09-01")
     assert "start_date=2026-09-01" in url_with_date
     assert "end_date=2026-09-01" in url_with_date
     assert "wind_speed_unit=ms" in url_with_date
@@ -71,9 +71,9 @@ def test_reference_service_query_url_builder_includes_wind_speed_unit_ms():
     """Test that OpenMeteoArchiveReferenceService explicitly requests wind_speed_unit=ms."""
     from backend.app.services.reference_service import OpenMeteoArchiveReferenceService
     ref_service = OpenMeteoArchiveReferenceService()
-    url = ref_service.build_query_url(51.5074, -0.1278, "2026-08-01", "2026-08-10")
-    assert "latitude=51.5074" in url
-    assert "longitude=-0.1278" in url
+    url = ref_service.build_query_url(28.6139, 77.2090, "2026-08-01", "2026-08-10")
+    assert "latitude=28.6139" in url
+    assert "longitude=77.209" in url
     assert "start_date=2026-08-01" in url
     assert "end_date=2026-08-10" in url
     assert "wind_speed_unit=ms" in url
@@ -83,7 +83,7 @@ def test_openmeteo_wind_speed_canonical_ingestion_preserves_ms_unit_and_value():
     """Test that a valid wind_speed_10m response in m/s passes through canonical ingestion with correct unit and value."""
     service = OpenMeteoGEFSWeatherService()
     payload = _get_mock_vendor_payload()
-    records = service.parse_canonical_records(payload, "London", 51.5074, -0.1278)
+    records = service.parse_canonical_records(payload, "Delhi", 28.6139, 77.2090)
 
     wind_records = [r for r in records if r.variable == "wind_speed_10m"]
     assert len(wind_records) == 4
@@ -104,7 +104,7 @@ def test_temperature_and_other_variables_ingestion_parity():
     """Verify that temperature, pressure, humidity, and precipitation behavior has not changed."""
     service = OpenMeteoGEFSWeatherService()
     payload = _get_mock_vendor_payload()
-    records = service.parse_canonical_records(payload, "London", 51.5074, -0.1278)
+    records = service.parse_canonical_records(payload, "Delhi", 28.6139, 77.2090)
 
     temp_records = [r for r in records if r.variable == "temperature_2m"]
     press_records = [r for r in records if r.variable == "surface_pressure"]
@@ -132,12 +132,12 @@ def test_openmeteo_service_canonical_parsing():
     """Test that vendor JSON response is parsed cleanly into CanonicalForecastRecords."""
     service = OpenMeteoGEFSWeatherService()
     payload = _get_mock_vendor_payload()
-    records = service.parse_canonical_records(payload, "London", 51.5074, -0.1278)
+    records = service.parse_canonical_records(payload, "Delhi", 28.6139, 77.2090)
 
     assert len(records) == 20  # 4 timestamps * 5 variables
     first_record = records[0]
     assert isinstance(first_record, CanonicalForecastRecord)
-    assert first_record.location == "London"
+    assert first_record.location == "Delhi"
     assert first_record.variable == "temperature_2m"
     assert first_record.unit == "celsius"
     assert first_record.value == 15.2
@@ -148,7 +148,7 @@ def test_openmeteo_service_get_forecast_offline():
     """Test get_forecast using mock HTTP client to ensure zero network dependency in unit tests."""
     mock_http = MagicMock(return_value=_get_mock_vendor_payload())
     service = OpenMeteoGEFSWeatherService(http_client=mock_http)
-    result = service.get_forecast("London")
+    result = service.get_forecast("Delhi")
 
     assert isinstance(result, WeatherResult)
     assert result.is_available is True
@@ -175,11 +175,11 @@ def test_agent_integration_with_real_weather_service():
 
     # Injected into agent while model remains unready
     agent = ForecastBustAgent(weather_service=weather_service)
-    request = PredictionRequest(location="London")
+    request = PredictionRequest(location="Delhi")
     response = agent.analyze(request)
 
     # Weather ingestion succeeded, but model is not yet trained -> safe abstention
-    assert response.location == "London"
+    assert response.location == "Delhi"
     assert response.bust_probability is None
     assert response.risk_level is None
     assert response.trust_state == TrustState.UNAVAILABLE
@@ -190,9 +190,9 @@ def test_agent_integration_with_real_weather_service():
 def test_historical_pathway_error_and_bust_labeling():
     """Test historical forecast-reference alignment and bust threshold assignment."""
     pair = HistoricalPathwayAligner.align_pair(
-        location="London",
-        latitude=51.5074,
-        longitude=-0.1278,
+        location="Delhi",
+        latitude=28.6139,
+        longitude=77.2090,
         variable="temperature_2m",
         unit="celsius",
         issue_time="2026-08-20T00:00:00Z",
@@ -213,9 +213,9 @@ def test_historical_pathway_error_and_bust_labeling():
 def test_historical_pathway_anti_leakage_check():
     """Test that future verification data dated before issue time is caught as an error."""
     invalid_pair = HistoricalForecastPair(
-        location="London",
-        latitude=51.5074,
-        longitude=-0.1278,
+        location="Delhi",
+        latitude=28.6139,
+        longitude=77.2090,
         variable="temperature_2m",
         unit="celsius",
         forecast_issue_time="2026-08-25T00:00:00Z",

@@ -1,253 +1,254 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { AgencyBanner } from './components/AgencyBanner';
+import { Navigation, ActiveView } from './components/Navigation';
+import { LocationForm } from './components/LocationForm';
+import { ForecastMap } from './components/ForecastMap';
+import { TimelineChart } from './components/TimelineChart';
+import { VerificationPanel } from './components/VerificationPanel';
+import { BatchPanel } from './components/BatchPanel';
+import { ModelCatalog } from './components/ModelCatalog';
 import { apiClient } from './api/client';
+import { BENCHMARK_LOCATIONS } from './data/locations';
 import {
-  ApiError,
-  HorizonTimelineRequest,
-  HorizonTimelineResult,
-  PredictionRequest,
-  PredictionResponse,
+  DashboardIntelligenceResponse,
+  DashboardMode,
+  DashboardTimelinePoint,
 } from './api/types';
-import { AbstentionResult } from './components/AbstentionResult';
-import { ErrorView } from './components/ErrorView';
-import { ExplainabilityView } from './components/ExplainabilityView';
-import { Footer } from './components/Footer';
-import { ForecastForm } from './components/ForecastForm';
-import { ForecastRiskTimeline } from './components/ForecastRiskTimeline';
-import { Header } from './components/Header';
-import { HorizonRiskDetails } from './components/HorizonRiskDetails';
-import { ModelEvaluationView } from './components/ModelEvaluationView';
-import { PredictionResult } from './components/PredictionResult';
 
 export const App: React.FC = () => {
+  const [view, setView] = useState<ActiveView>('sentinel');
+  const [utcTime, setUtcTime] = useState<string>('--:--:--');
   const [isBackendHealthy, setIsBackendHealthy] = useState<boolean | null>(null);
-  const [serviceVersion, setServiceVersion] = useState<string | undefined>(undefined);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [activeMode, setActiveMode] = useState<'single' | 'timeline'>('single');
-  const [prediction, setPrediction] = useState<PredictionResponse | null>(null);
-  const [timeline, setTimeline] = useState<HorizonTimelineResult | null>(null);
-  const [selectedLeadHours, setSelectedLeadHours] = useState<number | null>(null);
-  const [error, setError] = useState<ApiError | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
+  // Form State: Initialize to first benchmark station (Delhi)
+  const [location, setLocation] = useState<string>(BENCHMARK_LOCATIONS[0].name);
+  const [lat, setLat] = useState<number>(BENCHMARK_LOCATIONS[0].lat);
+  const [lon, setLon] = useState<number>(BENCHMARK_LOCATIONS[0].lon);
+  const [variable, setVariable] = useState<string>('temperature_2m');
+  const [mode, setMode] = useState<DashboardMode>('standard_7d');
+
+  // Dashboard Intelligence Response State
+  const [dashboardData, setDashboardData] = useState<DashboardIntelligenceResponse | null>(null);
+  const [selectedLeadHours, setSelectedLeadHours] = useState<number | null>(null);
+
+  // Live UTC Clock
   useEffect(() => {
-    // Initial health check
-    apiClient.getHealth().then(({ data }) => {
-      if (data && data.status === 'ok') {
-        setIsBackendHealthy(true);
-        setServiceVersion(data.version);
-      } else {
-        setIsBackendHealthy(false);
-      }
-    });
+    const updateTime = () => setUtcTime(new Date().toISOString().slice(11, 19));
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
   }, []);
 
-  const handleModeChange = (newMode: 'single' | 'timeline') => {
-    setActiveMode(newMode);
-    setError(null);
-    if (newMode === 'single') {
-      // Immediately clear timeline results and selected horizon on mode switch
-      setTimeline(null);
-      setSelectedLeadHours(null);
-    } else {
-      // Immediately clear single prediction results on mode switch
-      setPrediction(null);
-    }
-  };
+  // Health check on mount and periodic polling
+  useEffect(() => {
+    const checkHealth = () => {
+      apiClient.getHealth()
+        .then(({ data }) => {
+          setIsBackendHealthy(data?.status === 'ok' || data?.status === 'healthy');
+        })
+        .catch(() => {
+          setIsBackendHealthy(false);
+        });
+    };
+    checkHealth();
+    const interval = setInterval(checkHealth, 20000);
+    return () => clearInterval(interval);
+  }, []);
 
-  const handleValidationError = (validationMsg: string) => {
-    // Clear stale prediction and timeline states immediately on invalid submission attempt
-    setPrediction(null);
-    setTimeline(null);
+  // Clear stale results when target parameters change
+  const handleLocationChange = (newLoc: string) => {
+    setLocation(newLoc);
+    setDashboardData(null);
     setSelectedLeadHours(null);
-    setError({
-      error: 'VALIDATION_ERROR',
-      message: validationMsg,
-      status_code: 422,
-    });
+    setError(null);
   };
 
-  const handleForecastSubmit = async (requestPayload: PredictionRequest) => {
-    setIsLoading(true);
-    setError(null);
-    setPrediction(null);
-    setTimeline(null);
+  const handleVariableChange = (newVar: string) => {
+    setVariable(newVar);
+    setDashboardData(null);
     setSelectedLeadHours(null);
+    setError(null);
+  };
 
-    const { data, error } = await apiClient.predictForecastBust(requestPayload);
+  const handleModeChange = (newMode: DashboardMode) => {
+    setMode(newMode);
+    setDashboardData(null);
+    setSelectedLeadHours(null);
+    setError(null);
+  };
 
-    if (error) {
-      setError(error);
-      setPrediction(null);
-    } else if (data) {
-      setPrediction(data);
-      setError(null);
+  // Primary Sentinel Audit: Calls centralized POST /v1/dashboard/intelligence
+  const handleAudit = async () => {
+    if (!location.trim()) {
+      setError('Please enter a valid location or coordinates.');
+      return;
     }
 
-    setIsLoading(false);
-  };
-
-  const handleTimelineSubmit = async (requestPayload: HorizonTimelineRequest) => {
-    setIsLoading(true);
+    setLoading(true);
     setError(null);
-    setPrediction(null);
-    setTimeline(null);
     setSelectedLeadHours(null);
 
     try {
-      const result = await apiClient.predictHorizonTimeline(requestPayload);
-      setTimeline(result);
+      const { data, error: apiErr } = await apiClient.getDashboardIntelligence({
+        location: location.trim(),
+        variable,
+        mode,
+      });
 
-      if (result.points.length > 0) {
-        // Choose default selected horizon: point with highest probability, or first valid point
-        const validPoints = result.points.filter(
-          (p) => p.status === 'SUCCESS' && p.response?.bust_probability !== null
-        );
-        if (validPoints.length > 0) {
-          const highestPoint = validPoints.reduce((prev, curr) =>
-            (curr.response?.bust_probability || 0) > (prev.response?.bust_probability || 0) ? curr : prev
-          );
-          setSelectedLeadHours(highestPoint.lead_hours);
-        } else {
-          setSelectedLeadHours(result.points[0].lead_hours);
+      if (apiErr) {
+        setError(apiErr.message || apiErr.error || 'Failed to communicate with Veyra backend.');
+        setDashboardData(null);
+      } else if (data) {
+        setDashboardData(data);
+        // If location context resolved coordinates, update map center
+        if (data.location?.latitude != null && data.location?.longitude != null) {
+          setLat(data.location.latitude);
+          setLon(data.location.longitude);
+        }
+        // Default selected lead hours to peak risk lead hours or canonical 24h
+        if (data.timeline && data.timeline.length > 0) {
+          const peak = data.summary?.max_risk_lead_hours ?? 24;
+          setSelectedLeadHours(peak);
         }
       }
-      setError(null);
-    } catch (err: unknown) {
-      setError({
-        error: 'TIMELINE_EVALUATION_ERROR',
-        message: err instanceof Error ? err.message : 'Failed to evaluate timeline risk trajectory.',
-        status_code: 500,
-      });
-      setTimeline(null);
+    } catch (err: any) {
+      setError(err.message || 'Unexpected network failure while contacting Veyra Sentinel.');
+      setDashboardData(null);
+    } finally {
+      setLoading(false);
     }
-
-    setIsLoading(false);
   };
 
-  const handleSelectHorizon = (leadHours: number) => {
-    setSelectedLeadHours(leadHours);
-  };
-
-  const selectedPoint =
-    timeline && selectedLeadHours !== null
-      ? timeline.points.find((p) => p.lead_hours === selectedLeadHours) || null
-      : null;
+  // Active timeline point being inspected in VerificationPanel
+  const activeTimelinePoint = useMemo<DashboardTimelinePoint | null>(() => {
+    if (!dashboardData?.timeline) return null;
+    if (selectedLeadHours === null) return dashboardData.timeline[0] || null;
+    return (
+      dashboardData.timeline.find((p) => p.lead_hours === selectedLeadHours) ||
+      dashboardData.timeline[0] ||
+      null
+    );
+  }, [dashboardData, selectedLeadHours]);
 
   return (
-    <div className="app-container">
-      <Header isBackendHealthy={isBackendHealthy} serviceVersion={serviceVersion} />
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {/* Top Agency Header */}
+      <AgencyBanner isBackendHealthy={isBackendHealthy} utcTime={utcTime} />
 
-      <main className="main-content" role="main">
-        {/* Product Identity & Mission Banner */}
-        <section className="hero-section">
-          <div className="hero-badge">Medium-Range Forecast Sentinel</div>
-          <h2 className="hero-heading">
-            Anticipate Weather Forecast Failures Before They Happen
-          </h2>
-          <p className="hero-description">
-            Veyra does <span className="hero-highlight">not</span> generate weather forecasts.
-            Instead, it continuously evaluates issued numerical ensembles (NOAA GEFS) to estimate the probability that a forecast will fail unusually badly across horizons.
-          </p>
-        </section>
+      {/* Navigation */}
+      <Navigation view={view} setView={setView} />
 
-        {/* Dashboard 2-Column Grid */}
-        <div className="dashboard-grid">
-          {/* Left Column: Forecast Configuration Form */}
-          <div className="form-column">
-            <ForecastForm
-              mode={activeMode}
-              onModeChange={handleModeChange}
-              onSubmit={handleForecastSubmit}
-              onSubmitTimeline={handleTimelineSubmit}
-              onValidationError={handleValidationError}
-              isLoading={isLoading}
+      {/* Breadcrumbs */}
+      <div className="breadcrumb">
+        Home &gt; Reliability Layer &gt; <strong>{view.toUpperCase()}</strong>
+      </div>
+
+      {/* Main Workspace View */}
+      <main>
+        {view === 'sentinel' && (
+          <div className="workspace">
+            {/* Left Column: Atmospheric Target Input */}
+            <LocationForm
+              location={location}
+              setLocation={handleLocationChange}
+              lat={lat}
+              setLat={setLat}
+              lon={lon}
+              setLon={setLon}
+              variable={variable}
+              setVariable={handleVariableChange}
+              mode={mode}
+              setMode={handleModeChange}
+              loading={loading}
+              onAudit={handleAudit}
+              onSwitchToBatch={() => setView('batch')}
+            />
+
+            {/* Center Column: Interactive Map & Multi-Horizon Risk Timeline */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: 0 }}>
+              <ForecastMap
+                latitude={lat}
+                longitude={lon}
+                label={dashboardData?.location?.resolved_name || location}
+              />
+
+              {/* Error notice if audit failed */}
+              {error && (
+                <div className="abstention-box" role="alert">
+                  <div className="abstention-title">Audit Communication Notice</div>
+                  <div className="abstention-desc">{error}</div>
+                </div>
+              )}
+
+              {/* Multi-Horizon Risk Timeline Chart */}
+              {dashboardData?.timeline && dashboardData.timeline.length > 0 ? (
+                <TimelineChart
+                  timeline={dashboardData.timeline}
+                  selectedLeadHours={selectedLeadHours}
+                  onSelectHorizon={(hours) => setSelectedLeadHours(hours)}
+                  variable={variable}
+                />
+              ) : (
+                <div
+                  className="timeline-chart-panel"
+                  style={{
+                    padding: '36px 20px',
+                    textAlign: 'center',
+                    color: 'var(--noaa-muted)',
+                  }}
+                >
+                  <div style={{ fontWeight: 700, color: 'var(--noaa-dark-blue)', marginBottom: '6px' }}>
+                    FORECAST BUST RISK TIMELINE STANDBY
+                  </div>
+                  <div style={{ fontSize: '0.85rem' }}>
+                    Select atmospheric target and click <strong>&quot;Audit Reliability&quot;</strong> to evaluate multi-horizon forecast bust risk.
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Right Column: Telemetry & Conformal Verification */}
+            <VerificationPanel
+              prediction={dashboardData?.selected_prediction || null}
+              selectedPoint={activeTimelinePoint}
+              summary={dashboardData?.summary || null}
+              scientificContext={dashboardData?.scientific_context || null}
+              locationQuery={location}
+              variable={variable}
             />
           </div>
+        )}
 
-          {/* Right Column: Dynamic Results / Timeline / Abstention / Explanations */}
-          <div className="results-column">
-            {error && <ErrorView error={error} onDismiss={() => setError(null)} />}
-
-            {isLoading && (
-              <div className="glass-card" style={{ textAlign: 'center', padding: '3rem 1.5rem' }} aria-busy="true">
-                <div className="spinner" style={{ margin: '0 auto 1.5rem', width: '36px', height: '36px', borderWidth: '3px' }} />
-                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', marginBottom: '0.5rem' }}>
-                  {activeMode === 'timeline' ? 'Evaluating Forecast Trajectory' : 'Evaluating Forecast Ensemble'}
-                </h3>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', maxWidth: '380px', margin: '0 auto' }}>
-                  {activeMode === 'timeline'
-                    ? 'Ingesting 31-member NOAA GEFS ensemble, calculating 26 issue-time physical features across horizons, and evaluating Platt-calibrated LightGBM inference...'
-                    : 'Ingesting 31-member NOAA GEFS ensemble, calculating 26 issue-time physical features, and running Platt-calibrated LightGBM inference...'}
-                </p>
-              </div>
-            )}
-
-            {/* View A: Multi-Horizon Risk Timeline View (Active Mode = Timeline) */}
-            {!isLoading && activeMode === 'timeline' && timeline && (
-              <div className="results-container timeline-view-container">
-                <ForecastRiskTimeline
-                  timeline={timeline}
-                  selectedLeadHours={selectedLeadHours}
-                  onSelectHorizon={handleSelectHorizon}
-                />
-
-                {selectedPoint && (
-                  <HorizonRiskDetails
-                    point={selectedPoint}
-                    location={timeline.location}
-                    variable={timeline.variable}
-                  />
-                )}
-              </div>
-            )}
-
-            {/* View B: Single Point-in-Time Prediction Result View (Active Mode = Single) */}
-            {!isLoading && activeMode === 'single' && prediction && !prediction.abstain && (
-              <div className="results-container">
-                <PredictionResult prediction={prediction} />
-                <ExplainabilityView explanation={prediction.explanation} />
-              </div>
-            )}
-
-            {/* View C: Single Point Abstention View (Active Mode = Single) */}
-            {!isLoading && activeMode === 'single' && prediction && prediction.abstain && (
-              <div className="results-container">
-                <AbstentionResult prediction={prediction} />
-              </div>
-            )}
-
-            {/* View D: Initial Empty State Box */}
-            {!isLoading && !error && ((activeMode === 'timeline' && !timeline) || (activeMode === 'single' && !prediction)) && (
-              <div className="empty-state-box">
-                <div className="empty-state-icon">📡</div>
-                <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-                  Sentinel Ready for Assessment
-                </h3>
-                <p className="empty-state-text">
-                  {activeMode === 'timeline' ? (
-                    <>
-                      Enter a target city name or coordinates, choose a forecast variable and horizon window, then click{' '}
-                      <strong style={{ color: 'var(--text-primary)' }}>Generate Risk Timeline</strong> to evaluate failure probabilities across horizons.
-                    </>
-                  ) : (
-                    <>
-                      Enter a target city name or geographical coordinate pair and click{' '}
-                      <strong style={{ color: 'var(--text-primary)' }}>Estimate Bust Probability</strong> to inspect the reliability of the current forecast.
-                    </>
-                  )}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Model Evaluation & Scientific Diagnostics Panel */}
-        <ModelEvaluationView />
+        {view === 'batch' && <BatchPanel />}
+        {view === 'models' && <ModelCatalog />}
       </main>
 
-      <Footer
-        modelVersion={prediction?.model_version || (timeline?.points[0]?.response?.model_version) || 'prototype-gbm-v1'}
-        dataVersion={prediction?.data_version || (timeline?.points[0]?.response?.data_version) || 'gefs-openmeteo-v1.0'}
-      />
+      {/* Footer */}
+      <footer>
+        <div>
+          <a
+            href="https://github.com/RupanjanDutta2006/Veyra-Know-When-Forecasts-May-Fail"
+            target="_blank"
+            rel="noreferrer"
+          >
+            GitHub Repository
+          </a>
+          <a href="/docs" target="_blank" rel="noreferrer">
+            FastAPI Documentation
+          </a>
+          <a href="/v1/health" target="_blank" rel="noreferrer">
+            Health Check API
+          </a>
+          <a href="/v1/metrics" target="_blank" rel="noreferrer">
+            Operational Metrics
+          </a>
+        </div>
+        <div style={{ opacity: 0.75, marginTop: '8px' }}>
+          &copy; 2026 Veyra Sentinel Research Platform — Atmospheric Forecast Reliability Layer.
+        </div>
+      </footer>
     </div>
   );
 };
