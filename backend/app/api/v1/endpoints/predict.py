@@ -71,10 +71,15 @@ def get_forecast_bust_agent() -> ForecastBustAgent:
 @router.post(
     "/predict",
     response_model=PredictionResponse,
-    summary="Predict Forecast Bust Risk",
+    summary="Predict Forecast Bust Risk (Single Horizon)",
     description=(
         "Evaluates the probability and risk of an issued weather forecast failing unusually badly "
-        "using real-time GEFS weather ingestion, canonical feature engineering, and the centralized Model Integration Layer."
+        "using real-time GEFS weather ingestion, canonical feature engineering, and the centralized Model Integration Layer.\n\n"
+        "**Horizon Evaluation Contract:**\n"
+        "- **Canonical Default:** If `issue_time` and `valid_time` are omitted, evaluates the standard 24-hour lead.\n"
+        "- **Explicit Horizon:** Pass both `issue_time` and `valid_time` in ISO 8601 UTC format (`lead_hours = valid_time - issue_time`).\n"
+        "- **Unsupported Fields:** `lead_hours`, `latitude`, and `longitude` are NOT accepted as input fields and will be rejected with HTTP 422.\n"
+        "- **Multi-Horizon Trajectories:** For 7-day or full 16-day timelines, use `POST /v1/dashboard/intelligence`."
     ),
 )
 async def predict_forecast_bust(

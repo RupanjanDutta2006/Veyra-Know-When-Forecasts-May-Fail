@@ -119,3 +119,11 @@ frontend/dist/
 scratch/
 
 
+
+# Subproject exclusions
+Frontend-Original/node_modules/
+Frontend-Original/dist/
+Builder-2/.pytest_cache/
+Parinidhi/.pytest_cache/
+*.env.local
+*.env.*.local

@@ -1,0 +1,106 @@
+{
+  "ensemble_std": {
+    "split": 1.0,
+    "gain": 28.352500915527344
+  },
+  "ensemble_range": {
+    "split": 12.0,
+    "gain": 259.1190013885498
+  },
+  "ensemble_iqr": {
+    "split": 8.0,
+    "gain": 122.04195976257324
+  },
+  "ensemble_skew_proxy": {
+    "split": 19.0,
+    "gain": 310.52990178531036
+  },
+  "ensemble_cv": {
+    "split": 13.0,
+    "gain": 339.23597717285156
+  },
+  "ensemble_spread_to_iqr_ratio": {
+    "split": 12.0,
+    "gain": 185.30924009741284
+  },
+  "member_count": {
+    "split": 0.0,
+    "gain": 0.0
+  },
+  "has_full_ensemble": {
+    "split": 0.0,
+    "gain": 0.0
+  },
+  "forecast_value": {
+    "split": 29.0,
+    "gain": 682.6209559738636
+  },
+  "ensemble_mean": {
+    "split": 22.0,
+    "gain": 596.35786612425
+  },
+  "ensemble_spread_delta_6h": {
+    "split": 0.0,
+    "gain": 0.0
+  },
+  "ensemble_spread_delta_24h": {
+    "split": 40.0,
+    "gain": 605.5508862867573
+  },
+  "forecast_delta_6h": {
+    "split": 0.0,
+    "gain": 0.0
+  },
+  "forecast_delta_24h": {
+    "split": 32.0,
+    "gain": 732.9689471563324
+  },
+  "lead_hours": {
+    "split": 29.0,
+    "gain": 876.1044017935637
+  },
+  "lead_days": {
+    "split": 3.0,
+    "gain": 74.23480033874512
+  },
+  "valid_hour": {
+    "split": 5.0,
+    "gain": 107.5381007194519
+  },
+  "valid_month": {
+    "split": 0.0,
+    "gain": 0.0
+  },
+  "valid_dayofweek": {
+    "split": 6.0,
+    "gain": 121.45069003105164
+  },
+  "sin_hour": {
+    "split": 0.0,
+    "gain": 0.0
+  },
+  "cos_hour": {
+    "split": 2.0,
+    "gain": 10.78380012512207
+  },
+  "sin_month": {
+    "split": 0.0,
+    "gain": 0.0
+  },
+  "cos_month": {
+    "split": 0.0,
+    "gain": 0.0
+  },
+  "is_weekend": {
+    "split": 0.0,
+    "gain": 0.0
+  },
+  "latitude": {
+    "split": 0.0,
+    "gain": 0.0
+  },
+  "longitude": {
+    "split": 0.0,
+    "gain": 0.0
+  }
+}

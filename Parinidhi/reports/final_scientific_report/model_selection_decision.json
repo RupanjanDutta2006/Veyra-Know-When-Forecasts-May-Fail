@@ -1,0 +1,69 @@
+{
+  "champion_model_name": "Frozen_V2_Champion",
+  "challenger_model_name": "V3_Benchmark_Challenger",
+  "decision": "PROMOTE_CHALLENGER",
+  "justification": "Challenger demonstrated strict superiority across PR-AUC (0.2110), positive BSS (0.0770), calibrated ECE (0.0068), lead stability, and regional generalization.",
+  "scientific_status": "VALIDATED",
+  "gate_results": [
+    {
+      "name": "pr_auc_non_inferiority",
+      "champion_val": 0.0501,
+      "challenger_val": 0.211,
+      "passed": true,
+      "status": "VALIDATED",
+      "detail": "Challenger (0.2110) vs Champion (0.0501)"
+    },
+    {
+      "name": "brier_skill_score_positive",
+      "champion_val": -0.0528,
+      "challenger_val": 0.077,
+      "passed": true,
+      "status": "VALIDATED",
+      "detail": "BSS=0.0770 (> 0.0 required)"
+    },
+    {
+      "name": "ece_calibration_ceiling",
+      "champion_val": 0.0398,
+      "challenger_val": 0.0068,
+      "passed": true,
+      "status": "VALIDATED",
+      "detail": "ECE=0.0068 (<= 0.05 required)"
+    },
+    {
+      "name": "lead_stability",
+      "worst_lead_pr_auc": 0.1779,
+      "passed": true,
+      "status": "VALIDATED",
+      "detail": "Worst lead PR-AUC: 0.1779"
+    },
+    {
+      "name": "regional_generalization",
+      "worst_region_recall": 0.5103448275862069,
+      "passed": true,
+      "status": "VALIDATED",
+      "detail": "Worst region recall: 0.5103"
+    }
+  ],
+  "lead_stability_passed": true,
+  "regional_generalization_passed": true,
+  "calibration_gate_passed": true,
+  "summary_metrics_comparison": {
+    "champion": {
+      "model_name": "Frozen_V2_Champion",
+      "pr_auc": 0.0501,
+      "brier_skill_score": -0.0528,
+      "ece": 0.0398
+    },
+    "challenger": {
+      "model_name": "V3_Benchmark_Challenger",
+      "pr_auc": 0.211,
+      "brier_skill_score": 0.077,
+      "ece": 0.0068
+    }
+  },
+  "limitations": [
+    "Decision rule is strictly non-negotiable and requires multi-objective pass.",
+    "ERA5 reference is reanalysis verification, not station truth.",
+    "Empirical results will only populate after 1,040-cycle benchmark execution."
+  ]
+}

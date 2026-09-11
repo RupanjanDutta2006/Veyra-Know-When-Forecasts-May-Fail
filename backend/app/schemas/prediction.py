@@ -128,13 +128,14 @@ class PredictionRequest(BaseModel):
     )
 
     model_config = {
+        "extra": "forbid",
         "json_schema_extra": {
             "example": {
                 "location": "Kolkata",
                 "variable": "temperature_2m",
                 "model_type": "prototype-gbm-v1",
             }
-        }
+        },
     }
 
     @model_validator(mode="after")
@@ -321,6 +322,20 @@ class PredictionResponse(BaseModel):
     operational_trust_horizon_hours: Optional[int] = Field(
         default=None,
         description="Maximum forecast lead time (hours) where model error remains bounded",
+    )
+    lead_hours: Optional[int] = Field(
+        default=None,
+        ge=1,
+        le=MAX_SUPPORTED_LEAD_HOURS,
+        description="Forecast lead time in hours if evaluated for an explicit horizon",
+    )
+    valid_time: Optional[str] = Field(
+        default=None,
+        description="Forecast valid target timestamp in ISO 8601 UTC format if evaluated for an explicit horizon",
+    )
+    issue_time: Optional[str] = Field(
+        default=None,
+        description="Forecast issuance timestamp in ISO 8601 UTC format if evaluated for an explicit horizon",
     )
 
     model_config = {

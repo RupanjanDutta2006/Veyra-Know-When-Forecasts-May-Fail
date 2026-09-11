@@ -234,6 +234,26 @@ class ForecastBustAgent:
 
         default_metrics.record_calibration(cal_status)
 
+        # 9. Explicit Horizon Context
+        evaluated_lead: Optional[int] = None
+        if feature_result and feature_result.features and "lead_hours" in feature_result.features:
+            try:
+                evaluated_lead = int(round(float(feature_result.features["lead_hours"])))
+            except (ValueError, TypeError):
+                evaluated_lead = None
+        elif weather_result and weather_result.metadata and "lead_hours" in weather_result.metadata:
+            try:
+                evaluated_lead = int(round(float(weather_result.metadata["lead_hours"])))
+            except (ValueError, TypeError):
+                evaluated_lead = None
+
+        evaluated_valid: Optional[str] = (
+            weather_result.metadata.get("valid_time") if weather_result and weather_result.metadata else None
+        )
+        evaluated_issue: Optional[str] = (
+            weather_result.metadata.get("issue_time") if weather_result and weather_result.metadata else None
+        )
+
         return PredictionResponse(
             location=location,
             bust_probability=safety_assessment.bust_probability,
@@ -256,6 +276,9 @@ class ForecastBustAgent:
             decision_guidance=decision_guidance,
             within_trust_horizon=within_trust_h,
             operational_trust_horizon_hours=op_trust_horizon,
+            lead_hours=evaluated_lead,
+            valid_time=evaluated_valid,
+            issue_time=evaluated_issue,
         )
 
     def analyze(self, request: PredictionRequest) -> PredictionResponse:

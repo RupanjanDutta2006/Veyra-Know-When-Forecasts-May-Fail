@@ -4,6 +4,26 @@
 
 ---
 
+## 🌐 Complete Workspace Structure
+
+This repository contains the complete, unified Veyra project workspace:
+
+| Workspace Directory | Classification | Description |
+| :--- | :--- | :--- |
+| **`backend/`** | **Authoritative Production** | Centralized FastAPI service, multi-horizon intelligence contracts (`/v1/dashboard/intelligence`), V3 ML feature adapters, and dynamic geocoding. |
+| **`frontend/`** | **Authoritative Production** | High-performance Sentinel dashboard UI (React 19 + TypeScript + Vite + Leaflet + Chart.js), supporting 16-day interactive risk curves and India benchmark telemetry. |
+| **`models/`** | **Authoritative Artifacts** | Certified frozen V3 LightGBM model, isotonic calibrator, and Day 4 baseline models. |
+| **`scripts/`** | **Authoritative Tooling** | Official developer verification suites (`verify_frontend_backend_parity.ps1`, `verify_16day_trajectory.ps1`). |
+| **`docs/`** | **Authoritative Standards** | Comprehensive technical specs, including the authoritative [Horizon Request Contract](./docs/HORIZON_REQUEST_CONTRACT.md). |
+| **`Audits/`** | **Master Audits** | 12 cross-project architectural and scientific audit documents verifying dataset integrity, red-team analysis, and calibration status. |
+| **`Builder-2/`** | **Reference / Engineering** | Builder 2 ML engineering sources, feature pipelines, model artifacts, and integration handoff manifests. |
+| **`Frontend-Original/`** | **Historical Reference** | Original teammate frontend prototype source and experimental components. |
+| **`Parinidhi/`** | **Scientific Research** | Comprehensive Builder 2 backtest analyses, adversarial red-team reports, feature experiments, and diagnostic notebooks. |
+
+---
+
+---
+
 ## 📚 Development Documentation
 
 Veyra's complete development history and technical verification records are organized hierarchically by phase, builder, and day.

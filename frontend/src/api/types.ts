@@ -62,6 +62,9 @@ export interface PredictionResponse {
   decision_guidance?: string | null;
   within_trust_horizon?: boolean | null;
   operational_trust_horizon_hours?: number | null;
+  lead_hours?: number | null;
+  valid_time?: string | null;
+  issue_time?: string | null;
 }
 
 export interface HealthResponse {

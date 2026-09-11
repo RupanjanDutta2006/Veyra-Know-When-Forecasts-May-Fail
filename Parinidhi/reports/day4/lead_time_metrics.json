@@ -1,0 +1,98 @@
+{
+  "0-24h": {
+    "total_samples": 15,
+    "positive_busts": 2,
+    "negative_non_busts": 13,
+    "base_bust_rate": 0.1333,
+    "threshold": 0.28,
+    "pr_auc": 0.4167,
+    "brier_score": 0.1303,
+    "roc_auc": 0.8462,
+    "precision": 0.25,
+    "recall": 1.0,
+    "f1_score": 0.4,
+    "expected_calibration_error": 0.1524,
+    "confusion_matrix": {
+      "tp": 2,
+      "fp": 6,
+      "tn": 7,
+      "fn": 0
+    },
+    "sample_count": 15,
+    "reliable_sample_size": true
+  },
+  "24-48h": {
+    "total_samples": 12,
+    "positive_busts": 3,
+    "negative_non_busts": 9,
+    "base_bust_rate": 0.25,
+    "threshold": 0.28,
+    "pr_auc": 0.5778,
+    "brier_score": 0.1856,
+    "roc_auc": 0.6667,
+    "precision": 0.4,
+    "recall": 0.6667,
+    "f1_score": 0.5,
+    "expected_calibration_error": 0.0899,
+    "confusion_matrix": {
+      "tp": 2,
+      "fp": 3,
+      "tn": 6,
+      "fn": 1
+    },
+    "sample_count": 12,
+    "reliable_sample_size": true
+  },
+  "48-72h": {
+    "total_samples": 12,
+    "positive_busts": 3,
+    "negative_non_busts": 9,
+    "base_bust_rate": 0.25,
+    "threshold": 0.28,
+    "pr_auc": 0.4444,
+    "brier_score": 0.1815,
+    "roc_auc": 0.7407,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1_score": 0.0,
+    "expected_calibration_error": 0.1481,
+    "confusion_matrix": {
+      "tp": 0,
+      "fp": 2,
+      "tn": 7,
+      "fn": 3
+    },
+    "sample_count": 12,
+    "reliable_sample_size": true
+  },
+  "72-120h": {
+    "total_samples": 21,
+    "positive_busts": 2,
+    "negative_non_busts": 19,
+    "base_bust_rate": 0.0952,
+    "threshold": 0.28,
+    "pr_auc": 1.0,
+    "brier_score": 0.0396,
+    "roc_auc": 1.0,
+    "precision": 0.5,
+    "recall": 1.0,
+    "f1_score": 0.6667,
+    "expected_calibration_error": 0.1332,
+    "confusion_matrix": {
+      "tp": 2,
+      "fp": 2,
+      "tn": 17,
+      "fn": 0
+    },
+    "sample_count": 21,
+    "reliable_sample_size": true
+  },
+  "120-168h": {
+    "sample_count": 0,
+    "status": "NO_DATA"
+  },
+  "168-240h": {
+    "sample_count": 0,
+    "status": "NO_DATA"
+  }
+}

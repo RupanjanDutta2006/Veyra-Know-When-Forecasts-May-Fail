@@ -196,13 +196,26 @@ class DashboardRequest(BaseModel):
     )
 
     model_config = {
+        "extra": "forbid",
         "json_schema_extra": {
-            "example": {
-                "location": "Kolkata",
-                "variable": "temperature_2m",
-                "mode": "standard_7d",
-            }
-        }
+            "examples": [
+                {
+                    "location": "Delhi",
+                    "variable": "temperature_2m",
+                    "mode": "full_16d",
+                },
+                {
+                    "location": "Kolkata",
+                    "variable": "temperature_2m",
+                    "mode": "standard_7d",
+                },
+                {
+                    "location": "London",
+                    "variable": "surface_pressure",
+                    "mode": "single",
+                },
+            ]
+        },
     }
 
     @field_validator("location")

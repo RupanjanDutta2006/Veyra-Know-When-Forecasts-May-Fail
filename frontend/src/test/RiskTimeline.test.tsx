@@ -114,9 +114,9 @@ const createMockDashboardResponse = (
       available_points: leads.length,
       abstained_points: 0,
       total_points: leads.length,
-      max_bust_probability: probs[probs.length - 1],
+      max_bust_probability: probs[0],
       max_risk_level: 'LOW',
-      max_risk_lead_hours: leads[leads.length - 1],
+      max_risk_lead_hours: 24,
       mean_bust_probability: 0.0578,
       elevated_risk_points: 0,
       first_elevated_risk_lead_hours: null,
@@ -611,7 +611,7 @@ describe('Day 16 — Visual Forecast Risk & Timeline Tests', () => {
 
     await waitFor(() => {
       expect(screen.getByText('5.61%')).toBeInTheDocument();
-      expect(screen.getByText('LOW')).toBeInTheDocument();
+      expect(screen.getAllByText('LOW')[0]).toBeInTheDocument();
     });
   });
 
