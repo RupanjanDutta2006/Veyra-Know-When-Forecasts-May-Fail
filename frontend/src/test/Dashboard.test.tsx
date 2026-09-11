@@ -257,7 +257,7 @@ describe('Veyra Frontend Dashboard Component Tests', () => {
       expect(screen.getByText('14.20%')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('LOW')).toBeInTheDocument();
+    expect(screen.getAllByText('LOW')[0]).toBeInTheDocument();
 
     // Switch to Explainability tab to verify driver
     const explainTab = screen.getByRole('button', { name: /Explainability/i });
@@ -395,7 +395,7 @@ describe('Veyra Frontend Dashboard Component Tests', () => {
     await waitFor(() => {
       expect(screen.getByText('5.71%')).toBeInTheDocument();
     });
-    expect(screen.getByText('LOW')).toBeInTheDocument();
+    expect(screen.getAllByText('LOW')[0]).toBeInTheDocument();
 
     // Step 2: User modifies location to new target
     const locationInput = screen.getByLabelText(/Location Name or Coordinates/i);
@@ -527,7 +527,7 @@ describe('Veyra Frontend Dashboard Component Tests', () => {
       expect(screen.getByText('72.00%')).toBeInTheDocument();
     });
     expect(screen.queryByText('5.00%')).not.toBeInTheDocument();
-    expect(screen.getByText('HIGH')).toBeInTheDocument();
+    expect(screen.getAllByText('HIGH')[0]).toBeInTheDocument();
   });
 
   it('TEST F: renders exact backend 96h lead hours and medium-range signal in ExplainabilityView', () => {

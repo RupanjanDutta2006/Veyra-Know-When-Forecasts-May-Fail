@@ -1,0 +1,63 @@
+# Data Sources Configuration for Forecast-Bust Sentinel (Day 1 & Phase 2)
+
+gefs:
+  name: "NOAA Global Ensemble Forecast System (GEFS)"
+  provider: "NOAA NCEP / Open-Meteo Ensemble Mirror"
+  model: "ncep_gefs025"
+  endpoint: "https://ensemble-api.open-meteo.com/v1/ensemble"
+  resolution_deg: 0.25
+  ensemble_members: 31 # 1 control + 30 perturbed members
+  default_forecast_days: 10 # Medium-range horizon (240 hours)
+  
+  # Default test location (Delhi, India)
+  default_location:
+    name: "delhi"
+    latitude: 28.6139
+    longitude: 77.2090
+    country: "India"
+
+  # Minimal Day 1 Variable Set (Temperature, Pressure, Wind)
+  variables:
+    temperature:
+      source_key: "temperature_2m"
+      standard_name: "temperature_2m"
+      standard_unit: "degC"
+      description: "Air temperature at 2 meters above ground"
+      qc_bounds:
+        min: -60.0
+        max: 60.0
+    pressure:
+      source_key: "surface_pressure"
+      standard_name: "surface_pressure"
+      standard_unit: "hPa"
+      description: "Surface atmospheric pressure"
+      qc_bounds:
+        min: 500.0
+        max: 1100.0
+    wind_speed:
+      source_key: "wind_speed_10m"
+      standard_name: "wind_speed_10m"
+      standard_unit: "km/h"
+      description: "Wind speed at 10 meters above ground"
+      qc_bounds:
+        min: 0.0
+        max: 300.0
+
+  storage:
+    raw_dir: "data/raw/gefs"
+    processed_dir: "data/processed/gefs"
+
+# Phase 2: Historical Verification Reference Data (ERA5 Reanalysis)
+# CRITICAL SCIENTIFIC CONSTRAINT:
+# ERA5 / Reference data is strictly for historical error calculation, evaluation,
+# and offline verification labels. It is NEVER used as a live inference feature.
+era5_reference:
+  name: "ECMWF ERA5 Atmospheric Reanalysis"
+  provider: "ECMWF / Open-Meteo Historical Weather Archive"
+  endpoint: "https://archive-api.open-meteo.com/v1/archive"
+  role: "Ground Truth Verification & Error Reference"
+  spatial_policy: "Nearest grid-point colocation to forecast coordinates"
+  time_alignment_key: "valid_time"
+  storage:
+    raw_dir: "data/raw/era5"
+    historical_dir: "data/historical"

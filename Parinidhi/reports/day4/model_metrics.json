@@ -1,0 +1,266 @@
+{
+  "validation": {
+    "majority_class": {
+      "total_samples": 72,
+      "positive_busts": 13,
+      "negative_non_busts": 59,
+      "base_bust_rate": 0.1806,
+      "threshold": 0.5,
+      "pr_auc": 0.1073,
+      "brier_score": 0.1806,
+      "roc_auc": 0.5,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1_score": 0.0,
+      "expected_calibration_error": 0.1806,
+      "confusion_matrix": {
+        "tp": 0,
+        "fp": 0,
+        "tn": 59,
+        "fn": 13
+      }
+    },
+    "e0_climatology": {
+      "total_samples": 72,
+      "positive_busts": 13,
+      "negative_non_busts": 59,
+      "base_bust_rate": 0.1806,
+      "threshold": 0.5,
+      "pr_auc": 0.1073,
+      "brier_score": 0.1523,
+      "roc_auc": 0.5,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1_score": 0.0,
+      "expected_calibration_error": 0.0657,
+      "confusion_matrix": {
+        "tp": 0,
+        "fp": 0,
+        "tn": 59,
+        "fn": 13
+      }
+    },
+    "e1_persistence": {
+      "total_samples": 72,
+      "positive_busts": 13,
+      "negative_non_busts": 59,
+      "base_bust_rate": 0.1806,
+      "threshold": 0.5,
+      "pr_auc": 0.1073,
+      "brier_score": 0.1806,
+      "roc_auc": 0.5,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1_score": 0.0,
+      "expected_calibration_error": 0.1806,
+      "confusion_matrix": {
+        "tp": 0,
+        "fp": 0,
+        "tn": 59,
+        "fn": 13
+      }
+    },
+    "e2_spread_heuristic": {
+      "total_samples": 72,
+      "positive_busts": 13,
+      "negative_non_busts": 59,
+      "base_bust_rate": 0.1806,
+      "threshold": 0.5,
+      "pr_auc": 0.5953,
+      "brier_score": 0.1465,
+      "roc_auc": 0.8996,
+      "precision": 0.6,
+      "recall": 0.2308,
+      "f1_score": 0.3333,
+      "expected_calibration_error": 0.1376,
+      "confusion_matrix": {
+        "tp": 3,
+        "fp": 2,
+        "tn": 57,
+        "fn": 10
+      }
+    },
+    "e3_logistic_regression": {
+      "total_samples": 72,
+      "positive_busts": 13,
+      "negative_non_busts": 59,
+      "base_bust_rate": 0.1806,
+      "threshold": 0.5,
+      "pr_auc": 0.4743,
+      "brier_score": 0.2377,
+      "roc_auc": 0.8005,
+      "precision": 0.3077,
+      "recall": 0.9231,
+      "f1_score": 0.4615,
+      "expected_calibration_error": 0.3318,
+      "confusion_matrix": {
+        "tp": 12,
+        "fp": 27,
+        "tn": 32,
+        "fn": 1
+      }
+    },
+    "e4_lightgbm_uncalibrated": {
+      "total_samples": 72,
+      "positive_busts": 13,
+      "negative_non_busts": 59,
+      "base_bust_rate": 0.1806,
+      "threshold": 0.5,
+      "pr_auc": 0.5494,
+      "brier_score": 0.1491,
+      "roc_auc": 0.8722,
+      "precision": 0.4231,
+      "recall": 0.8462,
+      "f1_score": 0.5641,
+      "expected_calibration_error": 0.1931,
+      "confusion_matrix": {
+        "tp": 11,
+        "fp": 15,
+        "tn": 44,
+        "fn": 2
+      }
+    },
+    "e4_lightgbm_calibrated": {
+      "total_samples": 72,
+      "positive_busts": 13,
+      "negative_non_busts": 59,
+      "base_bust_rate": 0.1806,
+      "threshold": 0.28,
+      "pr_auc": 0.5494,
+      "brier_score": 0.1067,
+      "roc_auc": 0.8722,
+      "precision": 0.5,
+      "recall": 0.8462,
+      "f1_score": 0.6286,
+      "expected_calibration_error": 0.0615,
+      "confusion_matrix": {
+        "tp": 11,
+        "fp": 11,
+        "tn": 48,
+        "fn": 2
+      }
+    }
+  },
+  "test": {
+    "majority_class": {
+      "total_samples": 60,
+      "positive_busts": 10,
+      "negative_non_busts": 50,
+      "base_bust_rate": 0.1667,
+      "threshold": 0.5,
+      "pr_auc": 0.1176,
+      "brier_score": 0.1667,
+      "roc_auc": 0.5,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1_score": 0.0,
+      "expected_calibration_error": 0.1667,
+      "confusion_matrix": {
+        "tp": 0,
+        "fp": 0,
+        "tn": 50,
+        "fn": 10
+      }
+    },
+    "e0_climatology": {
+      "total_samples": 60,
+      "positive_busts": 10,
+      "negative_non_busts": 50,
+      "base_bust_rate": 0.1667,
+      "threshold": 0.5,
+      "pr_auc": 0.1176,
+      "brier_score": 0.1416,
+      "roc_auc": 0.5,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1_score": 0.0,
+      "expected_calibration_error": 0.0518,
+      "confusion_matrix": {
+        "tp": 0,
+        "fp": 0,
+        "tn": 50,
+        "fn": 10
+      }
+    },
+    "e1_persistence": {
+      "total_samples": 60,
+      "positive_busts": 10,
+      "negative_non_busts": 50,
+      "base_bust_rate": 0.1667,
+      "threshold": 0.5,
+      "pr_auc": 0.1176,
+      "brier_score": 0.1667,
+      "roc_auc": 0.5,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1_score": 0.0,
+      "expected_calibration_error": 0.1667,
+      "confusion_matrix": {
+        "tp": 0,
+        "fp": 0,
+        "tn": 50,
+        "fn": 10
+      }
+    },
+    "e2_spread_heuristic": {
+      "total_samples": 60,
+      "positive_busts": 10,
+      "negative_non_busts": 50,
+      "base_bust_rate": 0.1667,
+      "threshold": 0.5,
+      "pr_auc": 0.3921,
+      "brier_score": 0.1993,
+      "roc_auc": 0.812,
+      "precision": 0.3333,
+      "recall": 0.2,
+      "f1_score": 0.25,
+      "expected_calibration_error": 0.1996,
+      "confusion_matrix": {
+        "tp": 2,
+        "fp": 4,
+        "tn": 46,
+        "fn": 8
+      }
+    },
+    "e3_logistic_regression": {
+      "total_samples": 60,
+      "positive_busts": 10,
+      "negative_non_busts": 50,
+      "base_bust_rate": 0.1667,
+      "threshold": 0.28,
+      "pr_auc": 0.3582,
+      "brier_score": 0.2691,
+      "roc_auc": 0.77,
+      "precision": 0.2,
+      "recall": 1.0,
+      "f1_score": 0.3333,
+      "expected_calibration_error": 0.3689,
+      "confusion_matrix": {
+        "tp": 10,
+        "fp": 40,
+        "tn": 10,
+        "fn": 0
+      }
+    },
+    "e4_lightgbm_calibrated": {
+      "total_samples": 60,
+      "positive_busts": 10,
+      "negative_non_busts": 50,
+      "base_bust_rate": 0.1667,
+      "threshold": 0.28,
+      "pr_auc": 0.5121,
+      "brier_score": 0.1199,
+      "roc_auc": 0.796,
+      "precision": 0.3158,
+      "recall": 0.6,
+      "f1_score": 0.4138,
+      "expected_calibration_error": 0.0514,
+      "confusion_matrix": {
+        "tp": 6,
+        "fp": 13,
+        "tn": 37,
+        "fn": 4
+      }
+    }
+  }
+}

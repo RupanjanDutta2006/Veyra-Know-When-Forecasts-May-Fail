@@ -1,0 +1,87 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment & Secrets
+.env
+.env.*
+*.env
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.*
+secrets.*
+
+# Weather Data Files (Raw & Processed) - CRITICAL: Never commit large datasets
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+data/historical/*
+!data/historical/.gitkeep
+data/features/*
+!data/features/.gitkeep
+data/cache/*
+!data/cache/.gitkeep
+
+# IDE & OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Local investigation / tooling
+scratch/
+
+# Binary & Dataset Artifacts
+*.joblib
+*.pkl
+*.parquet
+*.grib
+*.grib2
+*.nc
+*.h5
+*.hdf5
+
+# Logs & Temporary outputs
+*.log
+*.tmp
+temp/
+tmp/
+BROWSER_E2E_AUDIT.md
+CURRENT_STATE_AUDIT.md
+
+# Model Artifacts
+models/*
+!models/.gitkeep
+!models/*.py
+!models/**/*.json
+

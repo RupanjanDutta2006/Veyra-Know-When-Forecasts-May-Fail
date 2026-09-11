@@ -1,0 +1,28 @@
+{
+  "completed_cycles": {
+    "0000": {
+      "cycle_idx": 0,
+      "cycle_date": "2000-01-01T00:00:00+00:00",
+      "partition": "train",
+      "rows": 750,
+      "bytes_transferred": 157595365,
+      "requests_succeeded": 220,
+      "sha256": "5e27266036e6928bbeb6e67133a45b3206c2fe4499818c95eae2d6bcc629b2e2",
+      "parquet_size_bytes": 115564,
+      "elapsed_seconds": 53.14,
+      "timestamp": "2026-09-04T11:14:48.970994+00:00"
+    },
+    "0001": {
+      "cycle_idx": 1,
+      "cycle_date": "2000-01-08T00:00:00+00:00",
+      "partition": "train",
+      "rows": 750,
+      "bytes_transferred": 300198424,
+      "requests_succeeded": 420,
+      "sha256": "f380e995de9637bdf7570c6f4a18d703b1f7a37b7f71a796254719460c01e2ef",
+      "parquet_size_bytes": 166692,
+      "elapsed_seconds": 92.45,
+      "timestamp": "2026-09-04T11:16:21.421459+00:00"
+    }
+  }
+}

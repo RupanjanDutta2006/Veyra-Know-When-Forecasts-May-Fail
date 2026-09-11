@@ -1,0 +1,166 @@
+{
+  "spec_version": "v1-experimental",
+  "generation_time_utc": "2026-08-26T15:40:18.369731+00:00",
+  "total_fingerprints_generated": 35040,
+  "trajectory_regime_distribution": {
+    "INSUFFICIENT_CYCLES": 5760,
+    "STABLE": 29280
+  },
+  "revision_non_null_counts": {
+    "total_rows": 35040,
+    "forecast_delta_6h": 32160,
+    "forecast_delta_12h": 29280,
+    "forecast_delta_24h": 23520,
+    "spread_delta_6h": 32160,
+    "spread_delta_12h": 29280,
+    "spread_delta_24h": 23520,
+    "revision_accel_6h": 29280,
+    "revision_accel_12h": 23520,
+    "spread_accel_6h": 29280
+  },
+  "tolerances": {
+    "temperature_2m": {
+      "eps": 0.2,
+      "eps_spread": 0.15,
+      "unit": "degC"
+    },
+    "surface_pressure": {
+      "eps": 0.5,
+      "eps_spread": 0.3,
+      "unit": "hPa"
+    },
+    "wind_speed_10m": {
+      "eps": 1.0,
+      "eps_spread": 0.5,
+      "unit": "km/h"
+    }
+  },
+  "sample_fingerprints": [
+    {
+      "fingerprint_version": "v1-experimental",
+      "variable": "surface_pressure",
+      "lead_hours": 72,
+      "revision_instability": {
+        "delta_6h": null,
+        "delta_12h": null,
+        "delta_24h": null,
+        "magnitude_6h": null,
+        "magnitude_12h": null,
+        "magnitude_24h": null,
+        "acceleration_6h": null,
+        "oscillation_detected": false
+      },
+      "ensemble_dispersion": {
+        "ensemble_std": 0.3076,
+        "ensemble_range": 1.0,
+        "ensemble_iqr": 0.8,
+        "ensemble_cv": 0.0003
+      },
+      "spread_dynamics": {
+        "spread_delta_6h": null,
+        "spread_delta_24h": null,
+        "spread_acceleration_6h": null,
+        "spread_growth_regime": "NO_PRIOR_CYCLE"
+      },
+      "forecast_trajectory": {
+        "regime": "INSUFFICIENT_CYCLES",
+        "precedence_applied": "Missing prior cycle revisions for identical valid time",
+        "tolerance_applied": 0.5
+      },
+      "ensemble_shape": {
+        "skew_proxy": -0.021,
+        "spread_to_iqr_ratio": 0.3845,
+        "distribution_tail": "SYMMETRIC"
+      },
+      "horizon_pressure": {
+        "lead_hours": 72,
+        "lead_bin": "day2_3",
+        "climatological_error_growth_factor": 1.18
+      }
+    },
+    {
+      "fingerprint_version": "v1-experimental",
+      "variable": "surface_pressure",
+      "lead_hours": 66,
+      "revision_instability": {
+        "delta_6h": 0.0,
+        "delta_12h": null,
+        "delta_24h": null,
+        "magnitude_6h": 0.0,
+        "magnitude_12h": null,
+        "magnitude_24h": null,
+        "acceleration_6h": null,
+        "oscillation_detected": false
+      },
+      "ensemble_dispersion": {
+        "ensemble_std": 0.3076,
+        "ensemble_range": 1.0,
+        "ensemble_iqr": 0.8,
+        "ensemble_cv": 0.0003
+      },
+      "spread_dynamics": {
+        "spread_delta_6h": 0.0,
+        "spread_delta_24h": null,
+        "spread_acceleration_6h": null,
+        "spread_growth_regime": "SPREAD_STABLE"
+      },
+      "forecast_trajectory": {
+        "regime": "INSUFFICIENT_CYCLES",
+        "precedence_applied": "Missing prior cycle revisions for identical valid time",
+        "tolerance_applied": 0.5
+      },
+      "ensemble_shape": {
+        "skew_proxy": -0.021,
+        "spread_to_iqr_ratio": 0.3845,
+        "distribution_tail": "SYMMETRIC"
+      },
+      "horizon_pressure": {
+        "lead_hours": 66,
+        "lead_bin": "day2_3",
+        "climatological_error_growth_factor": 1.18
+      }
+    },
+    {
+      "fingerprint_version": "v1-experimental",
+      "variable": "surface_pressure",
+      "lead_hours": 67,
+      "revision_instability": {
+        "delta_6h": null,
+        "delta_12h": null,
+        "delta_24h": null,
+        "magnitude_6h": null,
+        "magnitude_12h": null,
+        "magnitude_24h": null,
+        "acceleration_6h": null,
+        "oscillation_detected": false
+      },
+      "ensemble_dispersion": {
+        "ensemble_std": 0.3118,
+        "ensemble_range": 1.1,
+        "ensemble_iqr": 0.8,
+        "ensemble_cv": 0.0003
+      },
+      "spread_dynamics": {
+        "spread_delta_6h": null,
+        "spread_delta_24h": null,
+        "spread_acceleration_6h": null,
+        "spread_growth_regime": "NO_PRIOR_CYCLE"
+      },
+      "forecast_trajectory": {
+        "regime": "INSUFFICIENT_CYCLES",
+        "precedence_applied": "Missing prior cycle revisions for identical valid time",
+        "tolerance_applied": 0.5
+      },
+      "ensemble_shape": {
+        "skew_proxy": 0.0155,
+        "spread_to_iqr_ratio": 0.3898,
+        "distribution_tail": "SYMMETRIC"
+      },
+      "horizon_pressure": {
+        "lead_hours": 67,
+        "lead_bin": "day2_3",
+        "climatological_error_growth_factor": 1.18
+      }
+    }
+  ]
+}

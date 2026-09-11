@@ -1,0 +1,228 @@
+{
+  "schema_version": "1.0.0",
+  "pipeline_phase": "Phase 3 (Features & Leakage Audit)",
+  "issue_time_safety_policy": "All features strictly derivable at availability_time <= issue_time. Ground truth ERA5 reanalysis and future verification observations strictly forbidden.",
+  "feature_count": 26,
+  "features": [
+    {
+      "name": "ensemble_std",
+      "type": "float64",
+      "category": "ensemble_dispersion",
+      "description": "Standard deviation across all 31 GEFS ensemble members at forecast valid_time",
+      "availability": "issue_time",
+      "leakage_safe": true
+    },
+    {
+      "name": "ensemble_range",
+      "type": "float64",
+      "category": "ensemble_dispersion",
+      "description": "Difference between maximum and minimum ensemble member forecast values (ensemble_max - ensemble_min)",
+      "availability": "issue_time",
+      "leakage_safe": true
+    },
+    {
+      "name": "ensemble_iqr",
+      "type": "float64",
+      "category": "ensemble_dispersion",
+      "description": "Interquartile/decile range between 90th and 10th percentiles of ensemble members (q90 - q10)",
+      "availability": "issue_time",
+      "leakage_safe": true
+    },
+    {
+      "name": "ensemble_skew_proxy",
+      "type": "float64",
+      "category": "ensemble_dispersion",
+      "description": "Proxy for ensemble distribution asymmetry: (mean - midpoint) / (std + eps)",
+      "availability": "issue_time",
+      "leakage_safe": true
+    },
+    {
+      "name": "ensemble_cv",
+      "type": "float64",
+      "category": "ensemble_dispersion",
+      "description": "Coefficient of variation: ensemble_std / (|ensemble_mean| + eps)",
+      "availability": "issue_time",
+      "leakage_safe": true
+    },
+    {
+      "name": "ensemble_spread_to_iqr_ratio",
+      "type": "float64",
+      "category": "ensemble_dispersion",
+      "description": "Ratio of ensemble standard deviation to ensemble IQR (tail thickness proxy)",
+      "availability": "issue_time",
+      "leakage_safe": true
+    },
+    {
+      "name": "member_count",
+      "type": "int64",
+      "category": "quality_control",
+      "description": "Number of active ensemble members populated for the forecast step",
+      "availability": "issue_time",
+      "leakage_safe": true
+    },
+    {
+      "name": "has_full_ensemble",
+      "type": "int64",
+      "category": "quality_control",
+      "description": "Binary flag indicating whether all 31 operational ensemble members are present",
+      "availability": "issue_time",
+      "leakage_safe": true
+    },
+    {
+      "name": "forecast_value",
+      "type": "float64",
+      "category": "forecast_value",
+      "description": "Deterministic control forecast value (member 0 / control run)",
+      "availability": "issue_time",
+      "leakage_safe": true
+    },
+    {
+      "name": "ensemble_mean",
+      "type": "float64",
+      "category": "forecast_value",
+      "description": "Arithmetic mean of all 31 ensemble member forecasts",
+      "availability": "issue_time",
+      "leakage_safe": true
+    },
+    {
+      "name": "ensemble_spread_delta_6h",
+      "type": "float64",
+      "category": "trajectory_gradient",
+      "description": "6-hour forward difference in ensemble spread along forecast lead trajectory: spread(t) - spread(t - 6h)",
+      "availability": "issue_time",
+      "leakage_safe": true
+    },
+    {
+      "name": "ensemble_spread_delta_24h",
+      "type": "float64",
+      "category": "trajectory_gradient",
+      "description": "24-hour diurnal difference in ensemble spread along forecast lead trajectory: spread(t) - spread(t - 24h)",
+      "availability": "issue_time",
+      "leakage_safe": true
+    },
+    {
+      "name": "forecast_delta_6h",
+      "type": "float64",
+      "category": "trajectory_gradient",
+      "description": "6-hour forecast rate-of-change along forecast lead trajectory: forecast(t) - forecast(t - 6h)",
+      "availability": "issue_time",
+      "leakage_safe": true
+    },
+    {
+      "name": "forecast_delta_24h",
+      "type": "float64",
+      "category": "trajectory_gradient",
+      "description": "24-hour forecast diurnal change along forecast lead trajectory: forecast(t) - forecast(t - 24h)",
+      "availability": "issue_time",
+      "leakage_safe": true
+    },
+    {
+      "name": "lead_hours",
+      "type": "int64",
+      "category": "horizon",
+      "description": "Forecast lead time in hours from issue_time (valid_time - issue_time)",
+      "availability": "issue_time",
+      "leakage_safe": true
+    },
+    {
+      "name": "lead_days",
+      "type": "float64",
+      "category": "horizon",
+      "description": "Forecast lead time in days (lead_hours / 24.0)",
+      "availability": "issue_time",
+      "leakage_safe": true
+    },
+    {
+      "name": "valid_hour",
+      "type": "int64",
+      "category": "temporal",
+      "description": "Hour of the day in UTC (0-23) for the target valid time",
+      "availability": "issue_time",
+      "leakage_safe": true
+    },
+    {
+      "name": "valid_month",
+      "type": "int64",
+      "category": "temporal",
+      "description": "Month of the year (1-12) for the target valid time",
+      "availability": "issue_time",
+      "leakage_safe": true
+    },
+    {
+      "name": "valid_dayofweek",
+      "type": "int64",
+      "category": "temporal",
+      "description": "Day of the week (0=Monday, 6=Sunday) for the target valid time",
+      "availability": "issue_time",
+      "leakage_safe": true
+    },
+    {
+      "name": "sin_hour",
+      "type": "float64",
+      "category": "temporal_cyclical",
+      "description": "Sine trigonometric transformation of valid_hour: sin(2 * pi * valid_hour / 24)",
+      "availability": "issue_time",
+      "leakage_safe": true
+    },
+    {
+      "name": "cos_hour",
+      "type": "float64",
+      "category": "temporal_cyclical",
+      "description": "Cosine trigonometric transformation of valid_hour: cos(2 * pi * valid_hour / 24)",
+      "availability": "issue_time",
+      "leakage_safe": true
+    },
+    {
+      "name": "sin_month",
+      "type": "float64",
+      "category": "temporal_cyclical",
+      "description": "Sine trigonometric transformation of valid_month: sin(2 * pi * valid_month / 12)",
+      "availability": "issue_time",
+      "leakage_safe": true
+    },
+    {
+      "name": "cos_month",
+      "type": "float64",
+      "category": "temporal_cyclical",
+      "description": "Cosine trigonometric transformation of valid_month: cos(2 * pi * valid_month / 12)",
+      "availability": "issue_time",
+      "leakage_safe": true
+    },
+    {
+      "name": "is_weekend",
+      "type": "int64",
+      "category": "temporal",
+      "description": "Binary flag indicating whether valid_time falls on Saturday or Sunday",
+      "availability": "issue_time",
+      "leakage_safe": true
+    },
+    {
+      "name": "latitude",
+      "type": "float64",
+      "category": "spatial",
+      "description": "Latitude coordinate of target grid point in degrees North",
+      "availability": "issue_time",
+      "leakage_safe": true
+    },
+    {
+      "name": "longitude",
+      "type": "float64",
+      "category": "spatial",
+      "description": "Longitude coordinate of target grid point in degrees East",
+      "availability": "issue_time",
+      "leakage_safe": true
+    }
+  ],
+  "target_definitions": {
+    "primary_target": "bust_label",
+    "primary_target_type": "binary (0/1)",
+    "primary_target_description": "Indicator of whether forecast absolute error exceeds the conditional q95 threshold fitted on historical training data",
+    "regression_target": "forecast_abs_error",
+    "sensitivity_targets": [
+      "bust_label_q9",
+      "bust_label_q95",
+      "bust_label_q975",
+      "bust_label_q99"
+    ]
+  }
+}

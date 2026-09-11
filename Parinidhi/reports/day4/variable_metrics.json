@@ -1,0 +1,68 @@
+{
+  "surface_pressure": {
+    "total_samples": 20,
+    "positive_busts": 1,
+    "negative_non_busts": 19,
+    "base_bust_rate": 0.05,
+    "threshold": 0.28,
+    "pr_auc": 0.3333,
+    "brier_score": 0.0488,
+    "roc_auc": 0.8947,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1_score": 0.0,
+    "expected_calibration_error": 0.04,
+    "confusion_matrix": {
+      "tp": 0,
+      "fp": 0,
+      "tn": 19,
+      "fn": 1
+    },
+    "sample_count": 20,
+    "reliable_sample_size": true
+  },
+  "temperature_2m": {
+    "total_samples": 20,
+    "positive_busts": 0,
+    "negative_non_busts": 20,
+    "base_bust_rate": 0.0,
+    "threshold": 0.28,
+    "pr_auc": 0.0,
+    "brier_score": 0.0621,
+    "roc_auc": null,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1_score": 0.0,
+    "expected_calibration_error": 0.2068,
+    "confusion_matrix": {
+      "tp": 0,
+      "fp": 6,
+      "tn": 14,
+      "fn": 0
+    },
+    "sample_count": 20,
+    "reliable_sample_size": false
+  },
+  "wind_speed_10m": {
+    "total_samples": 20,
+    "positive_busts": 9,
+    "negative_non_busts": 11,
+    "base_bust_rate": 0.45,
+    "threshold": 0.28,
+    "pr_auc": 0.6141,
+    "brier_score": 0.2486,
+    "roc_auc": 0.6061,
+    "precision": 0.4615,
+    "recall": 0.6667,
+    "f1_score": 0.5455,
+    "expected_calibration_error": 0.1147,
+    "confusion_matrix": {
+      "tp": 6,
+      "fp": 7,
+      "tn": 4,
+      "fn": 3
+    },
+    "sample_count": 20,
+    "reliable_sample_size": true
+  }
+}

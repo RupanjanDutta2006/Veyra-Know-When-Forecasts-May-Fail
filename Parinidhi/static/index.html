@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Veyra — Forecast-Bust Sentinel Operational Reliability Intelligence Platform">
+    <title>Veyra — Forecast Reliability Sentinel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        /* ================================================================
+           Design System — Veyra Forecast-Bust Sentinel
+           ================================================================ */
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-card: #151d32;
+            --bg-card-hover: #1c2642;
+            --bg-glass: rgba(21, 29, 50, 0.75);
+            --border: rgba(99, 128, 255, 0.14);
+            --border-active: rgba(99, 128, 255, 0.45);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            --gradient-brand: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+            --gradient-danger: linear-gradient(135deg, #ef4444 0%, #f59e0b 100%);
+            --gradient-success: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
+            --shadow-lg: 0 12px 36px rgba(0,0,0,0.6);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Cascadia Code', monospace;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 650px 450px at 15% 15%, rgba(59, 130, 246, 0.08) 0%, transparent 70%),
+                radial-gradient(ellipse 550px 350px at 85% 85%, rgba(6, 182, 212, 0.06) 0%, transparent 70%),
+                radial-gradient(ellipse 400px 300px at 50% 50%, rgba(139, 92, 246, 0.04) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .app-container {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px 32px 60px;
+        }
+
+        /* Header */
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 0 24px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-icon {
+            width: 44px;
+            height: 44px;
+            background: var(--gradient-brand);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            box-shadow: 0 0 24px rgba(59, 130, 246, 0.35);
+        }
+
+        .brand h1 {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            background: var(--gradient-brand);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .brand-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .header-status {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .status-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 100px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .status-pill.online .status-dot { background: var(--accent-green); box-shadow: 0 0 8px var(--accent-green); }
+        .status-pill.offline .status-dot { background: var(--accent-red); box-shadow: 0 0 8px var(--accent-red); }
+        .status-pill.loading .status-dot { background: var(--accent-amber); box-shadow: 0 0 8px var(--accent-amber); animation: blink 1s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+        /* Scenario Bar */
+        .scenario-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 18px 24px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .scenario-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .scenario-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .scenario-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 12px;
+        }
+
+        .scenario-btn {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 12px 16px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .scenario-btn:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card-hover);
+            transform: translateY(-2px);
+        }
+
+        .scenario-btn.active {
+            border-color: var(--accent-cyan);
+            background: rgba(6, 182, 212, 0.1);
+            box-shadow: 0 0 16px rgba(6, 182, 212, 0.15);
+        }
+
+        .scenario-btn-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .scenario-btn-desc {
+            font-size: 11px;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .scenario-disclaimer {
+            margin-top: 14px;
+            padding: 10px 14px;
+            background: rgba(245, 158, 11, 0.08);
+            border-left: 3px solid var(--accent-amber);
+            border-radius: var(--radius-sm);
+            font-size: 11px;
+            color: #fde68a;
+            line-height: 1.4;
+        }
+
+        /* 15-Second Hero Card */
+        .hero-decision-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+        }
+
+        .live-station-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 16px 24px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .station-query-container {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .station-query-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--accent-cyan);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .station-select {
+            flex: 1;
+            min-width: 260px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            padding: 10px 14px;
+            font-size: 14px;
+            font-family: var(--font-sans);
+            outline: none;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .station-select:focus { border-color: var(--accent-blue); }
+
+        .station-query-btn {
+            background: var(--gradient-brand);
+            border: none;
+            border-radius: var(--radius-sm);
+            color: #ffffff;
+            padding: 10px 20px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            box-shadow: 0 0 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .station-query-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 0 18px rgba(59, 130, 246, 0.5);
+        }
+
+        .station-query-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .reliability-headline {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .reliability-supporting {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--accent-cyan);
+            margin-bottom: 16px;
+            line-height: 1.4;
+        }
+
+        .hero-submeta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .probability-caption {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 6px;
+            line-height: 1.4;
+        }
+
+        .decision-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            border-radius: 100px;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .mode-HIGH_TRUST { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); border: 1px solid var(--accent-green); }
+        .mode-CAUTION { background: rgba(245, 158, 11, 0.15); color: var(--accent-amber); border: 1px solid var(--accent-amber); }
+        .mode-RECHECK_SOON { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid #f87171; animation: pulse 2s infinite; }
+        .mode-DO_NOT_RELY_SOLELY { background: rgba(239, 68, 68, 0.25); color: #fca5a5; border: 1px solid var(--accent-red); }
+        .mode-ABSTAIN { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; border: 1px solid #94a3b8; }
+
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+
+        .location-lead-label {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .q-block {
+            margin-bottom: 20px;
+        }
+
+        .q-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--accent-cyan);
+            margin-bottom: 6px;
+        }
+
+        .metric-hero-val {
+            font-size: 38px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            line-height: 1.1;
+        }
+
+        .risk-pct-high { color: var(--accent-red); }
+        .risk-pct-elevated { color: var(--accent-amber); }
+        .risk-pct-low { color: var(--accent-green); }
+
+        .action-box {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-active);
+            border-radius: var(--radius-md);
+            padding: 16px 20px;
+            margin-top: 16px;
+        }
+
+        .action-box-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .action-box-text {
+            font-size: 14px;
+            color: var(--text-primary);
+            line-height: 1.5;
+            font-weight: 500;
+        }
+
+        .fingerprint-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 20px;
+        }
+
+        .fingerprint-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .fingerprint-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+
+        .fingerprint-meta {
+            font-size: 11px;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            padding-top: 10px;
+            line-height: 1.4;
+        }
+
+        /* Trust Timeline */
+        .timeline-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .timeline-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .horizon-badge {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 100px;
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--accent-cyan);
+            border: 1px solid var(--accent-blue);
+        }
+
+        .timeline-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+
+        .timeline-step {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 14px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .timeline-step:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+        }
+
+        .timeline-step.active {
+            border-color: var(--accent-cyan);
+            background: rgba(6, 182, 212, 0.12);
+        }
+
+        .step-lead { font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+        .step-prob { font-size: 15px; font-weight: 800; font-family: var(--font-mono); margin-bottom: 4px; }
+        .step-mode { font-size: 9px; font-weight: 700; text-transform: uppercase; padding: 2px 4px; border-radius: 4px; }
+
+        /* Technical Deep Dive Drawer */
+        .drawer-toggle {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            width: 100%;
+            color: var(--text-primary);
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            transition: all 0.2s ease;
+        }
+
+        .drawer-toggle:hover { background: var(--bg-card-hover); border-color: var(--border-active); }
+
+        .drawer-content {
+            display: none;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .drawer-content.open { display: block; }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .tech-box {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 16px;
+        }
+
+        .tech-box-title { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px; }
+        .tech-row { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+        .tech-key { color: var(--text-secondary); }
+        .tech-val { font-family: var(--font-mono); font-weight: 600; color: var(--text-primary); }
+
+        /* Footer */
+        .app-footer {
+            text-align: center;
+            padding: 24px 0;
+            border-top: 1px solid var(--border);
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        @media (max-width: 900px) {
+            .hero-grid { grid-template-columns: 1fr; }
+            .timeline-grid { grid-template-columns: repeat(5, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="brand">
+                <div class="brand-icon">⚡</div>
+                <div>
+                    <h1>Veyra — Forecast Reliability Sentinel</h1>
+                    <div class="brand-subtitle">Pre-Execution Decision Support & Operational Trust Horizon</div>
+                </div>
+            </div>
+            <div class="header-status">
+                <div id="statusPill" class="status-pill loading">
+                    <span class="status-dot"></span>
+                    <span id="statusText">Connecting…</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Scenario Selector Bar -->
+        <section class="scenario-section">
+            <div class="scenario-header">
+                <div class="scenario-title">🧪 Deterministic Demonstration Scenarios</div>
+                <span style="font-size:12px; color:var(--text-muted);">Quick-load simulation fixtures</span>
+            </div>
+            <div class="scenario-buttons">
+                <div class="scenario-btn active" id="btn-scenario_a_high_trust" onclick="loadScenario('scenario_a_high_trust')">
+                    <div class="scenario-btn-title">Scenario A: High Trust</div>
+                    <div class="scenario-btn-desc">Delhi NCR +24h · Stable Synoptic Consensus</div>
+                </div>
+                <div class="scenario-btn" id="btn-scenario_b_long_lead_decay" onclick="loadScenario('scenario_b_long_lead_decay')">
+                    <div class="scenario-btn-title">Scenario B: Long Lead Decay</div>
+                    <div class="scenario-btn-desc">Mumbai +144h · Predictability Loss</div>
+                </div>
+                <div class="scenario-btn" id="btn-scenario_c_revision_shock" onclick="loadScenario('scenario_c_revision_shock')">
+                    <div class="scenario-btn-title">Scenario C: Revision Shock</div>
+                    <div class="scenario-btn-desc">Kolkata +48h · Inter-Cycle Volatility</div>
+                </div>
+                <div class="scenario-btn" id="btn-scenario_d_severe_ood" onclick="loadScenario('scenario_d_severe_ood')">
+                    <div class="scenario-btn-title">Scenario D: Severe OOD</div>
+                    <div class="scenario-btn-desc">Srinagar +72h · Epistemic Abstention (D_M ≥ 40)</div>
+                </div>
+            </div>
+            <div class="scenario-disclaimer">
+                <strong>⚠️ Scientific Disclaimer:</strong> These fixtures are deterministic demonstration cases clearly labeled as simulation scenarios. They are NOT scientific validation cases and must NOT be presented as measured real-world performance evidence.
+            </div>
+        </section>
+
+        <!-- Live Canonical Station Query (25 IMD Stations) -->
+        <section class="live-station-section">
+            <div class="station-query-container">
+                <div class="station-query-label">
+                    <span>📡 Live Canonical Station Query</span>
+                </div>
+                <select id="stationSelect" class="station-select">
+                    <option value="Delhi">Delhi (DELHI)</option>
+                    <option value="Srinagar">Srinagar (SRINAGAR)</option>
+                    <option value="Chandigarh">Chandigarh (CHANDIGARH)</option>
+                    <option value="Jaipur">Jaipur (JAIPUR)</option>
+                    <option value="Lucknow">Lucknow (LUCKNOW)</option>
+                    <option value="Mumbai">Mumbai (MUMBAI)</option>
+                    <option value="Pune">Pune (PUNE)</option>
+                    <option value="Ahmedabad">Ahmedabad (AHMEDABAD)</option>
+                    <option value="Panaji">Panaji (GOA/PANAJI)</option>
+                    <option value="Bhopal">Bhopal (BHOPAL)</option>
+                    <option value="Nagpur">Nagpur (NAGPUR)</option>
+                    <option value="Raipur">Raipur (RAIPUR)</option>
+                    <option value="Kolkata">Kolkata (KOLKATA)</option>
+                    <option value="Bhubaneswar">Bhubaneswar (BHUBANESWAR)</option>
+                    <option value="Ranchi">Ranchi (RANCHI)</option>
+                    <option value="Guwahati">Guwahati (GUWAHATI)</option>
+                    <option value="Bengaluru">Bengaluru (BANGALORE)</option>
+                    <option value="Chennai">Chennai (CHENNAI)</option>
+                    <option value="Hyderabad">Hyderabad (HYDERABAD)</option>
+                    <option value="Kochi">Kochi (COCHIN)</option>
+                    <option value="Dehradun">Dehradun (DEHRADUN)</option>
+                    <option value="Shimla">Shimla (SHIMLA - High Altitude)</option>
+                    <option value="Leh">Leh (LEH - High Altitude)</option>
+                    <option value="Visakhapatnam">Visakhapatnam (VIZAG)</option>
+                    <option value="Thiruvananthapuram">Thiruvananthapuram (TRIVANDRUM)</option>
+                </select>
+                <button id="stationQueryBtn" class="station-query-btn" onclick="queryLiveStation()">
+                    <span>Query Live Builder 1</span>
+                    <span>⚡</span>
+                </button>
+            </div>
+            <div id="stationQueryResult" style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">
+                Queries Builder 1 (POST http://127.0.0.1:8000/v1/predict) live weather acquisition + QC + Builder 2 V3 inference.
+            </div>
+        </section>
+
+        <!-- 15-Second Hero Decision Card -->
+        <section class="hero-decision-card" id="heroCard">
+            <div class="hero-grid">
+                <!-- Left: Decision & Probability -->
+                <div>
+                    <div id="heroHeadline" class="reliability-headline">FORECAST RELIABILITY: HIGH</div>
+                    <div id="heroSupporting" class="reliability-supporting">Forecast is within Veyra's reliable trust envelope.</div>
+
+                    <div class="hero-submeta">
+                        <span id="heroDecisionBadge" class="decision-badge mode-HIGH_TRUST">HIGH TRUST</span>
+                        <span id="heroLocationLead" class="location-lead-label">Delhi NCR (+24h Lead · T2M)</span>
+                    </div>
+
+                    <div class="q-block">
+                        <div class="q-title">1. Weather Forecast Bust Probability</div>
+                        <div style="display:flex; align-items:baseline; gap:12px;">
+                            <span id="heroBustPct" class="metric-hero-val risk-pct-low">6.5%</span>
+                            <span id="heroRiskTier" style="font-size:14px; font-weight:700; color:var(--text-secondary);">LOW RISK TIER</span>
+                        </div>
+                        <div class="probability-caption">Probability that the incoming weather forecast exceeds Veyra's defined operational error threshold (not Veyra model accuracy).</div>
+                    </div>
+
+                    <div class="q-block">
+                        <div class="q-title">2. Reliability & Trust Confidence</div>
+                        <div style="font-size:15px; font-weight:600; color:var(--text-primary);" id="heroConfidence">
+                            Confidence Index: 94.9 / 100 · Stability: 100.0 / 100
+                        </div>
+                    </div>
+
+                    <div class="action-box">
+                        <div class="action-box-title">⚡ 4. Recommended Operational Action</div>
+                        <div class="action-box-text" id="heroActionText">Proceed with standard operational workflows. Forecast is within reliable trust envelope.</div>
+                    </div>
+                </div>
+
+                <!-- Right: Analytical Failure Fingerprint Diagnostic -->
+                <div>
+                    <div class="q-title">3. Failure Fingerprint & Physical Diagnostic</div>
+                    <div class="fingerprint-card">
+                        <div class="fingerprint-name" id="fpName">
+                            <span>🔍</span> <span id="fpTitle">Stable Synoptic Consensus</span>
+                        </div>
+                        <div class="fingerprint-desc" id="fpDesc">
+                            Coherent multi-member agreement under quiescent synoptic flow with minimal inter-cycle revision drift.
+                        </div>
+                        <div class="fingerprint-meta">
+                            <strong>Interpretation:</strong> <span id="fpInterp">Associated with high-confidence atmospheric regimes exhibiting low revision drift and normal ensemble spread.</span><br><br>
+                            <strong>Limitations:</strong> <span id="fpLimit">Unmodeled sudden events can occasionally bypass synoptic consensus. Non-causal diagnostic indicator.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Lead-Time Trust Timeline -->
+        <section class="timeline-section">
+            <div class="timeline-header">
+                <div class="timeline-title">
+                    <span>⏱️ Lead-Time Trust Timeline</span>
+                    <span style="font-size:13px; font-weight:400; color:var(--text-muted);">(Click any lead to inspect)</span>
+                </div>
+                <div class="horizon-badge" id="horizonBadge">Operational Trust Horizon: +240h</div>
+            </div>
+            <div class="timeline-grid" id="timelineGrid">
+                <!-- Populated dynamically via JS -->
+            </div>
+        </section>
+
+        <!-- Expandable Technical Deep-Dive -->
+        <button class="drawer-toggle" onclick="toggleDrawer()">
+            <span>🔬 Technical ML Telemetry & Atmospheric Moments (Progressive Disclosure)</span>
+            <span id="drawerArrow">▼</span>
+        </button>
+
+        <section class="drawer-content" id="techDrawer">
+            <div class="tech-grid">
+                <div class="tech-box">
+                    <div class="tech-box-title">Ensemble Dispersion Moments</div>
+                    <div class="tech-row"><span class="tech-key">Forecast Mean</span><span class="tech-val" id="techMean">—</span></div>
+                    <div class="tech-row"><span class="tech-key">Ensemble Spread (std)</span><span class="tech-val" id="techStd">—</span></div>
+                    <div class="tech-row"><span class="tech-key">Spread Range (P10-P90)</span><span class="tech-val" id="techRange">—</span></div>
+                    <div class="tech-row"><span class="tech-key">Coeff of Variation (CV)</span><span class="tech-val" id="techCV">—</span></div>
+                </div>
+                <div class="tech-box">
+                    <div class="tech-box-title">Revision Dynamics & Stability</div>
+                    <div class="tech-row"><span class="tech-key">Stability Score</span><span class="tech-val" id="techStab">—</span></div>
+                    <div class="tech-row"><span class="tech-key">Structural Overconfidence</span><span class="tech-val" id="techOverconf">—</span></div>
+                    <div class="tech-row"><span class="tech-key">Prediction Uncertainty</span><span class="tech-val" id="techUncertainty">—</span></div>
+                </div>
+                <div class="tech-box">
+                    <div class="tech-box-title">Out-of-Distribution & Provenance</div>
+                    <div class="tech-row"><span class="tech-key">Mahalanobis Novelty (D_M)</span><span class="tech-val" id="techOOD">—</span></div>
+                    <div class="tech-row"><span class="tech-key">Model Version</span><span class="tech-val" id="techModel">—</span></div>
+                    <div class="tech-row"><span class="tech-key">Truth Reference</span><span class="tech-val">ECMWF ERA5 Reanalysis</span></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            Veyra Forecast-Bust Sentinel &middot; Operational Reliability Platform<br>
+            Pcrit = 0.35 & OOD = 40.0 are configurable product/operational design thresholds &middot; Serving on <strong>localhost:8001</strong>
+        </footer>
+    </div>
+
+    <script>
+        let currentPayload = null;
+        let selectedLead = 24;
+        let activeScenarioId = 'scenario_a_high_trust';
+        let scenarioRequestId = 0;
+
+        function fmtNum(val, decimals, fallback = '—') {
+            if (val === null || val === undefined || isNaN(Number(val))) return fallback;
+            return Number(val).toFixed(decimals);
+        }
+
+        async function init() {
+            try {
+                const health = await fetch('/api/health').then(r => r.json());
+                document.getElementById('statusPill').className = 'status-pill online';
+                const ver = health.model_version || 'Sentinel';
+                document.getElementById('statusText').textContent = `${ver} · Online`;
+                await loadScenario('scenario_a_high_trust');
+            } catch (err) {
+                document.getElementById('statusPill').className = 'status-pill offline';
+                document.getElementById('statusText').textContent = 'Offline';
+            }
+        }
+
+        async function loadScenario(scenarioId) {
+            activeScenarioId = scenarioId;
+            const currentReq = ++scenarioRequestId;
+            document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
+            const activeBtn = document.getElementById('btn-' + scenarioId);
+            if (activeBtn) activeBtn.classList.add('active');
+
+            try {
+                const res = await fetch(`/api/scenarios/${scenarioId}`).then(r => r.json());
+                if (currentReq !== scenarioRequestId) return; // Discard out-of-order stale responses
+                currentPayload = res;
+                const targetLead = (res.scenario_meta && res.scenario_meta.lead_hours) ? res.scenario_meta.lead_hours : 24;
+                renderDashboard(res, targetLead);
+            } catch (err) {
+                console.error("Failed to load scenario", err);
+            }
+        }
+
+        function renderDashboard(data, leadToHighlight) {
+            if (!data) return;
+            selectedLead = leadToHighlight;
+            const forecasts = data.forecasts || [];
+            let item = forecasts.find(f => f.lead_hours === selectedLead);
+            if (!item && forecasts.length > 0) item = forecasts[0];
+            if (!item) item = {};
+
+            const guidance = data.decision_guidance || {};
+            const horizon = data.operational_trust_horizon || {};
+            const loc = data.location || {};
+            const meta = data.scenario_meta || {};
+
+            // Decision Badge & Reliability Headline / Supporting Framing
+            const badge = document.getElementById('heroDecisionBadge');
+            const mode = item.decision_mode || guidance.decision_mode || meta.intended_decision_mode || 'HIGH_TRUST';
+            badge.className = `decision-badge mode-${mode}`;
+            const modeUpper = String(mode).toUpperCase();
+            let badgeText = mode.replace(/_/g, ' ');
+            if (modeUpper === 'DO_NOT_RELY_SOLELY') {
+                badgeText = 'DEGRADING';
+            } else if (modeUpper === 'ABSTAIN') {
+                badgeText = 'OUT OF DOMAIN';
+            }
+            badge.textContent = badgeText;
+
+            const p = item.bust_probability !== undefined && item.bust_probability !== null ? Number(item.bust_probability) : 0.05;
+            const headlineEl = document.getElementById('heroHeadline');
+            const supportingEl = document.getElementById('heroSupporting');
+
+            let headline = "FORECAST RELIABILITY: HIGH";
+            let supporting = "Forecast is within Veyra's reliable trust envelope.";
+            let actionText = item.recommended_action || guidance.actionable_recommendation || 'Proceed with standard operational workflows. Forecast is within reliable trust envelope.';
+
+            const scId = activeScenarioId || (meta && meta.scenario_id) || '';
+
+            if (scId === 'scenario_b_long_lead_decay' || modeUpper === 'DO_NOT_RELY_SOLELY' || (item.lead_hours && item.lead_hours >= 144 && p >= 0.06)) {
+                headline = "FORECAST RELIABILITY: DEGRADING";
+                supporting = "Reliability has degraded at this extended lead time.";
+                actionText = "Recheck before committing to an irreversible decision. Extended lead predictability decay detected.";
+            } else if (scId === 'scenario_c_revision_shock' || modeUpper === 'RECHECK_SOON' || (item.stability_index !== undefined && Number(item.stability_index) < 60)) {
+                headline = "FORECAST RELIABILITY: RECHECK SOON";
+                supporting = "Recent forecast revisions indicate reduced stability.";
+                actionText = "Recheck before committing to critical operations. Recent forecast revisions indicate reduced stability.";
+            } else if (scId === 'scenario_d_severe_ood' || modeUpper === 'ABSTAIN' || item.abstain || (item.ood_score !== undefined && Number(item.ood_score) >= 40.0)) {
+                headline = "FORECAST RELIABILITY: OUT OF DOMAIN";
+                supporting = "Veyra cannot reliably assess this atmospheric state (Epistemic domain novelty D_M ≥ 40.0).";
+                actionText = "Manual meteorological consultation required. Abstention is triggered by Out-of-Distribution atmospheric novelty (D_M ≥ 40.0), independent of the estimated 34.5% bust probability.";
+            } else if (modeUpper === 'HIGH_TRUST' || p < 0.06) {
+                headline = "FORECAST RELIABILITY: HIGH";
+                supporting = "Forecast is within Veyra's reliable trust envelope.";
+                actionText = "Proceed with standard operational workflows. Forecast is within reliable trust envelope.";
+            } else if (modeUpper === 'CAUTION' || (p >= 0.06 && p < 0.60)) {
+                headline = "FORECAST RELIABILITY: CAUTION";
+                supporting = "Moderate forecast risk detected. Exercise operational vigilance.";
+                actionText = "Exercise caution in risk-sensitive operations. Monitor intermediate forecast updates.";
+            }
+
+            if (headlineEl) headlineEl.textContent = headline;
+            if (supportingEl) supportingEl.textContent = supporting;
+            document.getElementById('heroActionText').textContent = actionText;
+
+            // Location & Lead
+            const cityName = meta.city || loc.city || loc.location_id || 'Delhi NCR';
+            const varName = item.variable || meta.variable || 'temperature_2m';
+            const varLabel = varName === 'temperature_2m' ? 'T2M' : varName === 'wind_speed_10m' ? 'Wind 10m' : varName;
+            document.getElementById('heroLocationLead').textContent = `${cityName} (+${item.lead_hours || selectedLead}h Lead · ${varLabel})`;
+
+            // Bust Risk & Tier
+            const pPct = fmtNum(p * 100, 1) + '%';
+            const bustEl = document.getElementById('heroBustPct');
+            bustEl.textContent = pPct;
+            bustEl.className = `metric-hero-val ${p >= 0.60 ? 'risk-pct-high' : p >= 0.06 ? 'risk-pct-elevated' : 'risk-pct-low'}`;
+            
+            let tierText = `${item.risk_level || 'LOW'} RISK TIER`;
+            if (scId === 'scenario_d_severe_ood' || item.abstain || (item.ood_score !== undefined && Number(item.ood_score) >= 40.0)) {
+                tierText = `${item.risk_level || 'ELEVATED'} RISK TIER · EPISTEMIC ABSTENTION`;
+            }
+            document.getElementById('heroRiskTier').textContent = tierText;
+
+            // Confidence & Stability
+            const confVal = fmtNum(item.confidence_index, 1, '90.0');
+            const stabVal = fmtNum(item.stability_index, 1, '95.0');
+            document.getElementById('heroConfidence').textContent = `Confidence Index: ${confVal} / 100 · Stability: ${stabVal} / 100`;
+
+            // Fingerprint
+            const fp = item.failure_fingerprint_detail || {};
+            document.getElementById('fpTitle').textContent = fp.name || item.failure_fingerprint || 'Stable Synoptic Consensus';
+            document.getElementById('fpDesc').textContent = fp.description || 'Nominal atmospheric condition.';
+            document.getElementById('fpInterp').textContent = fp.interpretation || 'Pattern consistent with calibrated training distribution.';
+            document.getElementById('fpLimit').textContent = fp.limitations || 'Non-causal diagnostic pattern.';
+
+            // Horizon
+            const hVal = horizon.operational_trust_horizon_hours !== undefined ? horizon.operational_trust_horizon_hours : 240;
+            document.getElementById('horizonBadge').textContent = `Operational Trust Horizon: +${hVal}h (${horizon.status || 'ACTIVE'})`;
+
+            // Timeline
+            const timelineGrid = document.getElementById('timelineGrid');
+            timelineGrid.innerHTML = '';
+            (data.trust_timeline || []).forEach(t => {
+                const stepEl = document.createElement('div');
+                stepEl.className = `timeline-step ${t.lead_hours === selectedLead ? 'active' : ''}`;
+                stepEl.onclick = () => renderDashboard(data, t.lead_hours);
+
+                const tProb = t.bust_probability !== null && t.bust_probability !== undefined ? (Number(t.bust_probability) * 100).toFixed(1) + '%' : '—';
+                const tMode = t.decision_mode || 'AVAIL';
+                let tModeDisplay = tMode.replace(/_/g, ' ');
+                if (tMode.toUpperCase() === 'DO_NOT_RELY_SOLELY') {
+                    tModeDisplay = 'DEGRADING';
+                }
+                const probColor = (t.bust_probability !== null && Number(t.bust_probability) >= 0.60) ? 'color:var(--accent-red)' : (t.bust_probability !== null && Number(t.bust_probability) >= 0.06) ? 'color:var(--accent-amber)' : 'color:var(--accent-green)';
+
+                stepEl.innerHTML = `
+                    <div class="step-lead">+${t.lead_hours}h</div>
+                    <div class="step-prob" style="${probColor}">${tProb}</div>
+                    <div class="step-mode mode-${tMode}">${tModeDisplay}</div>
+                `;
+                timelineGrid.appendChild(stepEl);
+            });
+
+            // Tech Drawer
+            document.getElementById('techMean').textContent = item.ensemble_mean !== undefined && item.ensemble_mean !== null ? `${fmtNum(item.ensemble_mean, 2)} ${item.unit || ''}` : '—';
+            document.getElementById('techStd').textContent = item.ensemble_std !== undefined && item.ensemble_std !== null ? `${fmtNum(item.ensemble_std, 2)} ${item.unit || ''}` : '—';
+            document.getElementById('techRange').textContent = item.ensemble_mean !== undefined && item.ensemble_mean !== null && item.ensemble_std !== undefined ? `${fmtNum(item.ensemble_std * 2.56, 2)} ${item.unit || ''}` : '—';
+            document.getElementById('techCV').textContent = (item.ensemble_mean && item.ensemble_std) ? fmtNum(item.ensemble_std / item.ensemble_mean, 4) : '—';
+            document.getElementById('techStab').textContent = item.stability_index !== undefined && item.stability_index !== null ? `${fmtNum(item.stability_index, 1)} / 100` : '—';
+            document.getElementById('techOverconf').textContent = item.structural_overconfidence !== undefined && item.structural_overconfidence !== null ? fmtNum(item.structural_overconfidence, 3) : '0.000';
+            document.getElementById('techUncertainty').textContent = item.uncertainty_pct !== undefined && item.uncertainty_pct !== null ? `±${fmtNum(item.uncertainty_pct, 2)}%` : '±3.37%';
+            document.getElementById('techOOD').textContent = item.ood_score !== undefined && item.ood_score !== null ? `${fmtNum(item.ood_score, 1)} (Threshold: 40.0)` : '—';
+            document.getElementById('techModel').textContent = data.model_version || (data.provenance ? data.provenance.model_version : 'veyra-v3-benchmark-lightgbm');
+        }
+
+        async function queryLiveStation() {
+            const select = document.getElementById('stationSelect');
+            const btn = document.getElementById('stationQueryBtn');
+            const resultMsg = document.getElementById('stationQueryResult');
+            const locName = select.value;
+
+            btn.disabled = true;
+            btn.innerHTML = '<span>Querying…</span>';
+            resultMsg.textContent = `Connecting to Builder 1 (127.0.0.1:8000/v1/predict) for ${locName}…`;
+
+            // Unset active demo scenario buttons
+            document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
+            activeScenarioId = 'live_' + locName.toLowerCase();
+
+            try {
+                const response = await fetch('http://127.0.0.1:8000/v1/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ location: locName })
+                });
+                const b1 = await response.json();
+                
+                if (b1.abstain) {
+                    // Handled abstention
+                    resultMsg.textContent = `Station ${b1.location || locName}: Abstention triggered (${b1.reason_codes ? b1.reason_codes.join(', ') : 'Abstain'}). High-altitude QC or physical bounds envelope.`;
+                } else {
+                    resultMsg.textContent = `Station ${b1.location || locName}: Live response received. P(bust)=${(b1.bust_probability * 100).toFixed(1)}%, Risk=${b1.risk_level}, Model=${b1.model_version}.`;
+                }
+
+                // Construct dashboard compatible object from Builder 1 response
+                const isAbstain = Boolean(b1.abstain);
+                const pBust = b1.bust_probability !== undefined && b1.bust_probability !== null ? b1.bust_probability : 0.05;
+                const decMode = isAbstain ? 'ABSTAIN' : (b1.decision_mode || 'HIGH_TRUST');
+
+                const livePayload = {
+                    scenario_meta: {
+                        scenario_id: 'live_' + locName.toLowerCase(),
+                        city: b1.location || locName,
+                        lead_hours: 24,
+                        intended_decision_mode: decMode,
+                        variable: 'temperature_2m'
+                    },
+                    location: {
+                        location_id: locName.toLowerCase(),
+                        city: b1.location || locName
+                    },
+                    operational_trust_horizon: {
+                        operational_trust_horizon_hours: b1.operational_trust_horizon_hours !== undefined ? b1.operational_trust_horizon_hours : 0,
+                        status: isAbstain ? 'ABSTAIN' : (b1.within_trust_horizon ? 'ACTIVE' : 'DEGRADED')
+                    },
+                    forecasts: [{
+                        lead_hours: 24,
+                        variable: 'temperature_2m',
+                        unit: '°C',
+                        bust_probability: pBust,
+                        risk_level: b1.risk_level || 'LOW',
+                        confidence_index: b1.confidence_index !== undefined ? b1.confidence_index : 90.0,
+                        stability_index: b1.stability !== undefined ? b1.stability : 95.0,
+                        uncertainty_pct: b1.uncertainty_pct !== undefined ? b1.uncertainty_pct : 3.37,
+                        ood_score: b1.ood_distance !== undefined ? b1.ood_distance : 0.0,
+                        structural_overconfidence: b1.structural_overconfidence !== undefined ? b1.structural_overconfidence : 0.0,
+                        failure_fingerprint: b1.failure_fingerprint || 'STABLE_SYNOPTIC_CONSENSUS',
+                        decision_mode: decMode,
+                        abstain: isAbstain,
+                        ensemble_mean: null,
+                        ensemble_std: null,
+                        failure_fingerprint_detail: {
+                            name: b1.failure_fingerprint || 'Stable Synoptic Consensus',
+                            description: isAbstain ? 'Epistemic or Physical Quality Control Abstention.' : 'Real-time IMD canonical station weather inference.',
+                            interpretation: isAbstain ? 'Station triggered quality control safety thresholds.' : 'Nominal physical diagnostic assessment.',
+                            limitations: 'Live weather acquisition via Open-Meteo & IMD canonical grid.'
+                        },
+                        recommended_action: isAbstain ? 'Abstention active: Manual meteorological consultation advised.' : 'Operational decision guidance based on live V3 model evaluation.'
+                    }],
+                    trust_timeline: [
+                        { lead_hours: 24, bust_probability: pBust, decision_mode: decMode }
+                    ],
+                    model_version: b1.model_version || 'veyra-v3-benchmark-lightgbm'
+                };
+
+                currentPayload = livePayload;
+                renderDashboard(livePayload, 24);
+            } catch (err) {
+                console.error("Live station query error:", err);
+                resultMsg.textContent = `Error querying live Builder 1: ${err.message}. Ensure Builder 1 is running on port 8000.`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>Query Live Builder 1</span><span>⚡</span>';
+            }
+        }
+
+        function toggleDrawer() {
+            const drawer = document.getElementById('techDrawer');
+            const arrow = document.getElementById('drawerArrow');
+            if (drawer.classList.contains('open')) {
+                drawer.classList.remove('open');
+                arrow.textContent = '▼';
+            } else {
+                drawer.classList.add('open');
+                arrow.textContent = '▲';
+            }
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>

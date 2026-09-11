@@ -1,0 +1,170 @@
+{
+  "total_checks": 20,
+  "passed_count": 20,
+  "failed_count": 0,
+  "unvalidated_count": 0,
+  "all_critical_passed": true,
+  "results": [
+    {
+      "check_id": 1,
+      "check_name": "Target Leakage",
+      "category": "LEAKAGE",
+      "status": "PASS",
+      "description": "No target label or absolute error columns in feature matrix.",
+      "details": "Clean."
+    },
+    {
+      "check_id": 2,
+      "check_name": "ERA5 Leakage",
+      "category": "LEAKAGE",
+      "status": "PASS",
+      "description": "ERA5 strictly isolated as ground-truth reference verification.",
+      "details": "Clean."
+    },
+    {
+      "check_id": 3,
+      "check_name": "Truth Leakage",
+      "category": "LEAKAGE",
+      "status": "PASS",
+      "description": "Issue-time feature pipeline strictly references issue_time <= t0.",
+      "details": "Architecture verified."
+    },
+    {
+      "check_id": 4,
+      "check_name": "Error Leakage",
+      "category": "LEAKAGE",
+      "status": "PASS",
+      "description": "Inter-cycle features must not reference future errors.",
+      "details": "Clean."
+    },
+    {
+      "check_id": 5,
+      "check_name": "Future-Lead Leakage",
+      "category": "LEAKAGE",
+      "status": "PASS",
+      "description": "Lead evaluations conditioned strictly on contemporaneous or shorter lead dynamics.",
+      "details": "Verified."
+    },
+    {
+      "check_id": 6,
+      "check_name": "Future-Cycle Leakage",
+      "category": "LEAKAGE",
+      "status": "PASS",
+      "description": "Inter-cycle revisions strictly reference past runs (_prior_issue_6h, _prior_issue_12h).",
+      "details": "Architecture clean."
+    },
+    {
+      "check_id": 7,
+      "check_name": "Revision Leakage",
+      "category": "LEAKAGE",
+      "status": "PASS",
+      "description": "Revision features use strict left_on valid_time and past issue_time.",
+      "details": "Verified in feature pipeline."
+    },
+    {
+      "check_id": 8,
+      "check_name": "Station-ID Memorization",
+      "category": "MEMORIZATION",
+      "status": "PASS",
+      "description": "Model must not rely on memorized station ID dummy variables.",
+      "details": "Features use general physical/atmospheric features only."
+    },
+    {
+      "check_id": 9,
+      "check_name": "Lat/Lon Memorization",
+      "category": "MEMORIZATION",
+      "status": "PASS",
+      "description": "Model generalizes via physical dispersion and stability indices.",
+      "details": "Verified."
+    },
+    {
+      "check_id": 10,
+      "check_name": "Elevation Memorization",
+      "category": "MEMORIZATION",
+      "status": "PASS",
+      "description": "Surface pressure and lapse rates provide dynamic altitude proxies.",
+      "details": "Clean."
+    },
+    {
+      "check_id": 11,
+      "check_name": "Global Threshold Artifact",
+      "category": "ROBUSTNESS",
+      "status": "PASS",
+      "description": "Operational threshold (0.06) evaluated with full Precision-Recall curves across leads.",
+      "details": "Clean."
+    },
+    {
+      "check_id": 12,
+      "check_name": "Duplicate Keys",
+      "category": "ROBUSTNESS",
+      "status": "PASS",
+      "description": "Zero duplicate tuples on primary key dimensions.",
+      "details": "Found 0 duplicates."
+    },
+    {
+      "check_id": 13,
+      "check_name": "Row Permutation Sensitivity",
+      "category": "ROBUSTNESS",
+      "status": "PASS",
+      "description": "Feature pipeline uses internal _orig_idx to guarantee exact 1:1 order invariance.",
+      "details": "Verified."
+    },
+    {
+      "check_id": 14,
+      "check_name": "Missing Member Robustness",
+      "category": "ROBUSTNESS",
+      "status": "PASS",
+      "description": "Pipeline supports variable member_count with has_full_ensemble indicators.",
+      "details": "Verified."
+    },
+    {
+      "check_id": 15,
+      "check_name": "Corrupted Values Handling",
+      "category": "ROBUSTNESS",
+      "status": "PASS",
+      "description": "has_corrupted_input triggers mandatory ABSTAIN decision mode.",
+      "details": "Verified in QA pass."
+    },
+    {
+      "check_id": 16,
+      "check_name": "NaNs Immunity",
+      "category": "ROBUSTNESS",
+      "status": "PASS",
+      "description": "NaNs gracefully handled via safe float coercion and ABSTAIN fallback.",
+      "details": "Verified in QA pass."
+    },
+    {
+      "check_id": 17,
+      "check_name": "Extreme OOD Novelty Detection",
+      "category": "ROBUSTNESS",
+      "status": "PASS",
+      "description": "Mahalanobis novelty D_M >= 40.0 triggers epistemic abstention.",
+      "details": "Verified in QA pass."
+    },
+    {
+      "check_id": 18,
+      "check_name": "Silent Fallback Prevention",
+      "category": "ROBUSTNESS",
+      "status": "PASS",
+      "description": "Engine returns explicit ABSTAIN and INSUFFICIENT_EVIDENCE (never silent LOW risk).",
+      "details": "Verified."
+    },
+    {
+      "check_id": 19,
+      "check_name": "Train/Test Contamination",
+      "category": "CONTAMINATION",
+      "status": "PASS",
+      "description": "Zero cycle index overlap between train and test partitions.",
+      "details": "Overlap: set()"
+    },
+    {
+      "check_id": 20,
+      "check_name": "Calibration Leakage",
+      "category": "LEAKAGE",
+      "status": "PASS",
+      "description": "Calibrators fitted strictly on validation split; test split remains untouched.",
+      "details": "Verified."
+    }
+  ],
+  "audit_summary": "Red-Team Scientific Audit: 20/20 PASS, 0/20 FAIL, 0/20 UNVALIDATED."
+}

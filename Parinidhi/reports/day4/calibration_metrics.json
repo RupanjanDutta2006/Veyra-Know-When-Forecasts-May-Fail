@@ -1,0 +1,16 @@
+{
+  "sigmoid_platt": {
+    "method": "sigmoid",
+    "brier_score_uncalibrated": 0.1491,
+    "brier_score_calibrated": 0.1067,
+    "brier_improvement_pct": 28.43
+  },
+  "isotonic": {
+    "method": "isotonic",
+    "brier_score_uncalibrated": 0.1491,
+    "brier_score_calibrated": 0.1254,
+    "brier_improvement_pct": 15.9
+  },
+  "selected_method": "sigmoid",
+  "justification": "Validation set (72 samples / 13 positives) is too small for non-parametric isotonic step functions, which risk severe overfitting. Platt sigmoid provides monotonic regularized shrinkage."
+}

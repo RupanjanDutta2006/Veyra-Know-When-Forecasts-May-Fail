@@ -1,0 +1,106 @@
+{
+  "model_type": "LogisticRegression",
+  "model_version": "baseline-logistic-v1.0",
+  "created_at": "2026-08-30T22:28:39.713192+00:00",
+  "feature_schema_version": "veyra-features-v1.0",
+  "feature_names": [
+    "cos_hour",
+    "cos_month",
+    "forecast_value",
+    "latitude",
+    "lead_hours",
+    "longitude",
+    "month",
+    "season_autumn",
+    "season_spring",
+    "season_summer",
+    "season_winter",
+    "sin_hour",
+    "sin_month",
+    "var_precipitation",
+    "var_relative_humidity_2m",
+    "var_surface_pressure",
+    "var_temperature_2m",
+    "var_wind_speed_10m"
+  ],
+  "split_strategy": "TemporalChronoSplit_70_15_15",
+  "threshold_policy": "QuantileBustPolicy_q95",
+  "train_samples": 62,
+  "val_samples": 13,
+  "test_samples": 15,
+  "train_time_range": [
+    "2026-07-01T00:00:00Z",
+    "2026-07-19T00:00:00Z"
+  ],
+  "val_time_range": [
+    "2026-07-19T00:00:00Z",
+    "2026-07-23T00:00:00Z"
+  ],
+  "test_time_range": [
+    "2026-07-24T00:00:00Z",
+    "2026-07-28T00:00:00Z"
+  ],
+  "val_metrics": {
+    "split_name": "validation",
+    "sample_count": 13,
+    "bust_count": 3,
+    "non_bust_count": 10,
+    "bust_prevalence": 0.2308,
+    "accuracy": 0.6923,
+    "precision": 0.4,
+    "recall": 0.6667,
+    "f1_score": 0.5,
+    "roc_auc": 0.7667,
+    "brier_score": 0.2383,
+    "confusion_matrix": {
+      "true_positives": 2,
+      "false_positives": 3,
+      "true_negatives": 7,
+      "false_negatives": 1
+    },
+    "is_calibrated": false,
+    "details": {}
+  },
+  "test_metrics": {
+    "split_name": "test",
+    "sample_count": 15,
+    "bust_count": 7,
+    "non_bust_count": 8,
+    "bust_prevalence": 0.4667,
+    "accuracy": 0.6,
+    "precision": 0.6,
+    "recall": 0.4286,
+    "f1_score": 0.5,
+    "roc_auc": 0.75,
+    "brier_score": 0.2432,
+    "confusion_matrix": {
+      "true_positives": 3,
+      "false_positives": 2,
+      "true_negatives": 6,
+      "false_negatives": 4
+    },
+    "is_calibrated": false,
+    "details": {}
+  },
+  "coefficients": {
+    "cos_hour": 0.0,
+    "cos_month": -0.0,
+    "forecast_value": 0.0161,
+    "latitude": 0.0,
+    "lead_hours": 0.0,
+    "longitude": -0.0,
+    "month": 0.0,
+    "season_autumn": 0.0,
+    "season_spring": 0.0,
+    "season_summer": 0.0,
+    "season_winter": 0.0,
+    "sin_hour": 0.0,
+    "sin_month": 0.0,
+    "var_precipitation": 0.0,
+    "var_relative_humidity_2m": 0.0,
+    "var_surface_pressure": -0.1404,
+    "var_temperature_2m": -0.2521,
+    "var_wind_speed_10m": 0.3973
+  },
+  "is_live_ready": false
+}
