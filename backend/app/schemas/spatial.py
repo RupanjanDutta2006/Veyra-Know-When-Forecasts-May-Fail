@@ -162,6 +162,13 @@ class SpatialReliabilityPoint(BaseModel):
     dominant_risk_drivers: Optional[List[str]] = Field(default=None, description="Dominant physical risk drivers")
     decision_mode: Optional[str] = Field(default=None, description="Operational decision governance mode")
     decision_guidance: Optional[str] = Field(default=None, description="Human-readable decision guidance")
+    # Day 29 Forecast Disagreement & Ensemble Dispersion Diagnostics
+    ensemble_spread: Optional[float] = Field(default=None, ge=0.0, description="Ensemble sample standard deviation (ddof=1) in native units")
+    ensemble_range: Optional[float] = Field(default=None, ge=0.0, description="Ensemble spread span (max - min) in native units")
+    ensemble_iqr: Optional[float] = Field(default=None, ge=0.0, description="Ensemble inter-percentile range (p90 - p10) in native units")
+    ensemble_cv: Optional[float] = Field(default=None, ge=0.0, description="Dimensionless coefficient of variation")
+    spread_unit: Optional[str] = Field(default=None, description="Physical unit of ensemble dispersion (°C, m/s, hPa)")
+    member_count: Optional[int] = Field(default=None, ge=1, description="Number of evaluated ensemble members")
 
 
 class SpatialReliabilitySummary(BaseModel):

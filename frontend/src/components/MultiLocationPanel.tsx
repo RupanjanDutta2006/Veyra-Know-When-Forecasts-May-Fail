@@ -10,6 +10,7 @@ import {
   ChevronRight,
   Table as TableIcon,
   LayoutGrid,
+  GitCompare,
 } from 'lucide-react';
 import { apiClient } from '../api/client';
 import {
@@ -46,9 +47,10 @@ export type FilterRisk = 'ALL' | 'ELEVATED' | 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITI
 
 interface MultiLocationPanelProps {
   onNavigateToSpatial?: (locationName?: string) => void;
+  onNavigateToDisagreement?: (locationName?: string, variable?: string, leadHours?: number) => void;
 }
 
-export const MultiLocationPanel: React.FC<MultiLocationPanelProps> = ({ onNavigateToSpatial }) => {
+export const MultiLocationPanel: React.FC<MultiLocationPanelProps> = ({ onNavigateToSpatial, onNavigateToDisagreement }) => {
   const [stationPreset, setStationPreset] = useState<'25_STATIONS' | 'METROS' | 'NORTH_SOUTH' | 'CUSTOM'>('25_STATIONS');
   const [customLocationsText, setCustomLocationsText] = useState<string>('Delhi, Kolkata, Mumbai, Chennai, Bengaluru');
   const [variable, setVariable] = useState<string>('temperature_2m');
@@ -298,6 +300,30 @@ export const MultiLocationPanel: React.FC<MultiLocationPanelProps> = ({ onNaviga
               >
                 <ExternalLink size={15} />
                 <span>View on Spatial Map</span>
+              </button>
+            )}
+
+            {onNavigateToDisagreement && (
+              <button
+                type="button"
+                onClick={() => onNavigateToDisagreement(selectedPoint?.resolved_name || selectedPoint?.location, variable, leadHours)}
+                style={{
+                  background: '#1e293b',
+                  color: '#a5b4fc',
+                  border: '1px solid #4338ca',
+                  borderRadius: '8px',
+                  padding: '10px 16px',
+                  fontWeight: 700,
+                  fontSize: '0.85rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  cursor: 'pointer',
+                  transition: 'background 0.2s ease',
+                }}
+              >
+                <GitCompare size={15} />
+                <span>Disagreement Intel</span>
               </button>
             )}
 
@@ -1257,6 +1283,33 @@ export const MultiLocationPanel: React.FC<MultiLocationPanelProps> = ({ onNaviga
                 >
                   <ExternalLink size={15} />
                   <span>Highlight on Spatial Map</span>
+                </button>
+              </div>
+            )}
+
+            {onNavigateToDisagreement && (
+              <div style={{ marginTop: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => onNavigateToDisagreement(selectedPoint.resolved_name || selectedPoint.location, variable, leadHours)}
+                  style={{
+                    width: '100%',
+                    background: '#6366f1',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '9px 14px',
+                    fontWeight: 700,
+                    fontSize: '0.82rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <GitCompare size={15} />
+                  <span>Inspect Forecast Disagreement</span>
                 </button>
               </div>
             )}
