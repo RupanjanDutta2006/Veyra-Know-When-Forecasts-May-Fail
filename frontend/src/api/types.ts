@@ -324,6 +324,10 @@ export interface SpatialReliabilitySummary {
   max_risk_location: string | null;
   mean_bust_probability: number | null;
   elevated_risk_locations: number;
+  low_risk_locations?: number;
+  medium_risk_locations?: number;
+  high_risk_locations?: number;
+  critical_risk_locations?: number;
 }
 
 export interface SpatialReliabilityResponse {

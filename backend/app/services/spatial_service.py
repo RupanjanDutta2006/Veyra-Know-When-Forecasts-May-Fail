@@ -219,6 +219,10 @@ class SpatialReliabilityService:
                 for p in available_pts
                 if p.risk_level in (RiskLevel.MEDIUM, RiskLevel.HIGH, RiskLevel.CRITICAL)
             )
+            low_count = sum(1 for p in available_pts if p.risk_level == RiskLevel.LOW)
+            med_count = sum(1 for p in available_pts if p.risk_level == RiskLevel.MEDIUM)
+            high_count = sum(1 for p in available_pts if p.risk_level == RiskLevel.HIGH)
+            crit_count = sum(1 for p in available_pts if p.risk_level == RiskLevel.CRITICAL)
             status = DashboardStatus.SUCCESS if abstained_count == 0 else DashboardStatus.PARTIAL
         else:
             max_prob = None
@@ -226,6 +230,10 @@ class SpatialReliabilityService:
             max_loc = None
             mean_prob = None
             elevated_count = 0
+            low_count = 0
+            med_count = 0
+            high_count = 0
+            crit_count = 0
             status = DashboardStatus.ABSTAINED
 
         summary = SpatialReliabilitySummary(
@@ -237,6 +245,10 @@ class SpatialReliabilityService:
             max_risk_location=max_loc,
             mean_bust_probability=mean_prob,
             elevated_risk_locations=elevated_count,
+            low_risk_locations=low_count,
+            medium_risk_locations=med_count,
+            high_risk_locations=high_count,
+            critical_risk_locations=crit_count,
         )
 
         # 5. Record Process Metrics

@@ -7,6 +7,7 @@ import {
   RefreshCw,
   Compass,
   AlertOctagon,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { apiClient } from '../api/client';
 import {
@@ -57,7 +58,11 @@ function MapBoundsController({ points }: { points: SpatialReliabilityPoint[] }) 
   return null;
 }
 
-export const SpatialReliabilityPanel: React.FC = () => {
+interface SpatialReliabilityPanelProps {
+  onNavigateToMultiLocation?: () => void;
+}
+
+export const SpatialReliabilityPanel: React.FC<SpatialReliabilityPanelProps> = ({ onNavigateToMultiLocation }) => {
   const [stationPreset, setStationPreset] = useState<'25_STATIONS' | 'METROS' | 'NORTH_SOUTH' | 'CUSTOM'>('25_STATIONS');
   const [customLocationsText, setCustomLocationsText] = useState<string>('Delhi, Kolkata, Mumbai, Chennai, Bengaluru');
   const [variable, setVariable] = useState<string>('temperature_2m');
@@ -210,28 +215,54 @@ export const SpatialReliabilityPanel: React.FC = () => {
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={handleEvaluate}
-            disabled={loading}
-            style={{
-              background: loading ? '#475569' : '#0284c7',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '10px 18px',
-              fontWeight: 700,
-              fontSize: '0.88rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              transition: 'background 0.2s ease',
-            }}
-          >
-            <RefreshCw size={16} className={loading ? 'spin' : ''} />
-            {loading ? 'Evaluating...' : 'Refresh Spatial Intelligence'}
-          </button>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            {onNavigateToMultiLocation && (
+              <button
+                type="button"
+                onClick={onNavigateToMultiLocation}
+                style={{
+                  background: '#1e293b',
+                  color: '#c084fc',
+                  border: '1px solid #334155',
+                  borderRadius: '8px',
+                  padding: '10px 16px',
+                  fontWeight: 700,
+                  fontSize: '0.85rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  cursor: 'pointer',
+                  transition: 'background 0.2s ease',
+                }}
+              >
+                <SlidersHorizontal size={15} />
+                <span>Multi-Location Matrix</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={handleEvaluate}
+              disabled={loading}
+              style={{
+                background: loading ? '#475569' : '#0284c7',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '10px 18px',
+                fontWeight: 700,
+                fontSize: '0.88rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                transition: 'background 0.2s ease',
+              }}
+            >
+              <RefreshCw size={16} className={loading ? 'spin' : ''} />
+              {loading ? 'Evaluating...' : 'Refresh Spatial Intelligence'}
+            </button>
+          </div>
         </div>
       </div>
 
