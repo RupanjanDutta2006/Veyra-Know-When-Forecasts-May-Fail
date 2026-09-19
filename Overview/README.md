@@ -150,6 +150,7 @@ Phase 2 Builder 2 documentation will be added when Phase 2 Builder 2 development
 - [Day 29](./Phase-3/Day-29-Forecast-Disagreement-Intelligence.md) — Forecast Disagreement Intelligence
 - [Day 30](./Phase-3/Day-30-Revision-Trajectory-Intelligence.md) — Forecast Revision & Trajectory Intelligence
 - [Days 28–30 Human Verification](./Phase-3/Day-28-to-30-Human-Verification.md) — Days 27–30 Human Verification & Release Alignment Record
+- [Day 31](./Phase-3/Day-31-Repository-Deployment-Truth-and-Day30-Freeze.md) — Repository Truth, Deployment Truth & Day 30 Final Freeze
 
 ---
 
