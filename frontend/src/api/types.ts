@@ -65,6 +65,7 @@ export interface PredictionResponse {
   lead_hours?: number | null;
   valid_time?: string | null;
   issue_time?: string | null;
+  certification?: ScientificCertificationResult | null;
 }
 
 export interface HealthResponse {
@@ -497,5 +498,42 @@ export interface ForecastRevisionResponse {
   abstain: boolean;
   reason_codes: string[];
   request_id: string;
+}
+
+export type CertificationStatus = 'CERTIFIED' | 'OUTSIDE_CERTIFIED_SCOPE' | 'CERTIFICATION_UNKNOWN';
+
+export interface CertifiedScope {
+  synoptic_stations: string[];
+  surface_variables: string[];
+  max_lead_hours: number;
+  evaluation_years: [number, number];
+  station_count: number;
+}
+
+export interface ObservedScope {
+  location: string | null;
+  resolved_station: string | null;
+  is_synoptic_station: boolean | null;
+  variable: string | null;
+  lead_hours: number | null;
+  model_version: string | null;
+}
+
+export interface ScientificCertificationResult {
+  certification_status: CertificationStatus;
+  certification_reason: string;
+  certification_policy_version: string;
+  is_certified: boolean;
+  model_sha256_verified: boolean;
+  calibrator_sha256_verified: boolean;
+  certified_scope: CertifiedScope;
+  observed_scope: ObservedScope;
+}
+
+export interface CertificationEvaluationRequest {
+  location: string;
+  variable?: string;
+  lead_hours?: number;
+  model_version?: string;
 }
 

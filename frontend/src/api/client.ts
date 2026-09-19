@@ -22,6 +22,8 @@ import {
   ForecastDisagreementResponse,
   ForecastRevisionRequest,
   ForecastRevisionResponse,
+  ScientificCertificationResult,
+  CertificationEvaluationRequest,
 } from './types';
 
 // Resolve base API URL from environment variable or fallback to empty string (same-origin relative URL)
@@ -502,6 +504,70 @@ export class VeyraApiClient {
       };
     }
   }
+
+  /**
+   * Fetch the frozen scientific certification policy metadata.
+   */
+  async getCertificationPolicy(): Promise<{ data?: any; error?: ApiError }> {
+    try {
+      const endpoint = `${this.baseUrl}/v1/certification/policy`;
+      const response = await fetch(endpoint, {
+        headers: { Accept: 'application/json' },
+      });
+
+      if (!response.ok) {
+        const error = await this.parseErrorResponse(response);
+        return { error };
+      }
+
+      const data = await response.json();
+      return { data };
+    } catch (err: unknown) {
+      return {
+        error: {
+          error: 'POLICY_FETCH_FAILED',
+          message: err instanceof Error ? err.message : 'Certification policy request failed.',
+          status_code: 0,
+        },
+      };
+    }
+  }
+
+  /**
+   * Evaluate certification status for a location, variable, lead_hours.
+   */
+  async evaluateCertification(
+    request: CertificationEvaluationRequest
+  ): Promise<{ data?: ScientificCertificationResult; error?: ApiError }> {
+    try {
+      const endpoint = `${this.baseUrl}/v1/certification/evaluate`;
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(request),
+      });
+
+      if (!response.ok) {
+        const error = await this.parseErrorResponse(response);
+        return { error };
+      }
+
+      const data: ScientificCertificationResult = await response.json();
+      return { data };
+    } catch (err: unknown) {
+      return {
+        error: {
+          error: 'CERTIFICATION_EVALUATION_FAILED',
+          message: err instanceof Error ? err.message : 'Certification evaluation request failed.',
+          status_code: 0,
+        },
+      };
+    }
+  }
+
 
   /**
    * Helper to parse structured error payloads from FastAPI handlers.

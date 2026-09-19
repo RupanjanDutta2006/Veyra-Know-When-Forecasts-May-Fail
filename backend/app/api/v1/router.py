@@ -1,6 +1,7 @@
 """V1 API Router combining all v1 endpoints."""
 from fastapi import APIRouter
 from backend.app.api.v1.endpoints import (
+    certification,
     dashboard,
     disagreement,
     evaluation,
@@ -61,4 +62,9 @@ api_router.include_router(
     revision.router,
     prefix="/revision",
     tags=["Forecast Revision Intelligence"],
+)
+
+api_router.include_router(
+    certification.router,
+    tags=["Scientific Certification"],
 )
