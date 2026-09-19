@@ -8,6 +8,7 @@ from backend.app.api.v1.endpoints import (
     metrics,
     multi_location,
     predict,
+    revision,
     spatial,
 )
 
@@ -54,4 +55,10 @@ api_router.include_router(
     disagreement.router,
     prefix="/disagreement",
     tags=["Forecast Disagreement Intelligence"],
+)
+
+api_router.include_router(
+    revision.router,
+    prefix="/revision",
+    tags=["Forecast Revision Intelligence"],
 )

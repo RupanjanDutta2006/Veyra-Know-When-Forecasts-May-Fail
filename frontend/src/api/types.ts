@@ -416,3 +416,86 @@ export interface ForecastDisagreementResponse {
   request_id: string;
 }
 
+// ---------------------------------------------------------------------------
+// Day 30 Forecast Revision / Trajectory Intelligence Contracts
+// ---------------------------------------------------------------------------
+
+export type RevisionStatus = 'AVAILABLE' | 'INSUFFICIENT_HISTORY' | 'UNAVAILABLE' | 'ABSTAINED';
+export type RevisionDirection = 'INCREASED' | 'DECREASED' | 'UNCHANGED';
+
+export interface TrajectoryPoint {
+  issue_time: string;
+  valid_time: string;
+  lead_hours: number;
+  forecast_value: number;
+  ensemble_mean: number | null;
+  ensemble_spread: number | null;
+}
+
+export interface TrajectoryDiagnostics {
+  current_value: number;
+  previous_value: number;
+  revision_delta: number;
+  absolute_revision: number;
+  direction: RevisionDirection;
+}
+
+export interface EnsembleRevisionDiagnostics {
+  current_mean: number | null;
+  previous_mean: number | null;
+  mean_delta: number | null;
+  current_spread: number | null;
+  previous_spread: number | null;
+  spread_delta: number | null;
+}
+
+export interface RevisionUnits {
+  value: string;
+  revision_delta: string;
+  absolute_revision: string;
+  ensemble_mean: string;
+  ensemble_spread: string;
+}
+
+export interface ForecastRevisionRequest {
+  location: string;
+  variable?: string;
+  lead_hours?: number;
+  issue_time?: string | null;
+  valid_time?: string | null;
+}
+
+export interface ForecastRevisionResponse {
+  status: RevisionStatus;
+  location: string;
+  resolved_name?: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  variable: string;
+  lead_hours: number;
+  lead_days: number;
+  current_issue_time?: string | null;
+  previous_issue_time?: string | null;
+  valid_time?: string | null;
+  trajectory: TrajectoryDiagnostics | null;
+  ensemble_revision: EnsembleRevisionDiagnostics | null;
+  trajectory_points: TrajectoryPoint[];
+  current_value: number | null;
+  previous_value: number | null;
+  revision_delta: number | null;
+  units: RevisionUnits | null;
+  bust_probability: number | null;
+  previous_bust_probability: number | null;
+  bust_probability_delta: number | null;
+  risk_level: RiskLevel | null;
+  trust_state: TrustState;
+  calibration_status?: string | null;
+  scientific_scope: string;
+  is_certified_horizon: boolean;
+  history_is_durable: boolean;
+  history_source: string | null;
+  abstain: boolean;
+  reason_codes: string[];
+  request_id: string;
+}
+
