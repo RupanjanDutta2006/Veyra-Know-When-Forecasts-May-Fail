@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Crosshair, Layers, Cpu, ExternalLink, Menu, X, MapPin } from 'lucide-react';
+import { Crosshair, Layers, Cpu, ExternalLink, Menu, X, MapPin, SlidersHorizontal } from 'lucide-react';
 
-export type ActiveView = 'sentinel' | 'spatial' | 'batch' | 'models';
+export type ActiveView = 'sentinel' | 'spatial' | 'multi-location' | 'batch' | 'models';
 
 interface NavigationProps {
   view: ActiveView;
@@ -44,7 +44,15 @@ export const Navigation: React.FC<NavigationProps> = ({ view, setView }) => {
           <span>Menu</span>
         </button>
         <span className="mobile-current-view">
-          {view === 'sentinel' ? 'Reliability Sentinel' : view === 'spatial' ? 'Spatial Reliability' : view === 'batch' ? 'Batch Evaluation' : 'Model Registry'}
+          {view === 'sentinel'
+            ? 'Reliability Sentinel'
+            : view === 'spatial'
+            ? 'Spatial Reliability'
+            : view === 'multi-location'
+            ? 'Multi-Location Intelligence'
+            : view === 'batch'
+            ? 'Batch Evaluation'
+            : 'Model Registry'}
         </span>
       </div>
 
@@ -82,6 +90,31 @@ export const Navigation: React.FC<NavigationProps> = ({ view, setView }) => {
               }}
             >
               Day 27
+            </span>
+          </button>
+        </div>
+
+        {/* Multi-Location Intelligence Direct Button (Day 28) */}
+        <div className="dropdown">
+          <button
+            type="button"
+            className={view === 'multi-location' ? 'active' : ''}
+            onClick={() => handleSelectView('multi-location')}
+          >
+            <SlidersHorizontal size={16} /> Multi-Location Intelligence
+            <span
+              style={{
+                marginLeft: '6px',
+                background: '#8b5cf6',
+                color: '#ffffff',
+                padding: '2px 7px',
+                borderRadius: '10px',
+                fontSize: '0.72rem',
+                fontWeight: 800,
+                letterSpacing: '0.02em',
+              }}
+            >
+              Day 28
             </span>
           </button>
         </div>

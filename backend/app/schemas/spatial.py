@@ -195,6 +195,26 @@ class SpatialReliabilitySummary(BaseModel):
         ge=0,
         description="Count of valid locations with risk level MEDIUM, HIGH, or CRITICAL",
     )
+    low_risk_locations: int = Field(
+        default=0,
+        ge=0,
+        description="Count of valid locations with risk level LOW",
+    )
+    medium_risk_locations: int = Field(
+        default=0,
+        ge=0,
+        description="Count of valid locations with risk level MEDIUM",
+    )
+    high_risk_locations: int = Field(
+        default=0,
+        ge=0,
+        description="Count of valid locations with risk level HIGH",
+    )
+    critical_risk_locations: int = Field(
+        default=0,
+        ge=0,
+        description="Count of valid locations with risk level CRITICAL",
+    )
 
 
 class SpatialReliabilityResponse(BaseModel):
