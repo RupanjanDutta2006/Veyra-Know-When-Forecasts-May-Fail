@@ -12,6 +12,7 @@ from typing import Optional
 from backend.app.core.metrics import default_metrics
 from backend.app.safety.abstention import SafetyAssessment, SafetyEvaluator
 from backend.app.schemas.prediction import (
+    MAX_SUPPORTED_LEAD_HOURS,
     PredictionRequest,
     PredictionResponse,
     ReasonCode,
@@ -246,6 +247,9 @@ class ForecastBustAgent:
                 evaluated_lead = int(round(float(weather_result.metadata["lead_hours"])))
             except (ValueError, TypeError):
                 evaluated_lead = None
+
+        if evaluated_lead is not None and (evaluated_lead < 1 or evaluated_lead > MAX_SUPPORTED_LEAD_HOURS):
+            evaluated_lead = None
 
         evaluated_valid: Optional[str] = (
             weather_result.metadata.get("valid_time") if weather_result and weather_result.metadata else None
