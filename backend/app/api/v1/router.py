@@ -7,6 +7,7 @@ from backend.app.api.v1.endpoints import (
     metrics,
     multi_location,
     predict,
+    spatial,
 )
 
 api_router = APIRouter()
@@ -40,4 +41,10 @@ api_router.include_router(
     dashboard.router,
     prefix="/dashboard",
     tags=["Dashboard Intelligence"],
+)
+
+api_router.include_router(
+    spatial.router,
+    prefix="/spatial",
+    tags=["Spatial Intelligence"],
 )

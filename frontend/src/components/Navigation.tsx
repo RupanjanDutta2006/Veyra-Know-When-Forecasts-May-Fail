@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Crosshair, Layers, Cpu, ExternalLink, Menu, X } from 'lucide-react';
+import { Crosshair, Layers, Cpu, ExternalLink, Menu, X, MapPin } from 'lucide-react';
 
-export type ActiveView = 'sentinel' | 'batch' | 'models';
+export type ActiveView = 'sentinel' | 'spatial' | 'batch' | 'models';
 
 interface NavigationProps {
   view: ActiveView;
@@ -44,7 +44,7 @@ export const Navigation: React.FC<NavigationProps> = ({ view, setView }) => {
           <span>Menu</span>
         </button>
         <span className="mobile-current-view">
-          {view === 'sentinel' ? 'Reliability Sentinel' : view === 'batch' ? 'Batch Evaluation' : 'Model Registry'}
+          {view === 'sentinel' ? 'Reliability Sentinel' : view === 'spatial' ? 'Spatial Reliability' : view === 'batch' ? 'Batch Evaluation' : 'Model Registry'}
         </span>
       </div>
 
@@ -60,6 +60,32 @@ export const Navigation: React.FC<NavigationProps> = ({ view, setView }) => {
             <Crosshair size={16} /> Reliability Sentinel
           </button>
         </div>
+
+        {/* Spatial Reliability Intelligence Direct Button */}
+        <div className="dropdown">
+          <button
+            type="button"
+            className={view === 'spatial' ? 'active' : ''}
+            onClick={() => handleSelectView('spatial')}
+          >
+            <MapPin size={16} /> Spatial Reliability
+            <span
+              style={{
+                marginLeft: '6px',
+                background: '#0ea5e9',
+                color: '#ffffff',
+                padding: '2px 7px',
+                borderRadius: '10px',
+                fontSize: '0.72rem',
+                fontWeight: 800,
+                letterSpacing: '0.02em',
+              }}
+            >
+              Day 27
+            </span>
+          </button>
+        </div>
+
 
         {/* Batch Evaluation (25 Stations) Direct Button */}
         <div className="dropdown">

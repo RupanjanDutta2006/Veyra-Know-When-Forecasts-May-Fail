@@ -7,6 +7,7 @@ import { TimelineChart } from './components/TimelineChart';
 import { VerificationPanel } from './components/VerificationPanel';
 import { BatchPanel } from './components/BatchPanel';
 import { ModelCatalog } from './components/ModelCatalog';
+import { SpatialReliabilityPanel } from './components/SpatialReliabilityPanel';
 import { apiClient } from './api/client';
 import { BENCHMARK_LOCATIONS } from './data/locations';
 import {
@@ -221,9 +222,11 @@ export const App: React.FC = () => {
           </div>
         )}
 
+        {view === 'spatial' && <SpatialReliabilityPanel />}
         {view === 'batch' && <BatchPanel />}
         {view === 'models' && <ModelCatalog />}
       </main>
+
 
       {/* Footer */}
       <footer>
