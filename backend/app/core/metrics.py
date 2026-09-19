@@ -53,6 +53,12 @@ class ProcessMetrics:
         self._dashboard_valid_points_total: int = 0
         self._dashboard_abstained_points_total: int = 0
 
+        # Spatial Reliability Telemetry
+        self._spatial_requests: Dict[str, int] = defaultdict(int)
+        self._spatial_points_total: int = 0
+        self._spatial_valid_points_total: int = 0
+        self._spatial_abstained_points_total: int = 0
+
         self._start_time: float = time.time()
 
     def record_http_request(self, method: str, path: str, status_code: int, duration_ms: float) -> None:
@@ -158,6 +164,18 @@ class ProcessMetrics:
             self._dashboard_valid_points_total += valid_points
             self._dashboard_abstained_points_total += abstained_points
 
+    def record_spatial_request(
+        self, outcome: str, total_points: int, valid_points: int, abstained_points: int
+    ) -> None:
+        """Record a spatial forecast reliability orchestration request and points telemetry."""
+        if not self.enabled:
+            return
+        with self._lock:
+            self._spatial_requests[outcome] += 1
+            self._spatial_points_total += total_points
+            self._spatial_valid_points_total += valid_points
+            self._spatial_abstained_points_total += abstained_points
+
     def snapshot(self) -> Dict[str, Any]:
         """Return a read-only snapshot of all process-local metrics."""
         with self._lock:
@@ -179,6 +197,10 @@ class ProcessMetrics:
                 "dashboard_points_total": self._dashboard_points_total,
                 "dashboard_valid_points_total": self._dashboard_valid_points_total,
                 "dashboard_abstained_points_total": self._dashboard_abstained_points_total,
+                "spatial_requests_total": dict(self._spatial_requests),
+                "spatial_points_total": self._spatial_points_total,
+                "spatial_valid_points_total": self._spatial_valid_points_total,
+                "spatial_abstained_points_total": self._spatial_abstained_points_total,
                 "upstream_requests_total": dict(self._upstream_requests),
                 "upstream_failures_total": self._upstream_failures,
                 "upstream_429_total": self._upstream_429,
@@ -204,6 +226,10 @@ class ProcessMetrics:
             self._dashboard_points_total = 0
             self._dashboard_valid_points_total = 0
             self._dashboard_abstained_points_total = 0
+            self._spatial_requests.clear()
+            self._spatial_points_total = 0
+            self._spatial_valid_points_total = 0
+            self._spatial_abstained_points_total = 0
             self._upstream_requests.clear()
             self._upstream_failures = 0
             self._upstream_429 = 0

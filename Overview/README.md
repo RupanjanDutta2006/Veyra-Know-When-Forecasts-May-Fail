@@ -67,8 +67,10 @@ Overview/
     ├── Day-23-Model-Championship-Retraining-Decision.md
     ├── Day-24-Probabilistic-Intelligence.md
     ├── Day-25-Intelligence-Dashboard.md
-    └── Day-26-Internal-Release-Candidate.md
+    ├── Day-26-Internal-Release-Candidate.md
+    └── Day-27-Spatial-Forecast-Reliability.md
 ```
+
 
 ---
 
@@ -140,6 +142,7 @@ Phase 2 Builder 2 documentation will be added when Phase 2 Builder 2 development
 - [Day 24](./Phase-3/Day-24-Probabilistic-Intelligence.md) — Probabilistic Intelligence & Calibrated Serving Architecture
 - [Day 25](./Phase-3/Day-25-Intelligence-Dashboard.md) — Intelligence Dashboard: Backend-First Data Contract
 - [Day 26](./Phase-3/Day-26-Internal-Release-Candidate.md) — Internal Release Candidate (RC) Verification & Baseline Audit
+- [Day 27](./Phase-3/Day-27-Spatial-Forecast-Reliability.md) — Spatial Forecast Reliability Intelligence
 
 ---
 

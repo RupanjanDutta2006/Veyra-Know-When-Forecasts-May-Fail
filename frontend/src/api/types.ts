@@ -274,3 +274,68 @@ export interface MultiLocationPredictionResult {
   metadata?: Record<string, any>;
 }
 
+// ---------------------------------------------------------------------------
+// Day 27 Spatial Reliability Intelligence Contracts
+// ---------------------------------------------------------------------------
+
+export interface SpatialReliabilityRequest {
+  locations: string[];
+  variable?: string;
+  lead_hours?: number;
+  issue_time?: string | null;
+}
+
+export interface SpatialReliabilityPoint {
+  location: string;
+  resolved_name?: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  region_id?: string | null;
+  variable: string;
+  lead_hours: number;
+  lead_days: number;
+  issue_time?: string | null;
+  valid_time?: string | null;
+  bust_probability: number | null;
+  risk_level: RiskLevel | null;
+  trust_state: TrustState;
+  abstain: boolean;
+  reason_codes: string[];
+  calibration_status?: string | null;
+  model_version?: string | null;
+  data_version?: string | null;
+  is_certified_horizon: boolean;
+  scientific_scope: string;
+  confidence_index?: number | null;
+  uncertainty_pct?: number | null;
+  ood_score?: number | null;
+  stability_index?: number | null;
+  dominant_risk_drivers?: string[] | null;
+  decision_mode?: string | null;
+  decision_guidance?: string | null;
+}
+
+export interface SpatialReliabilitySummary {
+  total_locations: number;
+  available_locations: number;
+  abstained_locations: number;
+  max_bust_probability: number | null;
+  max_risk_level: RiskLevel | null;
+  max_risk_location: string | null;
+  mean_bust_probability: number | null;
+  elevated_risk_locations: number;
+}
+
+export interface SpatialReliabilityResponse {
+  status: DashboardStatus;
+  variable: string;
+  lead_hours: number;
+  lead_days: number;
+  issue_time?: string | null;
+  is_certified_horizon: boolean;
+  scientific_scope: string;
+  points: SpatialReliabilityPoint[];
+  summary: SpatialReliabilitySummary;
+  request_id?: string | null;
+}
+
