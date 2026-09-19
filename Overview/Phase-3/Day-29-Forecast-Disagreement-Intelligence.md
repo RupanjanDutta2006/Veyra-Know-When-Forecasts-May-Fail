@@ -18,7 +18,7 @@ Day 29 delivers quantitative, scientifically defensible disagreement diagnostics
 ### Core Boundaries & Guardrails
 - **No Fabricated Disagreement Scores:** No synthetic 0–100% "disagreement scores" or arbitrary risk tiers (e.g. no artificial "HIGH DISAGREEMENT" tier).
 - **No Synthetic Multi-Model Comparison:** Veyra ingests operational NOAA GEFS (Global Ensemble Forecast System) 31-member data; no fabricated ECMWF/ICON comparisons are constructed.
-- **Disagreement $\neq P(\text{BUST})$:** Internal ensemble dispersion describes numerical trajectory sensitivity and chaos; it is not a probability of forecast failure. High spread does not automatically imply a bust; low spread does not guarantee forecast accuracy.
+- **Disagreement $\neq P(\text{BUST})$:** Internal ensemble dispersion describes numerical trajectory divergence and solution spread among available GEFS members; it is not a probability of forecast failure. High spread does not automatically imply a bust; low spread does not guarantee forecast accuracy.
 - **Physical Dimensional Units:** Every spread metric is reported in its native variable units (°C for 2m temperature, m/s for 10m wind speed, hPa for surface pressure; dimensionless for ratios and coefficients).
 - **No Model Retraining or Calibrator Mutation:** Frozen V3 LightGBM (50 features) and isotonic calibrator remain untouched.
 
@@ -217,7 +217,7 @@ The interface enforces strict cognitive and visual separation:
    - Educational text defines $P(\text{BUST})$ as the empirical probability of exceeding the operational error threshold.
 2. **Observed Ensemble Spread Container**:
    - Displays sample standard deviation ($\sigma$), range, IQR, and member count (31 members).
-   - Educational note clarifies that dispersion represents numerical chaos across trajectories, not probability of failure.
+   - Educational note clarifies that dispersion represents ensemble trajectory divergence across member runs, not probability of failure.
 
 ---
 
