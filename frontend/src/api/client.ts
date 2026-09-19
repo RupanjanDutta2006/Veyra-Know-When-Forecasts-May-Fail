@@ -20,6 +20,8 @@ import {
   V3ModelEvaluationResponse,
   ForecastDisagreementRequest,
   ForecastDisagreementResponse,
+  ForecastRevisionRequest,
+  ForecastRevisionResponse,
 } from './types';
 
 // Resolve base API URL from environment variable or fallback to empty string (same-origin relative URL)
@@ -451,6 +453,50 @@ export class VeyraApiClient {
         error: {
           error: 'DISAGREEMENT_FETCH_FAILED',
           message: err instanceof Error ? err.message : 'Disagreement diagnostics request failed.',
+          status_code: 0,
+        },
+      };
+    }
+  }
+
+  /**
+   * Evaluate forecast revision and issue-cycle trajectory for the requested target.
+   */
+  async getForecastRevision(
+    request: ForecastRevisionRequest,
+    customRequestId?: string
+  ): Promise<{ data?: ForecastRevisionResponse; error?: ApiError; requestId?: string }> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    };
+
+    if (customRequestId) {
+      headers['X-Request-ID'] = customRequestId;
+    }
+
+    try {
+      const endpoint = `${this.baseUrl}/v1/revision/trajectory`;
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(request),
+      });
+
+      const headerRequestId = response.headers.get('X-Request-ID') || undefined;
+
+      if (!response.ok) {
+        const error = await this.parseErrorResponse(response, headerRequestId);
+        return { error, requestId: headerRequestId };
+      }
+
+      const data: ForecastRevisionResponse = await response.json();
+      return { data, requestId: headerRequestId || data.request_id };
+    } catch (err: unknown) {
+      return {
+        error: {
+          error: 'REVISION_FETCH_FAILED',
+          message: err instanceof Error ? err.message : 'Forecast revision request failed.',
           status_code: 0,
         },
       };

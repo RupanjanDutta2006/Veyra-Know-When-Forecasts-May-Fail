@@ -45,8 +45,29 @@ from backend.app.schemas.prediction import (
     RiskLevel,
     TrustState,
 )
-from backend.app.services.dashboard_service import DashboardIntelligenceService
+from backend.app.services.dashboard_service import (
+    DashboardIntelligenceService,
+    normalize_dashboard_decision_mode,
+)
 from backend.app.services.location_service import BaseLocationService
+
+
+def test_legacy_active_alert_respects_high_vs_critical_risk():
+    assert normalize_dashboard_decision_mode(
+        "ACTIVE_ALERT", RiskLevel.HIGH
+    ) == DecisionMode.HIGH_UNCERTAINTY
+    assert normalize_dashboard_decision_mode(
+        "ACTIVE_ALERT", RiskLevel.CRITICAL
+    ) == DecisionMode.CRITICAL_INTERVENTION
+
+
+def test_legacy_elevated_risk_maps_by_authoritative_risk_band():
+    assert normalize_dashboard_decision_mode(
+        "ELEVATED_RISK", RiskLevel.MEDIUM
+    ) == DecisionMode.ELEVATED_AWARENESS
+    assert normalize_dashboard_decision_mode(
+        "ELEVATED_RISK", RiskLevel.LOW
+    ) == DecisionMode.STANDARD_MONITORING
 
 
 # ---------------------------------------------------------------------------

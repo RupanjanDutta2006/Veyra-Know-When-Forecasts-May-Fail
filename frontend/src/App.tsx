@@ -10,6 +10,7 @@ import { ModelCatalog } from './components/ModelCatalog';
 import { SpatialReliabilityPanel } from './components/SpatialReliabilityPanel';
 import { MultiLocationPanel } from './components/MultiLocationPanel';
 import { ForecastDisagreementPanel } from './components/ForecastDisagreementPanel';
+import { ForecastRevisionPanel } from './components/ForecastRevisionPanel';
 import { apiClient } from './api/client';
 import { BENCHMARK_LOCATIONS } from './data/locations';
 import {
@@ -40,6 +41,11 @@ export const App: React.FC = () => {
   const [disagreementLocation, setDisagreementLocation] = useState<string>('Kolkata');
   const [disagreementVariable, setDisagreementVariable] = useState<string>('temperature_2m');
   const [disagreementLeadHours, setDisagreementLeadHours] = useState<number>(24);
+
+  // Day 30 Revision Panel State
+  const [revisionLocation] = useState<string>('Kolkata');
+  const [revisionVariable] = useState<string>('temperature_2m');
+  const [revisionLeadHours] = useState<number>(24);
 
   // Live UTC Clock
   useEffect(() => {
@@ -247,6 +253,15 @@ export const App: React.FC = () => {
             initialVariable={disagreementVariable}
             initialLeadHours={disagreementLeadHours}
             onNavigateToSpatial={() => setView('spatial')}
+            onNavigateToMultiLocation={() => setView('multi-location')}
+          />
+        )}
+        {view === 'revision' && (
+          <ForecastRevisionPanel
+            initialLocation={revisionLocation}
+            initialVariable={revisionVariable}
+            initialLeadHours={revisionLeadHours}
+            onNavigateToDisagreement={() => setView('disagreement')}
             onNavigateToMultiLocation={() => setView('multi-location')}
           />
         )}

@@ -33,6 +33,26 @@ from backend.app.services.location_service import BaseLocationService, DynamicLo
 logger = logging.getLogger(__name__)
 
 
+def normalize_dashboard_decision_mode(
+    raw_mode: Optional[str], risk_level: Optional[RiskLevel]
+) -> DecisionMode:
+    """Translate legacy agent modes without overstating their risk severity."""
+    normalized = (raw_mode or "").upper().strip()
+    if normalized in [mode.value for mode in DecisionMode]:
+        return DecisionMode(normalized)
+    if normalized not in {"ELEVATED_RISK", "ACTIVE_ALERT"}:
+        return DecisionMode.ABSTAINED
+    if risk_level == RiskLevel.CRITICAL:
+        return DecisionMode.CRITICAL_INTERVENTION
+    if risk_level == RiskLevel.HIGH:
+        return DecisionMode.HIGH_UNCERTAINTY
+    if risk_level == RiskLevel.MEDIUM:
+        return DecisionMode.ELEVATED_AWARENESS
+    if risk_level == RiskLevel.LOW:
+        return DecisionMode.STANDARD_MONITORING
+    return DecisionMode.ABSTAINED
+
+
 class DashboardIntelligenceService:
     """Production service orchestrating dashboard-ready probabilistic intelligence."""
 
@@ -214,7 +234,9 @@ class DashboardIntelligenceService:
             is_certified = h <= 240
             within_h = pred_resp.within_trust_horizon if pred_resp.within_trust_horizon is not None else (h <= 168)
             op_trust_h = pred_resp.operational_trust_horizon_hours if pred_resp.operational_trust_horizon_hours is not None else 168
-            dec_mode = pred_resp.decision_mode or DecisionMode.ABSTAINED.value
+            dec_mode = normalize_dashboard_decision_mode(
+                pred_resp.decision_mode, pred_resp.risk_level
+            )
 
             point = DashboardTimelinePoint(
                 lead_hours=h,
