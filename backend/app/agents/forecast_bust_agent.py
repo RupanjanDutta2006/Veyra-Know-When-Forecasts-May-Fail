@@ -9,6 +9,7 @@ import logging
 import math
 import time
 from typing import Optional
+from backend.app.core.certification_policy import evaluate_scientific_certification
 from backend.app.core.metrics import default_metrics
 from backend.app.safety.abstention import SafetyAssessment, SafetyEvaluator
 from backend.app.schemas.prediction import (
@@ -257,6 +258,16 @@ class ForecastBustAgent:
         evaluated_issue: Optional[str] = (
             weather_result.metadata.get("issue_time") if weather_result and weather_result.metadata else None
         )
+        evaluated_var: Optional[str] = (
+            weather_result.metadata.get("variable") if weather_result and weather_result.metadata else "temperature_2m"
+        )
+        cert_result = evaluate_scientific_certification(
+            location=location,
+            variable=evaluated_var,
+            lead_hours=evaluated_lead or 24,
+            model_sha256=model_meta.get("model_sha256"),
+            calibrator_sha256=model_meta.get("calibrator_sha256"),
+        )
 
         return PredictionResponse(
             location=location,
@@ -283,6 +294,7 @@ class ForecastBustAgent:
             lead_hours=evaluated_lead,
             valid_time=evaluated_valid,
             issue_time=evaluated_issue,
+            certification=cert_result,
         )
 
     def analyze(self, request: PredictionRequest) -> PredictionResponse:

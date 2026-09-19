@@ -4,6 +4,7 @@ from enum import Enum
 from typing import Any, Optional
 from pydantic import BaseModel, Field, model_validator
 
+from backend.app.schemas.certification import ScientificCertificationResult
 from backend.app.schemas.explainability import ExplanationItem
 
 
@@ -336,6 +337,10 @@ class PredictionResponse(BaseModel):
     issue_time: Optional[str] = Field(
         default=None,
         description="Forecast issuance timestamp in ISO 8601 UTC format if evaluated for an explicit horizon",
+    )
+    certification: Optional[ScientificCertificationResult] = Field(
+        default=None,
+        description="Evaluated Day 32 Scientific Certification Gate result assessing evidence bounds",
     )
 
     model_config = {

@@ -125,7 +125,50 @@ export const PredictionResult: React.FC<PredictionResultProps> = ({ prediction }
             <span>Ambiguity: {uncertainty_pct.toFixed(1)}%</span>
           </div>
         )}
+
+        {/* Scientific Certification Badge */}
+        {prediction.certification && (
+          <div
+            className={`trust-badge cert-badge ${
+              prediction.certification.certification_status === 'CERTIFIED'
+                ? 'cert-certified'
+                : prediction.certification.certification_status === 'OUTSIDE_CERTIFIED_SCOPE'
+                ? 'cert-outside'
+                : 'cert-unknown'
+            }`}
+            role="status"
+            aria-label={`Scientific Certification: ${prediction.certification.certification_status}`}
+            title={`Scientific Certification (${prediction.certification.certification_policy_version}): ${prediction.certification.certification_reason}`}
+            style={{
+              borderColor:
+                prediction.certification.certification_status === 'CERTIFIED'
+                  ? '#10b981'
+                  : prediction.certification.certification_status === 'OUTSIDE_CERTIFIED_SCOPE'
+                  ? '#f59e0b'
+                  : '#ef4444',
+              color:
+                prediction.certification.certification_status === 'CERTIFIED'
+                  ? '#059669'
+                  : prediction.certification.certification_status === 'OUTSIDE_CERTIFIED_SCOPE'
+                  ? '#d97706'
+                  : '#dc2626',
+              fontWeight: 600,
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+            </svg>
+            <span>
+              {prediction.certification.certification_status === 'CERTIFIED'
+                ? 'CERTIFIED EVIDENCE SCOPE'
+                : prediction.certification.certification_status === 'OUTSIDE_CERTIFIED_SCOPE'
+                ? 'OUTSIDE CERTIFIED EVIDENCE SCOPE'
+                : 'CERTIFICATION UNKNOWN'}
+            </span>
+          </div>
+        )}
       </div>
     </section>
   );
 };
+
