@@ -9,6 +9,7 @@ import { BatchPanel } from './components/BatchPanel';
 import { ModelCatalog } from './components/ModelCatalog';
 import { SpatialReliabilityPanel } from './components/SpatialReliabilityPanel';
 import { MultiLocationPanel } from './components/MultiLocationPanel';
+import { ForecastDisagreementPanel } from './components/ForecastDisagreementPanel';
 import { apiClient } from './api/client';
 import { BENCHMARK_LOCATIONS } from './data/locations';
 import {
@@ -34,6 +35,11 @@ export const App: React.FC = () => {
   // Dashboard Intelligence Response State
   const [dashboardData, setDashboardData] = useState<DashboardIntelligenceResponse | null>(null);
   const [selectedLeadHours, setSelectedLeadHours] = useState<number | null>(null);
+
+  // Day 29 Disagreement Panel State
+  const [disagreementLocation, setDisagreementLocation] = useState<string>('Kolkata');
+  const [disagreementVariable, setDisagreementVariable] = useState<string>('temperature_2m');
+  const [disagreementLeadHours, setDisagreementLeadHours] = useState<number>(24);
 
   // Live UTC Clock
   useEffect(() => {
@@ -224,7 +230,26 @@ export const App: React.FC = () => {
         )}
 
         {view === 'spatial' && <SpatialReliabilityPanel onNavigateToMultiLocation={() => setView('multi-location')} />}
-        {view === 'multi-location' && <MultiLocationPanel onNavigateToSpatial={() => setView('spatial')} />}
+        {view === 'multi-location' && (
+          <MultiLocationPanel
+            onNavigateToSpatial={() => setView('spatial')}
+            onNavigateToDisagreement={(loc, v, lh) => {
+              if (loc) setDisagreementLocation(loc);
+              if (v) setDisagreementVariable(v);
+              if (lh) setDisagreementLeadHours(lh);
+              setView('disagreement');
+            }}
+          />
+        )}
+        {view === 'disagreement' && (
+          <ForecastDisagreementPanel
+            initialLocation={disagreementLocation}
+            initialVariable={disagreementVariable}
+            initialLeadHours={disagreementLeadHours}
+            onNavigateToSpatial={() => setView('spatial')}
+            onNavigateToMultiLocation={() => setView('multi-location')}
+          />
+        )}
         {view === 'batch' && <BatchPanel />}
         {view === 'models' && <ModelCatalog />}
       </main>

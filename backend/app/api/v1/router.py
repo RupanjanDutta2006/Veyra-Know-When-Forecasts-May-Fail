@@ -2,6 +2,7 @@
 from fastapi import APIRouter
 from backend.app.api.v1.endpoints import (
     dashboard,
+    disagreement,
     evaluation,
     health,
     metrics,
@@ -47,4 +48,10 @@ api_router.include_router(
     spatial.router,
     prefix="/spatial",
     tags=["Spatial Intelligence"],
+)
+
+api_router.include_router(
+    disagreement.router,
+    prefix="/disagreement",
+    tags=["Forecast Disagreement Intelligence"],
 )

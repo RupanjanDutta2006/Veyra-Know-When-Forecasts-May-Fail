@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Crosshair, Layers, Cpu, ExternalLink, Menu, X, MapPin, SlidersHorizontal } from 'lucide-react';
+import { Crosshair, Layers, Cpu, ExternalLink, Menu, X, MapPin, SlidersHorizontal, GitCompare } from 'lucide-react';
 
-export type ActiveView = 'sentinel' | 'spatial' | 'multi-location' | 'batch' | 'models';
+export type ActiveView = 'sentinel' | 'spatial' | 'multi-location' | 'disagreement' | 'batch' | 'models';
 
 interface NavigationProps {
   view: ActiveView;
@@ -50,6 +50,8 @@ export const Navigation: React.FC<NavigationProps> = ({ view, setView }) => {
             ? 'Spatial Reliability'
             : view === 'multi-location'
             ? 'Multi-Location Intelligence'
+            : view === 'disagreement'
+            ? 'Forecast Disagreement'
             : view === 'batch'
             ? 'Batch Evaluation'
             : 'Model Registry'}
@@ -115,6 +117,31 @@ export const Navigation: React.FC<NavigationProps> = ({ view, setView }) => {
               }}
             >
               Day 28
+            </span>
+          </button>
+        </div>
+
+        {/* Forecast Disagreement Intelligence Direct Button (Day 29) */}
+        <div className="dropdown">
+          <button
+            type="button"
+            className={view === 'disagreement' ? 'active' : ''}
+            onClick={() => handleSelectView('disagreement')}
+          >
+            <GitCompare size={16} /> Forecast Disagreement
+            <span
+              style={{
+                marginLeft: '6px',
+                background: '#6366f1',
+                color: '#ffffff',
+                padding: '2px 7px',
+                borderRadius: '10px',
+                fontSize: '0.72rem',
+                fontWeight: 800,
+                letterSpacing: '0.02em',
+              }}
+            >
+              Day 29
             </span>
           </button>
         </div>

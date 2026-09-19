@@ -18,6 +18,8 @@ import {
   SpatialReliabilityRequest,
   SpatialReliabilityResponse,
   V3ModelEvaluationResponse,
+  ForecastDisagreementRequest,
+  ForecastDisagreementResponse,
 } from './types';
 
 // Resolve base API URL from environment variable or fallback to empty string (same-origin relative URL)
@@ -412,6 +414,48 @@ export class VeyraApiClient {
     }
   }
 
+
+  /**
+   * Fetch forecast disagreement and ensemble dispersion diagnostics.
+   */
+  async getForecastDisagreement(
+    request: ForecastDisagreementRequest,
+    customRequestId?: string
+  ): Promise<{ data?: ForecastDisagreementResponse; error?: ApiError; requestId?: string }> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    };
+    if (customRequestId) {
+      headers['X-Request-ID'] = customRequestId;
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/v1/disagreement/diagnostics`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(request),
+      });
+
+      const headerRequestId = response.headers.get('X-Request-ID') || undefined;
+
+      if (!response.ok) {
+        const error = await this.parseErrorResponse(response, headerRequestId);
+        return { error, requestId: headerRequestId };
+      }
+
+      const data: ForecastDisagreementResponse = await response.json();
+      return { data, requestId: headerRequestId || data.request_id };
+    } catch (err: unknown) {
+      return {
+        error: {
+          error: 'DISAGREEMENT_FETCH_FAILED',
+          message: err instanceof Error ? err.message : 'Disagreement diagnostics request failed.',
+          status_code: 0,
+        },
+      };
+    }
+  }
 
   /**
    * Helper to parse structured error payloads from FastAPI handlers.

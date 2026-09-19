@@ -313,6 +313,12 @@ export interface SpatialReliabilityPoint {
   dominant_risk_drivers?: string[] | null;
   decision_mode?: string | null;
   decision_guidance?: string | null;
+  ensemble_spread?: number | null;
+  ensemble_range?: number | null;
+  ensemble_iqr?: number | null;
+  ensemble_cv?: number | null;
+  spread_unit?: string | null;
+  member_count?: number | null;
 }
 
 export interface SpatialReliabilitySummary {
@@ -341,5 +347,72 @@ export interface SpatialReliabilityResponse {
   points: SpatialReliabilityPoint[];
   summary: SpatialReliabilitySummary;
   request_id?: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Day 29 Forecast Disagreement Intelligence Contracts
+// ---------------------------------------------------------------------------
+
+export type DisagreementStatus = 'AVAILABLE' | 'UNAVAILABLE' | 'ABSTAINED';
+
+export interface DisagreementDiagnostics {
+  ensemble_spread: number | null;
+  ensemble_std: number | null;
+  ensemble_range: number | null;
+  ensemble_iqr: number | null;
+  ensemble_cv: number | null;
+  spread_to_iqr_ratio: number | null;
+  ensemble_mean: number | null;
+  ensemble_min: number | null;
+  ensemble_max: number | null;
+}
+
+export interface DisagreementUnits {
+  spread: string;
+  range: string;
+  iqr: string;
+  mean: string;
+  cv: string;
+  spread_to_iqr_ratio: string;
+  ensemble_spread?: string;
+  ensemble_range?: string;
+  ensemble_iqr?: string;
+  ensemble_mean?: string;
+  ensemble_cv?: string;
+}
+
+export interface ForecastDisagreementRequest {
+  location: string;
+  variable?: string;
+  lead_hours?: number;
+  issue_time?: string | null;
+  valid_time?: string | null;
+  target_date?: string | null;
+}
+
+export interface ForecastDisagreementResponse {
+  status: DisagreementStatus;
+  location: string;
+  resolved_name?: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  variable: string;
+  lead_hours: number;
+  lead_days: number;
+  issue_time?: string | null;
+  valid_time?: string | null;
+  diagnostics: DisagreementDiagnostics | null;
+  units: DisagreementUnits | null;
+  member_count: number | null;
+  has_full_ensemble: boolean | null;
+  bust_probability: number | null;
+  risk_level: RiskLevel | null;
+  trust_state: TrustState;
+  calibration_status?: string | null;
+  scientific_scope: string;
+  is_certified_horizon: boolean;
+  abstain: boolean;
+  reason_codes: string[];
+  request_id: string;
 }
 

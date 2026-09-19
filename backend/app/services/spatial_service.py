@@ -167,6 +167,53 @@ class SpatialReliabilityService:
                 for rc in (pred_resp.reason_codes or [])
             ]
 
+            # Day 29: Extract real ensemble dispersion diagnostics from cached weather data
+            ens_spread = None
+            ens_range = None
+            ens_iqr = None
+            ens_cv = None
+            spread_u = None
+            m_count = None
+            if not pred_resp.abstain:
+                try:
+                    weather_res = agent.get_weather_data(raw_loc, None)
+                    if weather_res and weather_res.raw_data:
+                        raw_recs = weather_res.raw_data.get("records", [])
+                        matching = [
+                            r for r in raw_recs
+                            if (r.get("variable") if isinstance(r, dict) else getattr(r, "variable", None)) == request.variable
+                        ]
+                        if matching:
+                            def _get_lh(rec: Any) -> int:
+                                val = rec.get("lead_hours") if isinstance(rec, dict) else getattr(rec, "lead_hours", 0)
+                                return int(val or 0)
+
+                            closest_rec = min(matching, key=lambda r: abs(_get_lh(r) - lead_h))
+                            raw_s = closest_rec.get("ensemble_std") if isinstance(closest_rec, dict) else getattr(closest_rec, "ensemble_std", None)
+                            if raw_s is not None:
+                                std_f = float(raw_s)
+                                raw_mean = closest_rec.get("ensemble_mean") if isinstance(closest_rec, dict) else getattr(closest_rec, "ensemble_mean", None)
+                                raw_v = closest_rec.get("value") if isinstance(closest_rec, dict) else getattr(closest_rec, "value", None)
+                                mean_f = float(raw_mean) if raw_mean is not None else float(raw_v or 0.0)
+                                raw_min = closest_rec.get("ensemble_min") if isinstance(closest_rec, dict) else getattr(closest_rec, "ensemble_min", None)
+                                raw_max = closest_rec.get("ensemble_max") if isinstance(closest_rec, dict) else getattr(closest_rec, "ensemble_max", None)
+                                min_f = float(raw_min) if raw_min is not None else mean_f
+                                max_f = float(raw_max) if raw_max is not None else mean_f
+                                raw_q10 = closest_rec.get("q10") if isinstance(closest_rec, dict) else getattr(closest_rec, "q10", None)
+                                raw_q90 = closest_rec.get("q90") if isinstance(closest_rec, dict) else getattr(closest_rec, "q90", None)
+                                q10_f = float(raw_q10) if raw_q10 is not None else min_f
+                                q90_f = float(raw_q90) if raw_q90 is not None else max_f
+
+                                ens_spread = round(std_f, 3)
+                                ens_range = round(max(0.0, max_f - min_f), 3)
+                                ens_iqr = round(max(0.0, q90_f - q10_f), 3)
+                                ens_cv = round(std_f / (abs(mean_f) + 1e-6), 5)
+                                spread_u = "°C" if request.variable == "temperature_2m" else ("m/s" if request.variable == "wind_speed_10m" else ("hPa" if request.variable == "surface_pressure" else "units"))
+                                raw_mc = closest_rec.get("member_count") if isinstance(closest_rec, dict) else getattr(closest_rec, "member_count", None)
+                                m_count = int(raw_mc or 31)
+                except Exception as exc:
+                    logger.debug("Could not extract ensemble spread for spatial point %s: %s", raw_loc, exc)
+
             point = SpatialReliabilityPoint(
                 location=raw_loc,
                 resolved_name=resolved.name,
@@ -195,6 +242,12 @@ class SpatialReliabilityService:
                 dominant_risk_drivers=pred_resp.dominant_risk_drivers,
                 decision_mode=pred_resp.decision_mode,
                 decision_guidance=pred_resp.decision_guidance,
+                ensemble_spread=ens_spread,
+                ensemble_range=ens_range,
+                ensemble_iqr=ens_iqr,
+                ensemble_cv=ens_cv,
+                spread_unit=spread_u,
+                member_count=m_count,
             )
 
             for idx in indices:
