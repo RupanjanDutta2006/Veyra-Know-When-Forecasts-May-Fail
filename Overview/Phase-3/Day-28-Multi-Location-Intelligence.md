@@ -39,7 +39,7 @@ Before implementation, existing infrastructure was audited:
 - POST /v1/spatial/reliability - authoritative multi-point endpoint
 - backend/app/services/spatial_service.py - SingleFlight, cache, bounded parallelism
 - backend/app/schemas/spatial.py - SpatialReliabilityPoint, SpatialReliabilitySummary
-- backend/app/agents/forecast_bust_agent.py - V3 LightGBM + Platt calibration
+- backend/app/agents/forecast_bust_agent.py - V3 LightGBM + isotonic calibration
 - Location registry (INDIAN_BENCHMARK_25_STATIONS)
 
 **No new ML model. No retraining. No recalibration. No threshold changes.**
@@ -229,7 +229,7 @@ Demo scenario:
 
 ## 14. Known Follow-Ups
 
-1. First-call timeout on temperature_2m@24h during cold-start (expected behaviour).
+1. A cold-start temperature_2m@24h request timed out during manual verification; subsequent requests succeeded. This is retained as a non-blocking operational observation.
 2. Production build chunk size warning (642 KB JS) - optimization deferred.
 
 ---
