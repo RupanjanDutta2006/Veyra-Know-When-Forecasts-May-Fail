@@ -70,7 +70,8 @@ Overview/
     ├── Day-26-Internal-Release-Candidate.md
     ├── Day-27-Spatial-Forecast-Reliability.md
     ├── Day-28-Multi-Location-Intelligence.md
-    └── Day-29-Forecast-Disagreement-Intelligence.md
+    ├── Day-29-Forecast-Disagreement-Intelligence.md
+    └── Day-30-Revision-Trajectory-Intelligence.md
 ```
 
 
@@ -147,6 +148,7 @@ Phase 2 Builder 2 documentation will be added when Phase 2 Builder 2 development
 - [Day 27](./Phase-3/Day-27-Spatial-Forecast-Reliability.md) — Spatial Forecast Reliability Intelligence
 - [Day 28](./Phase-3/Day-28-Multi-Location-Intelligence.md) — Multi-Location Reliability Intelligence
 - [Day 29](./Phase-3/Day-29-Forecast-Disagreement-Intelligence.md) — Forecast Disagreement Intelligence
+- [Day 30](./Phase-3/Day-30-Revision-Trajectory-Intelligence.md) — Forecast Revision & Trajectory Intelligence
 
 ---
 
