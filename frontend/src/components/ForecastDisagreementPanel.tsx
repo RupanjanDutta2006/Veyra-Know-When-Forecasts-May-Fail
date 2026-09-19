@@ -741,8 +741,8 @@ export const ForecastDisagreementPanel: React.FC<ForecastDisagreementPanelProps>
             OPERATIONAL NOTE: FORECAST DISAGREEMENT ≠ P(BUST)
           </div>
           <div>
-            <strong>Ensemble disagreement</strong> describes the statistical dispersion among the 31 numerical ensemble trajectories produced by the operational GEFS model.
-            It is a diagnostic measure of atmospheric chaos and solution sensitivity for the selected lead time.
+            <strong>Ensemble disagreement</strong> describes the statistical dispersion among the available GEFS ensemble members for the valid forecast time.
+            It provides a diagnostic measure of ensemble trajectory divergence and solution spread for the selected lead horizon.
           </div>
           <div style={{ marginTop: '4px' }}>
             <strong>Calibrated P(BUST)</strong> is the machine-learned probability, verified under Day 22 isotonic calibration, that the forecast absolute error will meet or exceed the operational failure threshold.
