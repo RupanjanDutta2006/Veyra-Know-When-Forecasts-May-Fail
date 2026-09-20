@@ -10,7 +10,7 @@ Day 38 implements Cross-Provider Disagreement Intelligence (`CrossProviderDisagr
 - **Comparability Contract**: Enforces strict unit normalization (°C, m/s, hPa) and valid-time alignment before executing comparisons. Mismatched units or missing provider data yield explicit `NOT_COMPARABLE` or `PROVIDER_UNAVAILABLE` status without fake zero differences.
 - **Strict GEFS & P(BUST) Separation**: Keeps cross-provider disagreement strictly separate from Day 29 GEFS ensemble member spread (`ensemble_spread`, `ensemble_range`). Does NOT mutate frozen 50-feature V3 LightGBM inputs, P(BUST), risk thresholds, scientific certification, or OOD policies.
 - **Dedicated API Endpoint**: Exposes `POST /v1/provider-disagreement/diagnostics`.
-- **Frontend Panel**: Introduces `CrossProviderDisagreementPanel` displaying primary live provider vs secondary fixture provider comparisons with explicit fixture notice banners and clear diagnostic scope disclaimers.
+- **Frontend Integration**: Fully integrated into the production dashboard. `VeyraApiClient` exports `getCrossProviderDisagreement()` to call `POST /v1/provider-disagreement/diagnostics`, and `CrossProviderDisagreementPanel` is mounted inside `ForecastDisagreementPanel` (the active `disagreement` view), displaying primary live provider vs secondary fixture provider comparisons with explicit fixture notice banners and clear diagnostic scope disclaimers.
 
 ---
 

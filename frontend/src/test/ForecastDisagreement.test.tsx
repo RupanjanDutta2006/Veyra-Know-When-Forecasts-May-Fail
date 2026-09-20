@@ -273,3 +273,185 @@ describe('ForecastDisagreementPanel Component (Day 29)', () => {
     expect(mockSpatialNav).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('Day 38 Cross-Provider Disagreement Integration Tests', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('1. API client has getCrossProviderDisagreement method', () => {
+    expect(typeof apiClient.getCrossProviderDisagreement).toBe('function');
+  });
+
+  it('2-3. API client posts to /v1/provider-disagreement/diagnostics with typed request', async () => {
+    const mockFetch = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        status: 'AVAILABLE',
+        reason_code: 'OK',
+        canonical_location: 'Kolkata',
+        variable: 'temperature_2m',
+        valid_time: '2026-09-21T06:00:00Z',
+        unit: '°C',
+        primary_provider: {
+          provider_id: 'openmeteo_gefs',
+          provider_name: 'Open-Meteo GEFS',
+          provider_source_mode: 'LIVE',
+          canonical_location: 'Kolkata',
+          issue_time: '2026-09-20T06:00:00Z',
+          valid_time: '2026-09-21T06:00:00Z',
+          lead_hours: 24,
+          variable: 'temperature_2m',
+          forecast_value: 32.5,
+          unit: '°C',
+          is_available: true,
+        },
+        secondary_provider: {
+          provider_id: 'fixture_second_provider',
+          provider_name: 'Fixture Second Provider',
+          provider_source_mode: 'FIXTURE',
+          canonical_location: 'Kolkata',
+          issue_time: '2026-09-20T06:00:00Z',
+          valid_time: '2026-09-21T06:00:00Z',
+          lead_hours: 24,
+          variable: 'temperature_2m',
+          forecast_value: 30.0,
+          unit: '°C',
+          is_available: true,
+        },
+        signed_difference: 2.5,
+        absolute_difference: 2.5,
+        provider_min: 30.0,
+        provider_max: 32.5,
+        provider_mean: 31.25,
+        relative_difference_pct: 8.33,
+        is_comparable: true,
+        has_fixture_provider: true,
+        provenance_notice: 'Secondary provider uses deterministic fixture data for validation.',
+        scope_note: 'Diagnostic comparison between normalized provider values.',
+      }),
+    } as Response);
+
+    const res = await apiClient.getCrossProviderDisagreement({
+      location: 'Kolkata',
+      variable: 'temperature_2m',
+      lead_hours: 24,
+    });
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/v1/provider-disagreement/diagnostics'),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          location: 'Kolkata',
+          variable: 'temperature_2m',
+          lead_hours: 24,
+        }),
+      })
+    );
+    expect(res.data?.status).toBe('AVAILABLE');
+    expect(res.data?.absolute_difference).toBe(2.5);
+  });
+
+  it('4-12. CrossProviderDisagreementPanel renders values, differences, units, and fixture provenance disclosure', async () => {
+    vi.spyOn(apiClient, 'getForecastDisagreement').mockResolvedValue({
+      data: createMockDisagreementResponse(),
+    });
+
+    vi.spyOn(apiClient, 'getCrossProviderDisagreement').mockResolvedValue({
+      data: {
+        status: 'AVAILABLE',
+        reason_code: 'OK',
+        canonical_location: 'Kolkata',
+        variable: 'temperature_2m',
+        valid_time: '2026-09-21T06:00:00Z',
+        unit: '°C',
+        primary_provider: {
+          provider_id: 'openmeteo_gefs',
+          provider_name: 'Open-Meteo GEFS',
+          provider_source_mode: 'LIVE',
+          canonical_location: 'Kolkata',
+          issue_time: '2026-09-20T06:00:00Z',
+          valid_time: '2026-09-21T06:00:00Z',
+          lead_hours: 24,
+          variable: 'temperature_2m',
+          forecast_value: 32.5,
+          unit: '°C',
+          is_available: true,
+        },
+        secondary_provider: {
+          provider_id: 'fixture_second_provider',
+          provider_name: 'Fixture Second Provider',
+          provider_source_mode: 'FIXTURE',
+          canonical_location: 'Kolkata',
+          issue_time: '2026-09-20T06:00:00Z',
+          valid_time: '2026-09-21T06:00:00Z',
+          lead_hours: 24,
+          variable: 'temperature_2m',
+          forecast_value: 30.0,
+          unit: '°C',
+          is_available: true,
+        },
+        signed_difference: 2.5,
+        absolute_difference: 2.5,
+        provider_min: 30.0,
+        provider_max: 32.5,
+        provider_mean: 31.25,
+        relative_difference_pct: 8.33,
+        is_comparable: true,
+        has_fixture_provider: true,
+        provenance_notice: 'Secondary provider uses deterministic fixture data for validation.',
+        scope_note: 'Diagnostic comparison between normalized provider values.',
+      },
+    });
+
+    render(<ForecastDisagreementPanel initialLocation="Kolkata" />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Cross-Provider Forecast Difference/i)).toBeInTheDocument();
+      expect(screen.getByText(/Secondary Provider: Deterministic Fixture Data/i)).toBeInTheDocument();
+      expect(screen.getByText('32.5 °C')).toBeInTheDocument();
+      expect(screen.getByText('30 °C')).toBeInTheDocument();
+      expect(screen.getByText('2.5 °C')).toBeInTheDocument();
+      expect(screen.getByText('+2.5 °C')).toBeInTheDocument();
+      expect(screen.getByText('8.33%')).toBeInTheDocument();
+    });
+  });
+
+  it('13-16. Handles PROVIDER_UNAVAILABLE safely without fake zeroes or raw tracebacks', async () => {
+    vi.spyOn(apiClient, 'getForecastDisagreement').mockResolvedValue({
+      data: createMockDisagreementResponse(),
+    });
+
+    vi.spyOn(apiClient, 'getCrossProviderDisagreement').mockResolvedValue({
+      data: {
+        status: 'PROVIDER_UNAVAILABLE',
+        reason_code: 'PRIMARY_UNAVAILABLE',
+        canonical_location: 'Kolkata',
+        variable: 'temperature_2m',
+        valid_time: '2026-09-21T06:00:00Z',
+        unit: '°C',
+        primary_provider: null,
+        secondary_provider: null,
+        signed_difference: null,
+        absolute_difference: null,
+        provider_min: null,
+        provider_max: null,
+        provider_mean: null,
+        relative_difference_pct: null,
+        is_comparable: false,
+        has_fixture_provider: true,
+        provenance_notice: 'Secondary provider uses deterministic fixture data.',
+        scope_note: 'Comparison unavailable due to primary provider timeout.',
+      },
+    });
+
+    render(<ForecastDisagreementPanel initialLocation="Kolkata" />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/PROVIDER_UNAVAILABLE/i)).toBeInTheDocument();
+      expect(screen.getAllByText('Unavailable').length).toBeGreaterThanOrEqual(2);
+      expect(screen.queryByText('0.0 °C')).not.toBeInTheDocument();
+    });
+  });
+});

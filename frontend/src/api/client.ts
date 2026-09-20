@@ -24,6 +24,8 @@ import {
   ForecastRevisionResponse,
   ScientificCertificationResult,
   CertificationEvaluationRequest,
+  CrossProviderDisagreementRequest,
+  CrossProviderDisagreementResponse,
 } from './types';
 
 // Resolve base API URL from environment variable or fallback to empty string (same-origin relative URL)
@@ -562,6 +564,42 @@ export class VeyraApiClient {
         error: {
           error: 'CERTIFICATION_EVALUATION_FAILED',
           message: err instanceof Error ? err.message : 'Certification evaluation request failed.',
+          status_code: 0,
+        },
+      };
+    }
+  }
+
+  /**
+   * Evaluate Day 38 cross-provider forecast disagreement diagnostics.
+   * Performs diagnostic comparison between normalized provider forecast values.
+   */
+  async getCrossProviderDisagreement(
+    request: CrossProviderDisagreementRequest
+  ): Promise<{ data?: CrossProviderDisagreementResponse; error?: ApiError }> {
+    try {
+      const endpoint = `${this.baseUrl}/v1/provider-disagreement/diagnostics`;
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(request),
+      });
+
+      if (!response.ok) {
+        const error = await this.parseErrorResponse(response);
+        return { error };
+      }
+
+      const data: CrossProviderDisagreementResponse = await response.json();
+      return { data };
+    } catch (err: unknown) {
+      return {
+        error: {
+          error: 'CROSS_PROVIDER_DISAGREEMENT_FAILED',
+          message: err instanceof Error ? err.message : 'Cross-provider disagreement request failed.',
           status_code: 0,
         },
       };
