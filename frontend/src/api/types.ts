@@ -66,6 +66,8 @@ export interface PredictionResponse {
   valid_time?: string | null;
   issue_time?: string | null;
   certification?: ScientificCertificationResult | null;
+  ood_diagnostics?: OODDiagnosticResult | null;
+  model_provenance?: ModelProvenanceInfo | null;
 }
 
 export interface HealthResponse {
@@ -535,5 +537,49 @@ export interface CertificationEvaluationRequest {
   variable?: string;
   lead_hours?: number;
   model_version?: string;
+}
+
+export type OODState = 'IN_DISTRIBUTION' | 'OUT_OF_DISTRIBUTION' | 'OOD_UNKNOWN';
+
+export type OODReasonCode =
+  | 'WITHIN_PHYSICAL_TRAINING_SUPPORT'
+  | 'OUT_OF_PHYSICAL_SUPPORT'
+  | 'INSUFFICIENT_EVIDENCE'
+  | 'UNSUPPORTED_VARIABLE'
+  | 'INVALID_REQUEST_PARAMETERS'
+  | 'PROVIDER_QC_ANOMALY';
+
+export interface OODDiagnosticResult {
+  status: OODState;
+  is_ood: boolean | null;
+  reason_code: OODReasonCode;
+  reason_detail: string;
+  ood_score: number | null;
+  policy_version: string;
+  causes_abstention: boolean;
+  diagnostic_inputs?: Record<string, any> | null;
+}
+
+export interface ModelProvenanceInfo {
+  model_name: string;
+  model_version: string;
+  model_sha256: string;
+  calibrator_type: string;
+  calibrator_sha256: string;
+  feature_count: number;
+  feature_schema_version: string;
+  decision_threshold: number;
+  is_calibrated: boolean;
+  is_deterministic: boolean;
+  artifact_path?: string | null;
+}
+
+export interface OODPolicyMetadata {
+  policy_version: string;
+  description: string;
+  supported_variables: string[];
+  physical_bounding_ranges: Record<string, Record<string, any>>;
+  causes_abstention: boolean;
+  governance_note: string;
 }
 

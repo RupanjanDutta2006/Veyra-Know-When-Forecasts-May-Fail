@@ -11,6 +11,9 @@ import time
 from typing import Optional
 from backend.app.core.certification_policy import evaluate_scientific_certification
 from backend.app.core.metrics import default_metrics
+from backend.app.core.model_determinism import get_authoritative_v3_provenance
+from backend.app.core.ood_policy import evaluate_ood_policy
+from backend.app.schemas.provenance import ModelProvenanceInfo
 from backend.app.safety.abstention import SafetyAssessment, SafetyEvaluator
 from backend.app.schemas.prediction import (
     MAX_SUPPORTED_LEAD_HOURS,
@@ -269,6 +272,42 @@ class ForecastBustAgent:
             calibrator_sha256=model_meta.get("calibrator_sha256"),
         )
 
+        # 10. OOD Diagnostics (Gate C2)
+        forecast_val = None
+        if feature_result and feature_result.features:
+            for k in ["forecast_value", "t2m_fcst", "temperature_2m_forecast", "surface_pressure_forecast", "wind_speed_10m_forecast"]:
+                if k in feature_result.features:
+                    try:
+                        forecast_val = float(feature_result.features[k])
+                        break
+                    except (ValueError, TypeError):
+                        pass
+
+        ood_diag = evaluate_ood_policy(
+            variable=evaluated_var,
+            forecast_value=forecast_val,
+            raw_ood_score=ood_score,
+        )
+
+        # 11. Model Provenance (Gate C3)
+        provenance = None
+        if model_meta and model_meta.get("model_sha256"):
+            provenance = ModelProvenanceInfo(
+                model_name=model_meta.get("model_name", model_result.model_version if model_result else "builder2_v3"),
+                model_version=model_result.model_version if model_result else "veyra-v3-benchmark-lightgbm",
+                model_sha256=model_meta.get("model_sha256"),
+                calibrator_type=model_meta.get("calibrator_type", "IsotonicRegression"),
+                calibrator_sha256=model_meta.get("calibrator_sha256"),
+                feature_count=model_meta.get("feature_count", 50),
+                feature_schema_version=model_meta.get("feature_schema_version", "veyra-50-features-v3.0"),
+                decision_threshold=model_meta.get("decision_threshold", 0.060),
+                is_calibrated=model_meta.get("is_calibrated", True),
+                is_deterministic=True,
+                artifact_path=model_meta.get("artifact_path", "models/v3"),
+            )
+        else:
+            provenance = get_authoritative_v3_provenance()
+
         return PredictionResponse(
             location=location,
             bust_probability=safety_assessment.bust_probability,
@@ -295,6 +334,8 @@ class ForecastBustAgent:
             valid_time=evaluated_valid,
             issue_time=evaluated_issue,
             certification=cert_result,
+            ood_diagnostics=ood_diag,
+            model_provenance=provenance,
         )
 
     def analyze(self, request: PredictionRequest) -> PredictionResponse:
