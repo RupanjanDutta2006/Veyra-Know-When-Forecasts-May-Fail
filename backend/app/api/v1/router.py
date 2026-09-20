@@ -8,6 +8,7 @@ from backend.app.api.v1.endpoints import (
     health,
     metrics,
     multi_location,
+    ood,
     predict,
     revision,
     spatial,
@@ -67,4 +68,9 @@ api_router.include_router(
 api_router.include_router(
     certification.router,
     tags=["Scientific Certification"],
+)
+
+api_router.include_router(
+    ood.router,
+    tags=["OOD Diagnostic Policy"],
 )

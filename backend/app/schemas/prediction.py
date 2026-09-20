@@ -6,6 +6,8 @@ from pydantic import BaseModel, Field, model_validator
 
 from backend.app.schemas.certification import ScientificCertificationResult
 from backend.app.schemas.explainability import ExplanationItem
+from backend.app.schemas.ood import OODDiagnosticResult
+from backend.app.schemas.provenance import ModelProvenanceInfo
 
 
 class TrustState(str, Enum):
@@ -341,6 +343,14 @@ class PredictionResponse(BaseModel):
     certification: Optional[ScientificCertificationResult] = Field(
         default=None,
         description="Evaluated Day 32 Scientific Certification Gate result assessing evidence bounds",
+    )
+    ood_diagnostics: Optional[OODDiagnosticResult] = Field(
+        default=None,
+        description="Physical out-of-distribution diagnostic evaluation (Gate C2)",
+    )
+    model_provenance: Optional[ModelProvenanceInfo] = Field(
+        default=None,
+        description="Authoritative model artifact and calibrator provenance (Gate C3)",
     )
 
     model_config = {
