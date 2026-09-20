@@ -243,11 +243,43 @@ def test_d38_16_provider_min_max_mean_metrics():
 
 def test_d38_17_gefs_disagreement_separation():
     """Verify Day 29 GEFS ensemble disagreement service remains separate and unmodified."""
-    from backend.app.schemas.disagreement import ForecastDisagreementRequest
+    from backend.app.schemas.disagreement import ForecastDisagreementRequest, DisagreementStatus
+    from backend.app.schemas.prediction import PredictionResponse, RiskLevel, TrustState
     from backend.app.services.disagreement_service import DisagreementService
-    gefs_service = DisagreementService()
+
+    class MockAgent:
+        def analyze(self, pred_req):
+            return PredictionResponse(
+                location="Delhi",
+                bust_probability=0.05,
+                risk_level=RiskLevel.LOW,
+                trust_state=TrustState.HIGH_CONFIDENCE,
+                abstain=False,
+                reason_codes=[],
+                calibration_status="CALIBRATED",
+            )
+
+        def get_weather_data(self, loc, start_date):
+            class MockWeatherRes:
+                is_available = True
+                raw_data = {
+                    "records": [{
+                        "variable": "temperature_2m",
+                        "lead_hours": 24,
+                        "value": 32.0,
+                        "ensemble_mean": 32.0,
+                        "ensemble_std": 1.5,
+                        "ensemble_min": 29.0,
+                        "ensemble_max": 35.0,
+                        "member_count": 31,
+                    }]
+                }
+            return MockWeatherRes()
+
+    gefs_service = DisagreementService(agent=MockAgent())
     req = ForecastDisagreementRequest(location="Delhi", lead_hours=24)
     res = gefs_service.evaluate_disagreement(req)
+    assert res.status == DisagreementStatus.AVAILABLE
     assert res.diagnostics is not None
     assert hasattr(res.diagnostics, "ensemble_spread")
     assert hasattr(res.diagnostics, "ensemble_range")
