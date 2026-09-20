@@ -221,13 +221,47 @@ def test_http_certification_policy_endpoint():
 
 def test_predict_endpoint_contains_certification_metadata():
     """POST /v1/predict response includes certification gate result object."""
-    payload = {
-        "location": "Kolkata",
-        "variable": "temperature_2m",
-    }
-    resp = client.post("/v1/predict", json=payload)
-    assert resp.status_code == 200
-    data = resp.json()
-    assert "certification" in data
-    assert data["certification"]["status"] == "CERTIFIED"
-    assert data["certification"]["is_certified"] is True
+    from unittest.mock import patch
+    from backend.app.schemas.weather import CanonicalForecastDataset, CanonicalForecastRecord
+    from backend.app.services.base import WeatherResult
+
+    mock_rec = CanonicalForecastRecord(
+        location="Kolkata",
+        latitude=22.5726,
+        longitude=88.3639,
+        issue_time="2026-09-20T00:00:00Z",
+        valid_time="2026-09-21T00:00:00Z",
+        lead_hours=24,
+        variable="temperature_2m",
+        forecast_value=300.15,
+        unit="K",
+        ensemble_mean=300.10,
+        ensemble_std=1.2,
+        member_values=[300.0 + (i * 0.1 - 1.5) for i in range(31)],
+    )
+    mock_res = WeatherResult(
+        location="Kolkata",
+        target_date="2026-09-21",
+        raw_data={"dataset": CanonicalForecastDataset(
+            location="Kolkata",
+            latitude=22.5726,
+            longitude=88.3639,
+            issue_time="2026-09-20T00:00:00Z",
+            records=[mock_rec],
+        ).model_dump()},
+        data_version="gefs-openmeteo-v1.0",
+        is_available=True,
+    )
+    mock_res.record = mock_rec  # type: ignore
+
+    with patch("backend.app.services.openmeteo_service.OpenMeteoGEFSWeatherService.get_forecast", return_value=mock_res):
+        payload = {
+            "location": "Kolkata",
+            "variable": "temperature_2m",
+        }
+        resp = client.post("/v1/predict", json=payload)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "certification" in data
+        assert data["certification"]["status"] == "CERTIFIED"
+        assert data["certification"]["is_certified"] is True
