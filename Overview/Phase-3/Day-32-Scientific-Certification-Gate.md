@@ -37,8 +37,10 @@ The certification policy is derived strictly from repository evidence artifacts:
 3. **Test Holdout & Benchmark Evaluation (2017–2019):**
    - 116,250 rows across 155 reforecast cycles used for official frozen benchmark certification.
    - **V3 Test Performance:** Average Precision $AP = 0.2047$, $PR\text{-}AUC_{trap} = 0.2124$, $ROC\text{-}AUC = 0.7698$, $Brier = 0.053798$, $ECE = 0.0064$.
-4. **Synoptic Station Scope:**
-   - Exactly 25 synoptic meteorological stations across India (`AHMEDABAD`, `AMRITSAR`, `BANGALORE`, `BHOPAL`, `BHUBANESWAR`, `CHANDIGARH`, `CHENNAI`, `DEHRADUN`, `GANGTOK`, `GUWAHATI`, `HYDERABAD`, `JAIPUR`, `LUCKNOW`, `MUMBAI`, `NAGPUR`, `NEW_DELHI`, `PATNA`, `PUNE`, `RAIPUR`, `RANCHI`, `SHILLONG`, `SHIMLA`, `SRINAGAR`, `THIRUVANANTHAPURAM`, `VARANASI`).
+4. **Synoptic Station Scope (Frozen Benchmark Evidence Boundary):**
+   - Exactly 25 synoptic meteorological stations across India (`Ahmedabad`, `Bengaluru`, `Bhopal`, `Bhubaneswar`, `Chandigarh`, `Chennai`, `Dehradun`, `Delhi`, `Goa` / `Panaji`, `Guwahati`, `Hyderabad`, `Jaipur`, `Kochi`, `Kolkata`, `Leh`, `Lucknow`, `Mumbai`, `Nagpur`, `Pune`, `Raipur`, `Ranchi`, `Shimla`, `Srinagar`, `Thiruvananthapuram`, `Visakhapatnam`).
+   - *Operational Distinction:* Veyra's operational `LocationRegistry` and dynamic geocoding service support locations worldwide and across additional regional points. However, **operational support does NOT imply scientific benchmark certification**. Only the 25 canonical stations evaluated under the frozen 1,040-cycle / 780,000-row benchmark dataset carry scientific certification.
+   - *Human-Verification Follow-Up:* A human verification audit identified an initial station-scope inflation (where 6 operational stations were incorrectly certified and `Leh` was omitted). This was formally repaired and locked to the exact frozen 25 benchmark stations.
 5. **Surface Variable Scope:**
    - 3 surface variables (`temperature_2m`, `wind_speed_10m`, `surface_pressure`).
 6. **Lead Horizon Scope:**

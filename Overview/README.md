@@ -154,6 +154,7 @@ Phase 2 Builder 2 documentation will be added when Phase 2 Builder 2 development
 - [Days 28–30 Human Verification](./Phase-3/Day-28-to-30-Human-Verification.md) — Days 27–30 Human Verification & Release Alignment Record
 - [Day 31](./Phase-3/Day-31-Repository-Deployment-Truth-and-Day30-Freeze.md) — Repository Truth, Deployment Truth & Day 30 Final Freeze
 - [Day 32](./Phase-3/Day-32-Scientific-Certification-Gate.md) — Scientific Certification Gate (C1)
+- [Day 32 Human Verification Repair](./Phase-3/Day-32-Certification-Scope-Human-Verification-Repair.md) — Targeted Certification Station-Scope Repair Record
 
 ---
 

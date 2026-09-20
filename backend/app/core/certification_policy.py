@@ -38,27 +38,22 @@ CERTIFIED_BENCHMARK_STATIONS: List[str] = [
     "Chennai",
     "Dehradun",
     "Delhi",
-    "Dispur",
-    "Gangtok",
     "Goa",
     "Guwahati",
     "Hyderabad",
     "Jaipur",
     "Kochi",
     "Kolkata",
+    "Leh",
     "Lucknow",
     "Mumbai",
     "Nagpur",
-    "Patna",
     "Pune",
     "Raipur",
     "Ranchi",
-    "Shillong",
     "Shimla",
     "Srinagar",
     "Thiruvananthapuram",
-    "Varanasi",
-    "Vijayawada",
     "Visakhapatnam",
 ]
 
@@ -66,7 +61,7 @@ CERTIFIED_BENCHMARK_STATIONS: List[str] = [
 _CERTIFIED_STATION_LOWER_SET: Set[str] = {
     s.lower() for s in CERTIFIED_BENCHMARK_STATIONS
 } | {
-    "ncr", "national capital region", "panaji", "new delhi"
+    "ncr", "national capital region", "panaji", "new delhi", "ladakh"
 }
 
 
