@@ -77,7 +77,8 @@ Overview/
     ├── Day-33-OOD-Alias-Model-Determinism.md
     ├── Day-34-Time-Contract-Revision-Store-Foundation.md
     ├── Day-35-Independent-Replay-Release-Manifest.md
-    └── Day-36-Dashboard-Parity-Explanation-Coherence.md
+    ├── Day-36-Dashboard-Parity-Explanation-Coherence.md
+    └── Day-37-Provider-Adapters-Fixture-Second-Provider.md
 ```
 
 
@@ -163,6 +164,7 @@ Phase 2 Builder 2 documentation will be added when Phase 2 Builder 2 development
 - [Day 34](./Phase-3/Day-34-Time-Contract-Revision-Store-Foundation.md) — Time Contract + Durable Revision Store Foundation (Gate C4 Part 1)
 - [Day 35](./Phase-3/Day-35-Independent-Replay-Release-Manifest.md) — Independent Replay & Release Manifest (Gate C5)
 - [Day 36](./Phase-3/Day-36-Dashboard-Parity-Explanation-Coherence.md) — Dashboard Parity & Explanation Coherence (Gate C6)
+- [Day 37](./Phase-3/Day-37-Provider-Adapters-Fixture-Second-Provider.md) — Provider Adapters & Fixture Second Provider (Gate C7)
 
 
 
