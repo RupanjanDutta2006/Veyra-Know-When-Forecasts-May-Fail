@@ -583,3 +583,49 @@ export interface OODPolicyMetadata {
   governance_note: string;
 }
 
+export interface ProviderForecastSummary {
+  provider_id: string;
+  provider_name: string;
+  provider_source_mode: 'LIVE' | 'FIXTURE';
+  canonical_location: string;
+  issue_time: string;
+  valid_time: string;
+  lead_hours: number;
+  variable: string;
+  forecast_value: number | null;
+  unit: string;
+  is_available: boolean;
+}
+
+export interface CrossProviderDisagreementRequest {
+  location: string;
+  variable?: string;
+  lead_hours?: number;
+  issue_time?: string | null;
+  valid_time?: string | null;
+  primary_provider_id?: string;
+  secondary_provider_id?: string;
+}
+
+export interface CrossProviderDisagreementResponse {
+  status: string;
+  reason_code: string;
+  canonical_location: string;
+  variable: string;
+  valid_time: string;
+  unit: string;
+  primary_provider?: ProviderForecastSummary | null;
+  secondary_provider?: ProviderForecastSummary | null;
+  signed_difference?: number | null;
+  absolute_difference?: number | null;
+  provider_min?: number | null;
+  provider_max?: number | null;
+  provider_mean?: number | null;
+  relative_difference_pct?: number | null;
+  is_comparable: boolean;
+  has_fixture_provider: boolean;
+  provenance_notice: string;
+  scope_note: string;
+}
+
+

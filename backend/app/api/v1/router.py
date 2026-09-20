@@ -10,6 +10,7 @@ from backend.app.api.v1.endpoints import (
     multi_location,
     ood,
     predict,
+    provider_disagreement,
     revision,
     spatial,
 )
@@ -57,6 +58,12 @@ api_router.include_router(
     disagreement.router,
     prefix="/disagreement",
     tags=["Forecast Disagreement Intelligence"],
+)
+
+api_router.include_router(
+    provider_disagreement.router,
+    prefix="/provider-disagreement",
+    tags=["Cross-Provider Disagreement Intelligence"],
 )
 
 api_router.include_router(
