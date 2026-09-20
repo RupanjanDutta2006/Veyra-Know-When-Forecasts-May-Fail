@@ -74,7 +74,8 @@ Overview/
     ├── Day-30-Revision-Trajectory-Intelligence.md
     ├── Day-31-Repository-Deployment-Truth-and-Day30-Freeze.md
     ├── Day-32-Scientific-Certification-Gate.md
-    └── Day-33-OOD-Alias-Model-Determinism.md
+    ├── Day-33-OOD-Alias-Model-Determinism.md
+    └── Day-34-Time-Contract-Revision-Store-Foundation.md
 ```
 
 
@@ -157,6 +158,8 @@ Phase 2 Builder 2 documentation will be added when Phase 2 Builder 2 development
 - [Day 32](./Phase-3/Day-32-Scientific-Certification-Gate.md) — Scientific Certification Gate (C1)
 - [Day 32 Human Verification Repair](./Phase-3/Day-32-Certification-Scope-Human-Verification-Repair.md) — Targeted Certification Station-Scope Repair Record
 - [Day 33](./Phase-3/Day-33-OOD-Alias-Model-Determinism.md) — OOD Policy + Alias / Model Determinism (C2 + C3)
+- [Day 34](./Phase-3/Day-34-Time-Contract-Revision-Store-Foundation.md) — Time Contract + Durable Revision Store Foundation (Gate C4 Part 1)
+
 
 
 ---

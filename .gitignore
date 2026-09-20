@@ -77,6 +77,12 @@ venv.bak/
 .Trashes
 ehthumbs.db
 Thumbs.db
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
 
 # Data directories & large datasets
 data/raw/*
