@@ -1,0 +1,55 @@
+{
+  "release_id": "veyra-v3.0.0-release-candidate",
+  "manifest_schema_version": "v1.0.0",
+  "generation_timestamp": "2026-09-20T21:00:00Z",
+  "git_provenance": {
+    "base_commit_sha": "968e3e58f1f3f7e93fa0c25682a8644c108935ac",
+    "target_branch": "main",
+    "strategy": "base_commit_provenance"
+  },
+  "model_artifact": {
+    "path": "models/v3/lightgbm_v3_challenger.joblib",
+    "sha256": "00a8410746f4a0eecbf7e76aaa0565143fc948d0e06aea65e7bcc4ce28a1c660",
+    "version": "veyra-v3-benchmark-lightgbm",
+    "decision_threshold": 0.060
+  },
+  "calibrator_artifact": {
+    "path": "models/v3/probability_calibrator_v3.joblib",
+    "sha256": "9f448606ce4338ded92f238a551b3a9d8e6d2cb5902e8bc687bce5f5850af531",
+    "type": "IsotonicRegression",
+    "method": "isotonic"
+  },
+  "feature_contract": {
+    "feature_count": 50,
+    "feature_schema_version": "veyra-50-features-v3.0",
+    "feature_names_reference": "models/v3/feature_names.json"
+  },
+  "scientific_policies": {
+    "certification_policy_version": "v3.0.0-frozen-benchmark",
+    "certified_station_count": 25,
+    "certified_variables": [
+      "temperature_2m",
+      "wind_speed_10m",
+      "surface_pressure"
+    ],
+    "max_certified_lead_hours": 240,
+    "ood_policy_version": "v3.0.0-physical-support",
+    "time_contract_version": "v3.0.0-utc-temporal-invariants",
+    "revision_store_schema_version": "v1.0.0-sqlite-wal"
+  },
+  "operational_horizons": {
+    "supported_max_lead_hours": 384,
+    "certified_max_lead_hours": 240,
+    "extended_uncertified_horizon": "264h-384h"
+  },
+  "evidence_boundaries": {
+    "training_holdout": "2017-2019 NOAA GEFSv12 benchmark",
+    "post_2019_certified": false,
+    "unseen_station_certified": false,
+    "n5_historical_n31_live_equivalence_certified": false
+  },
+  "replay_suite": {
+    "version": "v1.0.0-golden-matrix",
+    "golden_cases_count": 10
+  }
+}
