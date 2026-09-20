@@ -10,8 +10,10 @@ import {
 import { apiClient } from '../api/client';
 import {
   ForecastDisagreementResponse,
+  CrossProviderDisagreementResponse,
   RiskLevel,
 } from '../api/types';
+import { CrossProviderDisagreementPanel } from './CrossProviderDisagreementPanel';
 
 interface ForecastDisagreementPanelProps {
   initialLocation?: string;
@@ -61,6 +63,8 @@ export const ForecastDisagreementPanel: React.FC<ForecastDisagreementPanelProps>
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [disagreementData, setDisagreementData] = useState<ForecastDisagreementResponse | null>(null);
+  const [crossProviderData, setCrossProviderData] = useState<CrossProviderDisagreementResponse | null>(null);
+  const [crossProviderLoading, setCrossProviderLoading] = useState<boolean>(false);
 
   // Sync initial props if updated externally
   useEffect(() => {
@@ -83,14 +87,24 @@ export const ForecastDisagreementPanel: React.FC<ForecastDisagreementPanelProps>
       return;
     }
     setLoading(true);
+    setCrossProviderLoading(true);
     setError(null);
 
+    // Concurrently fetch Day 29 GEFS disagreement and Day 38 Cross-Provider disagreement
+    const gefsPromise = apiClient.getForecastDisagreement({
+      location: locToUse.trim(),
+      variable: varToUse,
+      lead_hours: leadToUse,
+    });
+
+    const crossProviderPromise = apiClient.getCrossProviderDisagreement({
+      location: locToUse.trim(),
+      variable: varToUse,
+      lead_hours: leadToUse,
+    });
+
     try {
-      const { data, error: apiError } = await apiClient.getForecastDisagreement({
-        location: locToUse.trim(),
-        variable: varToUse,
-        lead_hours: leadToUse,
-      });
+      const { data, error: apiError } = await gefsPromise;
 
       if (apiError) {
         setError(apiError.message || apiError.error || 'Disagreement diagnostics evaluation failed.');
@@ -103,6 +117,17 @@ export const ForecastDisagreementPanel: React.FC<ForecastDisagreementPanelProps>
       setDisagreementData(null);
     } finally {
       setLoading(false);
+    }
+
+    try {
+      const { data: cpData } = await crossProviderPromise;
+      if (cpData) {
+        setCrossProviderData(cpData);
+      }
+    } catch (err: unknown) {
+      console.warn('Cross-provider disagreement fetch warning:', err);
+    } finally {
+      setCrossProviderLoading(false);
     }
   };
 
@@ -722,6 +747,11 @@ export const ForecastDisagreementPanel: React.FC<ForecastDisagreementPanelProps>
           </div>
         </div>
       )}
+
+      {/* Day 38 Cross-Provider Disagreement Panel Integration */}
+      <div style={{ marginTop: '16px', marginBottom: '8px' }}>
+        <CrossProviderDisagreementPanel data={crossProviderData} isLoading={crossProviderLoading} />
+      </div>
 
       {/* Educational Operational Panel: Disagreement != P(BUST) */}
       <div
