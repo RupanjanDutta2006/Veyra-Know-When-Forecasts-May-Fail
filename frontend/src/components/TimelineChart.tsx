@@ -152,11 +152,11 @@ export const TimelineChart: React.FC<TimelineChartProps> = ({
           <TrendingUp size={16} /> FORECAST BUST RISK TIMELINE ({variable.toUpperCase()})
         </span>
         <div className="timeline-chart-legend">
-          <span className="legend-badge badge-certified" title="Covered by Day 23 frozen benchmark certification (2017-2019)">
-            <Award size={12} /> &le;240h Certified Scope
+          <span className="legend-badge badge-certified" title="Covered by Day 23 frozen benchmark lead horizon (2017-2019 holdout)">
+            <Award size={12} /> &le;240h Benchmark Lead Scope
           </span>
-          <span className="legend-badge badge-operational" title="Operational numerical extension (uncertified by benchmark)">
-            <ShieldAlert size={12} /> &gt;240h Operational Scope
+          <span className="legend-badge badge-operational" title="Operational numerical lead horizon extension (uncertified by benchmark)">
+            <ShieldAlert size={12} /> &gt;240h Operational Lead Scope
           </span>
         </div>
       </div>

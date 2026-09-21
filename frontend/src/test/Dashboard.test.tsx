@@ -634,4 +634,123 @@ describe('Veyra Frontend Dashboard Component Tests', () => {
     expect(screen.queryByText('0.0%')).not.toBeInTheDocument();
     expect(screen.queryByText('0%')).not.toBeInTheDocument();
   });
+
+  describe('HV-002 Stale Coordinate Clearing & Geocoding Invalidation', () => {
+    it('clears coordinates when user edits location away from resolved target and on failed resolution', async () => {
+      vi.spyOn(apiClient, 'getHealth').mockResolvedValue({
+        data: { status: 'ok', service: 'forecast-bust-sentinel', version: '0.1.0' },
+      });
+
+      const mockDelhi = createMockDashboard('Delhi', 0.05, 'LOW');
+      mockDelhi.location = {
+        query: 'Delhi',
+        resolved_name: 'Delhi, India',
+        latitude: 28.6139,
+        longitude: 77.209,
+      };
+
+      const mockInvalid = createMockDashboard('asdfghjkl-not-a-real-place', null, null, true, ['INVALID_LOCATION']);
+      mockInvalid.location = {
+        query: 'asdfghjkl-not-a-real-place',
+        resolved_name: null,
+        latitude: null,
+        longitude: null,
+      };
+
+      vi.spyOn(apiClient, 'getDashboardIntelligence')
+        .mockResolvedValueOnce({ data: mockDelhi })
+        .mockResolvedValueOnce({ data: mockInvalid });
+
+      render(<App />);
+
+      const locationInput = screen.getByLabelText(/Location Name or Coordinates/i);
+      const latInput = screen.getByLabelText(/Latitude/i) as HTMLInputElement;
+      const lonInput = screen.getByLabelText(/Longitude/i) as HTMLInputElement;
+      const submitBtn = screen.getByRole('button', { name: /AUDIT RELIABILITY/i });
+
+      // Step 1: Initial Delhi resolution
+      fireEvent.change(locationInput, { target: { value: 'Delhi' } });
+      fireEvent.click(submitBtn);
+
+      await waitFor(() => {
+        expect(screen.getByText('5.00%')).toBeInTheDocument();
+      });
+      expect(latInput.value).toBe('28.6139');
+      expect(lonInput.value).toBe('77.209');
+
+      // Step 2: User types invalid string
+      fireEvent.change(locationInput, { target: { value: 'asdfghjkl-not-a-real-place' } });
+
+      // Coordinates must immediately be cleared/unresolved (NOT retaining Delhi)
+      expect(latInput.value).toBe('');
+      expect(lonInput.value).toBe('');
+
+      // Step 3: Trigger Audit which fails resolution
+      fireEvent.click(submitBtn);
+
+      await waitFor(() => {
+        expect(screen.getByText(/Prediction Safely Abstained/i)).toBeInTheDocument();
+      });
+
+      // Coordinates must still remain blank/unresolved
+      expect(latInput.value).toBe('');
+      expect(lonInput.value).toBe('');
+      expect(screen.queryByText('28.6139')).not.toBeInTheDocument();
+      expect(screen.queryByText('77.209')).not.toBeInTheDocument();
+    });
+
+    it('restores correct coordinates when valid location is queried after an invalid resolution failure', async () => {
+      vi.spyOn(apiClient, 'getHealth').mockResolvedValue({
+        data: { status: 'ok', service: 'forecast-bust-sentinel', version: '0.1.0' },
+      });
+
+      const mockInvalid = createMockDashboard('invalid-city', null, null, true, ['INVALID_LOCATION']);
+      mockInvalid.location = {
+        query: 'invalid-city',
+        resolved_name: null,
+        latitude: null,
+        longitude: null,
+      };
+
+      const mockKolkata = createMockDashboard('Kolkata', 0.142, 'LOW');
+      mockKolkata.location = {
+        query: 'Kolkata',
+        resolved_name: 'Kolkata, Synoptic Station',
+        latitude: 22.57,
+        longitude: 88.36,
+      };
+
+      vi.spyOn(apiClient, 'getDashboardIntelligence')
+        .mockResolvedValueOnce({ data: mockInvalid })
+        .mockResolvedValueOnce({ data: mockKolkata });
+
+      render(<App />);
+
+      const locationInput = screen.getByLabelText(/Location Name or Coordinates/i);
+      const latInput = screen.getByLabelText(/Latitude/i) as HTMLInputElement;
+      const lonInput = screen.getByLabelText(/Longitude/i) as HTMLInputElement;
+      const submitBtn = screen.getByRole('button', { name: /AUDIT RELIABILITY/i });
+
+      // 1. Query invalid location
+      fireEvent.change(locationInput, { target: { value: 'invalid-city' } });
+      fireEvent.click(submitBtn);
+
+      await waitFor(() => {
+        expect(screen.getByText(/Prediction Safely Abstained/i)).toBeInTheDocument();
+      });
+      expect(latInput.value).toBe('');
+      expect(lonInput.value).toBe('');
+
+      // 2. Query Kolkata
+      fireEvent.change(locationInput, { target: { value: 'Kolkata' } });
+      fireEvent.click(submitBtn);
+
+      await waitFor(() => {
+        expect(screen.getByText('14.20%')).toBeInTheDocument();
+      });
+      expect(latInput.value).toBe('22.57');
+      expect(lonInput.value).toBe('88.36');
+    });
+  });
 });
+

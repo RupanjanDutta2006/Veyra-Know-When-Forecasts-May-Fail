@@ -6,10 +6,10 @@ import { DashboardMode } from '../api/types';
 interface LocationFormProps {
   location: string;
   setLocation: (loc: string) => void;
-  lat: number;
-  setLat: (lat: number) => void;
-  lon: number;
-  setLon: (lon: number) => void;
+  lat: number | null;
+  setLat: (lat: number | null) => void;
+  lon: number | null;
+  setLon: (lon: number | null) => void;
   variable: string;
   setVariable: (v: string) => void;
   mode: DashboardMode;
@@ -40,14 +40,18 @@ export const LocationForm: React.FC<LocationFormProps> = ({
       setLocation(target.name);
       setLat(target.lat);
       setLon(target.lon);
+    } else {
+      setLocation('');
+      setLat(null);
+      setLon(null);
     }
   };
 
-  const handleCoordinateChange = (newLat: number, newLon: number) => {
+  const handleCoordinateChange = (newLat: number | null, newLon: number | null) => {
     setLat(newLat);
     setLon(newLon);
     // If coordinates are set directly, update location query to coordinate format
-    if (!isNaN(newLat) && !isNaN(newLon)) {
+    if (newLat !== null && newLon !== null && !isNaN(newLat) && !isNaN(newLon)) {
       setLocation(`${newLat.toFixed(4)}, ${newLon.toFixed(4)}`);
     }
   };
@@ -117,8 +121,12 @@ export const LocationForm: React.FC<LocationFormProps> = ({
             id="lat-input"
             type="number"
             step="0.0001"
-            value={lat}
-            onChange={(e) => handleCoordinateChange(parseFloat(e.target.value) || 0, lon)}
+            placeholder="Unresolved"
+            value={lat !== null && lat !== undefined && !isNaN(lat) ? lat : ''}
+            onChange={(e) => {
+              const val = e.target.value === '' ? null : parseFloat(e.target.value);
+              handleCoordinateChange(val, lon);
+            }}
           />
         </div>
         <div>
@@ -127,8 +135,12 @@ export const LocationForm: React.FC<LocationFormProps> = ({
             id="lon-input"
             type="number"
             step="0.0001"
-            value={lon}
-            onChange={(e) => handleCoordinateChange(lat, parseFloat(e.target.value) || 0)}
+            placeholder="Unresolved"
+            value={lon !== null && lon !== undefined && !isNaN(lon) ? lon : ''}
+            onChange={(e) => {
+              const val = e.target.value === '' ? null : parseFloat(e.target.value);
+              handleCoordinateChange(lat, val);
+            }}
           />
         </div>
       </div>
