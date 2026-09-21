@@ -26,19 +26,25 @@ function RecenterMap({ lat, lng }: { lat: number; lng: number }) {
 }
 
 interface ForecastMapProps {
-  latitude?: number;
-  longitude?: number;
+  latitude?: number | null;
+  longitude?: number | null;
   label?: string;
 }
 
 export const ForecastMap: React.FC<ForecastMapProps> = ({
-  latitude = 28.6139,
-  longitude = 77.2090,
+  latitude,
+  longitude,
   label = 'Location',
 }) => {
-  const validLat = typeof latitude === 'number' && !isNaN(latitude) ? latitude : 28.6139;
-  const validLon = typeof longitude === 'number' && !isNaN(longitude) ? longitude : 77.2090;
-  const position: [number, number] = [validLat, validLon];
+  const hasValidCoordinates =
+    typeof latitude === 'number' &&
+    typeof longitude === 'number' &&
+    !isNaN(latitude) &&
+    !isNaN(longitude);
+
+  const centerLat = hasValidCoordinates ? latitude : 28.6139;
+  const centerLon = hasValidCoordinates ? longitude : 77.2090;
+  const position: [number, number] = [centerLat, centerLon];
 
   return (
     <div className="forecast-map-wrapper" role="region" aria-label="Geographic Location Map">
@@ -52,15 +58,19 @@ export const ForecastMap: React.FC<ForecastMapProps> = ({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <Marker position={position}>
-          <Popup>
-            <div style={{ fontWeight: 600 }}>{label}</div>
-            <div style={{ fontSize: '0.8rem', color: '#555' }}>
-              [{validLat.toFixed(4)}°, {validLon.toFixed(4)}°]
-            </div>
-          </Popup>
-        </Marker>
-        <RecenterMap lat={validLat} lng={validLon} />
+        {hasValidCoordinates && (
+          <>
+            <Marker position={position}>
+              <Popup>
+                <div style={{ fontWeight: 600 }}>{label}</div>
+                <div style={{ fontSize: '0.8rem', color: '#555' }}>
+                  [{centerLat.toFixed(4)}°, {centerLon.toFixed(4)}°]
+                </div>
+              </Popup>
+            </Marker>
+            <RecenterMap lat={centerLat} lng={centerLon} />
+          </>
+        )}
       </MapContainer>
     </div>
   );

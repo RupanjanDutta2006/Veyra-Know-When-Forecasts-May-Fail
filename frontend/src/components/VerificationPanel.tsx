@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   Activity,
   AlertTriangle,
+  Award,
   Info,
   Flame,
 } from 'lucide-react';
@@ -92,7 +93,19 @@ export const VerificationPanel: React.FC<VerificationPanelProps> = ({
 
   const explanation = prediction?.explanation;
   const leadHours = selectedPoint ? selectedPoint.lead_hours : 24;
-  const isCertified = selectedPoint ? selectedPoint.is_certified_horizon : true;
+  const isBenchmarkLead = selectedPoint ? selectedPoint.is_certified_horizon : (leadHours <= 240);
+
+  const rawCertStatus = prediction?.certification?.certification_status;
+  const effectiveCertStatus = !isBenchmarkLead
+    ? 'OUTSIDE_CERTIFIED_SCOPE'
+    : rawCertStatus || (isAbstain ? 'OUTSIDE_CERTIFIED_SCOPE' : 'CERTIFICATION_UNKNOWN');
+
+  const effectiveCertReason = !isBenchmarkLead
+    ? `Lead horizon ${leadHours}h exceeds maximum certified benchmark horizon (240h).`
+    : prediction?.certification?.certification_reason ||
+      (effectiveCertStatus === 'CERTIFIED'
+        ? 'Request lies within frozen benchmark evidence boundary.'
+        : 'Location or variable lies outside frozen benchmark evidence boundary.');
 
   const getRiskColor = (risk: string | null) => {
     switch (risk) {
@@ -111,7 +124,48 @@ export const VerificationPanel: React.FC<VerificationPanelProps> = ({
           <Activity size={16} /> Conformal Telemetry
         </span>
         <span className="panel-badge">
-          {leadHours}h Horizon &bull; {isCertified ? 'Certified Scope' : 'Operational Scope'}
+          {leadHours}h Horizon &bull; {isBenchmarkLead ? 'Within Frozen Benchmark Lead Scope (\u2264240h)' : 'Extended Operational Horizon (>240h)'}
+        </span>
+      </div>
+
+      {/* Scientific Certification Evidence Status */}
+      <div
+        className="cert-scope-banner"
+        title={effectiveCertReason}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '8px 12px',
+          borderRadius: '6px',
+          marginBottom: '12px',
+          background: effectiveCertStatus === 'CERTIFIED' ? '#ecfdf5' : '#fffbeb',
+          border: `1px solid ${effectiveCertStatus === 'CERTIFIED' ? '#a7f3d0' : '#fde68a'}`,
+          color: effectiveCertStatus === 'CERTIFIED' ? '#065f46' : '#92400e',
+          fontSize: '0.8rem',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
+          <Award size={15} color={effectiveCertStatus === 'CERTIFIED' ? '#059669' : '#d97706'} />
+          <span>Scientific Certification:</span>
+          <span
+            className="diag-pill"
+            style={{
+              background: effectiveCertStatus === 'CERTIFIED' ? '#dcfce7' : '#fef3c7',
+              color: effectiveCertStatus === 'CERTIFIED' ? '#15803d' : '#b45309',
+              fontWeight: 700,
+              fontSize: '0.75rem',
+            }}
+          >
+            {effectiveCertStatus === 'CERTIFIED'
+              ? 'CERTIFIED'
+              : effectiveCertStatus === 'OUTSIDE_CERTIFIED_SCOPE'
+              ? 'OUTSIDE CERTIFIED SCOPE'
+              : 'CERTIFICATION UNKNOWN'}
+          </span>
+        </div>
+        <span style={{ fontSize: '0.75rem', color: effectiveCertStatus === 'CERTIFIED' ? '#047857' : '#78350f' }}>
+          {effectiveCertStatus === 'CERTIFIED' ? '25-Station Evidence Scope' : 'Outside Benchmark Scope'}
         </span>
       </div>
 

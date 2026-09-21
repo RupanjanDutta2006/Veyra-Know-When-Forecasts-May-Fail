@@ -79,7 +79,8 @@ Overview/
     ├── Day-35-Independent-Replay-Release-Manifest.md
     ├── Day-36-Dashboard-Parity-Explanation-Coherence.md
     ├── Day-37-Provider-Adapters-Fixture-Second-Provider.md
-    └── Day-38-Cross-Provider-Disagreement.md
+    ├── Day-38-Cross-Provider-Disagreement.md
+    └── Day-38-Post-Human-Verification-Repair.md
 ```
 
 
@@ -167,6 +168,7 @@ Phase 2 Builder 2 documentation will be added when Phase 2 Builder 2 development
 - [Day 36](./Phase-3/Day-36-Dashboard-Parity-Explanation-Coherence.md) — Dashboard Parity & Explanation Coherence (Gate C6)
 - [Day 37](./Phase-3/Day-37-Provider-Adapters-Fixture-Second-Provider.md) — Provider Adapters & Fixture Second Provider (Gate C7)
 - [Day 38](./Phase-3/Day-38-Cross-Provider-Disagreement.md) — Cross-Provider Disagreement Intelligence (Gate C8)
+- [Day 38 Post-Human Verification Repair](./Phase-3/Day-38-Post-Human-Verification-Repair.md) — Post-Human-Verification Narrow Repair (HV-001 + HV-002)
 
 
 
